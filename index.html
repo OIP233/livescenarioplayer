@@ -1,0 +1,3578 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OIP Live Scenario</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;700&display=swap');
+
+:root {
+  /* Achtergronden — middengrijzen, comfortabel leesbaar */
+  --bg:           #1e2330;
+  --bg2:          #262d3a;
+  --bg3:          #2e3648;
+  --panel:        #364050;
+  --border:       #48566a;
+  --border-hi:    #6a80a0;
+
+  /* Tekst — hoog contrast */
+  --text:         #e0eaf4;
+  --text-dim:     #90aabf;
+  --text-bright:  #f6fbff;
+  --text-muted:   #60788e;
+
+  /* Statuskleuren — helder en vol */
+  --green:        #3ee87c;
+  --green-bg:     #122e1e;
+  --amber:        #ffbe3a;
+  --amber-bg:     #2e1e06;
+  --red:          #ff5548;
+  --red-bg:       #2e1010;
+  --blue:         #52c0f8;
+  --blue-bg:      #0c2240;
+  --cyan:         #26e0ff;
+  --cyan-bg:      #082c3a;
+
+  --mono: 'Share Tech Mono', monospace;
+  --sans: 'Barlow', sans-serif;
+  --cond: 'Barlow Condensed', sans-serif;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+html, body {
+  height: 100%; width: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 15px;
+  overflow: hidden;
+}
+
+@keyframes blink    { 0%,100%{opacity:1}  50%{opacity:.45} }
+@keyframes fadeUp   { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+@keyframes pulse    { 0%,100%{opacity:1}  50%{opacity:.6} }
+
+/* Alarm: inslide + glow piek die uitdooft */
+@keyframes alarmEntryHi {
+  0%   { opacity:0; transform:translateX(-10px);
+         box-shadow:0 0 0 rgba(255,78,64,0); }
+  15%  { opacity:1; transform:translateX(0);
+         box-shadow:0 0 28px rgba(255,78,64,.9),inset 0 0 18px rgba(255,78,64,.25); }
+  100% { opacity:1; transform:translateX(0);
+         box-shadow:0 0 0 rgba(255,78,64,0); }
+}
+@keyframes alarmEntryMed {
+  0%   { opacity:0; transform:translateX(-10px);
+         box-shadow:0 0 0 rgba(255,176,48,0); }
+  15%  { opacity:1; transform:translateX(0);
+         box-shadow:0 0 22px rgba(255,176,48,.85),inset 0 0 14px rgba(255,176,48,.2); }
+  100% { opacity:1; transform:translateX(0);
+         box-shadow:0 0 0 rgba(255,176,48,0); }
+}
+@keyframes alarmEntryLo {
+  0%   { opacity:0; transform:translateX(-10px);
+         box-shadow:0 0 0 rgba(74,174,240,0); }
+  15%  { opacity:1; transform:translateX(0);
+         box-shadow:0 0 16px rgba(74,174,240,.7),inset 0 0 10px rgba(74,174,240,.15); }
+  100% { opacity:1; transform:translateX(0);
+         box-shadow:0 0 0 rgba(74,174,240,0); }
+}
+@keyframes alarmEntryInf {
+  0%   { opacity:0; transform:translateX(-8px); }
+  100% { opacity:1; transform:translateX(0); }
+}
+
+/* Chatbericht: inslide + border-glow die uitdooft */
+@keyframes msgEntryAi {
+  0%   { opacity:0; transform:translateY(8px);
+         box-shadow:0 0 0 rgba(32,216,255,0); }
+  20%  { opacity:1; transform:translateY(0);
+         box-shadow:0 0 20px rgba(32,216,255,.45); }
+  100% { opacity:1; transform:translateY(0);
+         box-shadow:0 0 0 rgba(32,216,255,0); }
+}
+@keyframes msgEntryAlarm {
+  0%   { opacity:0; transform:translateY(8px);
+         box-shadow:0 0 0 rgba(255,78,64,0); }
+  20%  { opacity:1; transform:translateY(0);
+         box-shadow:0 0 24px rgba(255,78,64,.6); }
+  100% { opacity:1; transform:translateY(0);
+         box-shadow:0 0 0 rgba(255,78,64,0); }
+}
+@keyframes msgEntryUser {
+  0%   { opacity:0; transform:translateY(6px); }
+  100% { opacity:1; transform:translateY(0); }
+}
+
+/* Typewriter cursor */
+@keyframes cursor { 0%,100%{opacity:1} 50%{opacity:0} }
+
+/* ── DEELNEMER TOPBAR ELEMENT ─────────────────────── */
+#participant-display {
+  display: none;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+#participant-display .pd-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-dim);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+#participant-display .pd-name {
+  font-family: var(--cond);
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--cyan);
+  letter-spacing: 1px;
+}
+#participant-display.visible { display: flex; }
+
+/* ── DEELNEMER BALK BOVEN STORYLINE ───────────────── */
+#participant-banner {
+  display: none;
+  background: var(--cyan-dim);
+  border-bottom: 1px solid rgba(32,216,255,.3);
+  padding: 8px 18px;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-shrink: 0;
+  flex-direction: column;
+}
+#participant-banner.visible { display: flex; }
+#participant-banner .pb-company-row {
+  display: flex; align-items: center; gap: 10px; margin-bottom: 2px;
+}
+#participant-banner .pb-company-name {
+  font-family: var(--mono); font-size: 11px; color: var(--cyan);
+  letter-spacing: 2px; text-transform: uppercase; opacity: .75;
+}
+#participant-banner .pb-company-tag {
+  font-family: var(--mono); font-size: 10px; padding: 1px 7px;
+  border-radius: 8px; border: 1px solid rgba(32,216,255,.35);
+  color: var(--cyan); opacity: .7; letter-spacing: 1px;
+}
+#participant-banner .pb-name-row {
+  display: flex; align-items: center; gap: 12px;
+}
+#participant-banner .pb-label {
+  font-family: var(--mono); font-size: 11px; color: var(--cyan);
+  letter-spacing: 2px; text-transform: uppercase; opacity: .8;
+}
+#participant-banner .pb-name {
+  font-family: var(--cond); font-size: 20px; font-weight: 700;
+  color: var(--cyan); letter-spacing: 2px;
+  text-shadow: 0 0 20px rgba(32,216,255,.4);
+}
+#participant-banner .pb-sep {
+  width: 1px; height: 16px; background: rgba(32,216,255,.3);
+}
+#topbar {
+  height: 48px;
+  background: var(--bg2);
+  border-bottom: 2px solid var(--border);
+  display: flex;
+  align-items: center;
+  padding: 0 18px;
+  gap: 16px;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 10;
+}
+
+.logo {
+  font-family: var(--cond);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--cyan);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.logo em { color: var(--text-dim); font-style: normal; font-weight: 500; }
+
+.topbar-sep {
+  width: 1px; height: 22px;
+  background: var(--border);
+  flex-shrink: 0;
+}
+
+#scenario-title {
+  font-family: var(--cond);
+  font-size: 15px;
+  color: var(--text);
+  letter-spacing: 0.5px;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#status-badge {
+  font-family: var(--mono);
+  font-size: 12px;
+  padding: 4px 12px;
+  border-radius: 3px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  flex-shrink: 0;
+  font-weight: 600;
+  transition: all .3s;
+}
+.s-normal  { background:var(--green-dim); color:var(--green); border:1px solid var(--green); }
+.s-alert   { background:var(--amber-dim); color:var(--amber); border:1px solid var(--amber); }
+.s-alarm   { background:var(--red-dim);   color:var(--red);   border:2px solid var(--red);   animation:blink 1s infinite; }
+.s-brief   { background:var(--blue-dim);  color:var(--blue);  border:1px solid var(--blue); }
+
+#sim-clock {
+  font-family: var(--mono);
+  font-size: 16px;
+  color: var(--text-bright);
+  letter-spacing: 2px;
+  flex-shrink: 0;
+}
+
+/* ── MAIN GRID ────────────────────────────────────── */
+#main {
+  display: grid;
+  grid-template-columns: 280px 1fr 340px;
+  grid-template-rows: 1fr;
+  height: calc(100vh - 48px);
+  overflow: hidden;
+}
+
+/* ── LEFT: ALARM PANEL ────────────────────────────── */
+#alarm-panel {
+  background: var(--bg2);
+  border-right: 2px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.panel-hdr {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--cond);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  background: var(--bg3);
+}
+
+.led {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--text-dim);
+  flex-shrink: 0;
+  transition: all .3s;
+}
+.led.g { background:var(--green); box-shadow:0 0 8px var(--green); }
+.led.a { background:var(--amber); box-shadow:0 0 8px var(--amber); }
+.led.r { background:var(--red);   box-shadow:0 0 8px var(--red);   animation:blink 1s infinite; }
+
+#alarm-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+#alarm-list::-webkit-scrollbar { width:4px; }
+#alarm-list::-webkit-scrollbar-thumb { background:var(--border-hi); }
+
+.alarm-row {
+  padding: 8px 10px;
+  border-left: 3px solid;
+  border-radius: 0 4px 4px 0;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.alarm-row.hi  {
+  border-color:var(--red);
+  background:rgba(255,78,64,.12);
+  color:#ff9080;
+  animation: alarmEntryHi 2.4s ease forwards;
+}
+.alarm-row.med {
+  border-color:var(--amber);
+  background:rgba(255,176,48,.10);
+  color:#ffc860;
+  animation: alarmEntryMed 2.2s ease forwards;
+}
+.alarm-row.lo  {
+  border-color:var(--blue);
+  background:rgba(74,174,240,.10);
+  color:#80c8f8;
+  animation: alarmEntryLo 2s ease forwards;
+}
+.alarm-row.inf {
+  border-color:var(--border-hi);
+  background:rgba(255,255,255,.04);
+  color:var(--text-dim);
+  animation: alarmEntryInf .4s ease forwards;
+}
+.alarm-row b   { display:block; font-weight:600; font-size:13px; color:var(--text-bright); }
+.alarm-row small { font-size:11px; color:var(--text-dim); }
+.alarm-time { float:right; opacity:.6; font-size:11px; }
+
+/* Situatie blok */
+#situation {
+  border-top: 2px solid var(--border);
+  padding: 12px 14px;
+  flex-shrink: 0;
+  background: var(--bg3);
+}
+#situation .lbl {
+  font-family: var(--cond);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--cyan);
+  margin-bottom: 6px;
+}
+#situation-text { font-size: 13px; line-height: 1.65; color: var(--text-bright); }
+
+/* ── FASE-TIMER ───────────────────────────────────── */
+#phase-timer {
+  display: none;
+  border-top: 1px solid var(--border);
+  padding: 10px 14px;
+  flex-shrink: 0;
+  background: var(--bg2);
+}
+#phase-timer.visible { display: block; }
+#phase-timer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 6px;
+}
+#phase-timer-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+}
+#phase-timer-name {
+  font-family: var(--cond);
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-bright);
+  letter-spacing: 1px;
+}
+#phase-timer-countdown {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-dim);
+  letter-spacing: 1px;
+  transition: color .5s;
+}
+#phase-timer-countdown.urgent { color: var(--amber); }
+#phase-timer-countdown.critical { color: var(--red); animation: pulse 1s infinite; }
+#phase-timer-bar-wrap {
+  height: 3px;
+  background: var(--bg3);
+  border-radius: 2px;
+  overflow: hidden;
+}
+#phase-timer-bar {
+  height: 100%;
+  width: 100%;
+  border-radius: 2px;
+  background: var(--cyan);
+  transition: width 1s linear, background-color .5s;
+  transform-origin: left;
+}
+
+/* ── CENTRE: STORYLINE + ZENDINVOER ──────────────── */
+#centre-panel {
+  display: flex;
+  flex-direction: column;
+  background: #111418;
+  overflow: hidden;
+  position: relative;
+  border-right: 2px solid var(--border);
+}
+
+#storyline-header {
+  background: var(--bg3);
+  border-bottom: 1px solid var(--border);
+  padding: 8px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+#storyline-header .lbl {
+  font-family: var(--cond);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text);
+}
+
+/* ── EXPAND KNOP ─────────────────────────────────── */
+#expand-btn {
+  display: none;
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 3px 10px;
+  border-radius: 3px;
+  border: 1px solid var(--border-hi);
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+  transition: all .15s;
+}
+#expand-btn:hover { border-color: var(--cyan); color: var(--cyan); }
+#expand-btn.visible { display: block; }
+
+
+#storyline-url-display {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── FASE-KNOPPEN ─────────────────────────────────── */
+#phase-controls {
+  display: none;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+#phase-controls.visible { display: flex; }
+.phase-btn {
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 3px 9px;
+  border-radius: 3px;
+  border: 1px solid var(--border-hi);
+  background: var(--bg);
+  color: var(--text-dim);
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  transition: all .15s;
+  white-space: nowrap;
+}
+.phase-btn:hover  { border-color: var(--cyan); color: var(--cyan); }
+.phase-btn.active { border-color: var(--cyan); color: var(--cyan); background: var(--cyan-dim); }
+
+/* Storyline iframe — neemt ~58% van de hoogte */
+#storyline-frame-wrap {
+  flex: 0 0 58%;
+  position: relative;
+  overflow: hidden;
+  border-bottom: 2px solid var(--border);
+  transition: none;
+}
+#storyline-frame-wrap.expanded {
+  position: fixed;
+  inset: 0;
+  z-index: 400;
+  flex: none;
+  border: none;
+}
+#expand-close-btn {
+  display: none;
+  position: fixed;
+  top: 10px;
+  right: 14px;
+  z-index: 401;
+  font-family: var(--mono);
+  font-size: 11px;
+  padding: 5px 14px;
+  border-radius: 3px;
+  border: 1px solid var(--border-hi);
+  background: var(--bg3);
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: all .15s;
+}
+#expand-close-btn:hover { border-color: var(--cyan); color: var(--cyan); }
+#expand-close-btn.visible { display: block; }
+
+/* Transparante laag over iframe om muisfocus te blokkeren na scenario-einde */
+#iframe-blocker {
+  display: none;
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  cursor: default;
+}
+#iframe-blocker.active { display: block; }
+
+#storyline-frame {
+  width: 100%; height: 100%;
+  border: none;
+  display: block;
+}
+
+#storyline-placeholder {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  background: var(--bg3);
+}
+#storyline-placeholder .ph-icon {
+  width: 72px; height: 54px;
+  border: 2px solid var(--border-hi);
+  border-radius: 5px;
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+}
+#storyline-placeholder .ph-icon::after {
+  content: '';
+  width: 22px; height: 22px;
+  border: 2px solid var(--text-dim);
+  border-radius: 50%;
+}
+#storyline-placeholder p {
+  font-family: var(--cond);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  text-align: center;
+}
+#storyline-placeholder small {
+  font-size: 12px;
+  color: var(--text-dim);
+  text-align: center;
+  max-width: 240px;
+  line-height: 1.6;
+}
+
+/* Zendgebied onderaan centre panel */
+#centre-input-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg2);
+}
+
+#centre-input-header {
+  padding: 10px 16px 8px;
+  border-bottom: 1px solid var(--border);
+  font-family: var(--cond);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  background: var(--bg3);
+}
+
+#centre-input-body {
+  flex: 1;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+/* Groot zendinvoerveld */
+#user-input-large {
+  width: 100%;
+  background: var(--bg3);
+  border: 1px solid var(--border-hi);
+  border-radius: 5px;
+  padding: 14px 16px;
+  color: var(--text-bright);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.6;
+  resize: none;
+  min-height: 80px;
+  max-height: 160px;
+  outline: none;
+  transition: border-color .2s;
+}
+#user-input-large:focus { border-color: var(--cyan); }
+#user-input-large::placeholder { color: var(--text-dim); }
+#user-input-large:disabled { opacity:.35; }
+
+#centre-send-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.centre-radio-lbl {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--cyan);
+  letter-spacing: 1px;
+  flex-shrink: 0;
+}
+
+#centre-send-btn {
+  background: var(--blue-dim);
+  border: 1px solid var(--blue);
+  color: #90c8f8;
+  padding: 12px 24px;
+  border-radius: 4px;
+  font-family: var(--cond);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all .15s;
+}
+#centre-send-btn:hover:not(:disabled) { background:var(--blue); color:#fff; }
+#centre-send-btn:disabled { opacity:.3; cursor:not-allowed; }
+
+/* Hint onder invoerveld */
+.input-hint {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  text-align: right;
+  opacity: .7;
+}
+
+/* ── RIGHT: RADIO PANEL — tabbladen ──────────────── */
+#radio-panel {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+/* Tabblad-header */
+#panel-tabs {
+  display: flex;
+  border-bottom: 2px solid var(--border);
+  flex-shrink: 0;
+  background: var(--bg2);
+}
+.ptab {
+  flex: 1;
+  padding: 11px 10px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  color: var(--text-dim);
+  font-family: var(--cond);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all .15s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+.ptab:hover:not(:disabled) { color: var(--text); }
+.ptab.active { color: var(--cyan); border-bottom-color: var(--cyan); }
+.ptab:disabled { opacity: .35; cursor: not-allowed; }
+.ptab-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--cyan); box-shadow: 0 0 5px var(--cyan);
+  display: none;
+}
+.ptab-dot.pulse { display: block; animation: pulse 1.5s infinite; }
+
+/* Tab inhoud */
+.tab-content { display: none; flex: 1; flex-direction: column; overflow: hidden; }
+.tab-content.active { display: flex; }
+#tab-content-radio { overflow: hidden; }
+
+#messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+#messages::-webkit-scrollbar { width:4px; }
+#messages::-webkit-scrollbar-thumb { background:var(--border-hi); }
+
+/* ── DEBRIEFING TAB ───────────────────────────────── */
+#debrief-export-bar {
+  display: flex; gap: 10px; padding: 14px 16px;
+  border-top: 1px solid var(--border);
+  background: var(--bg2);
+  margin-top: 8px;
+}
+.debrief-export-btn {
+  flex: 1; padding: 8px 12px;
+  background: var(--bg3); border: 1px solid var(--border-hi);
+  color: var(--text); border-radius: 4px;
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.5px;
+  cursor: pointer; transition: all .15s; text-transform: uppercase;
+}
+.debrief-export-btn:hover { border-color: var(--cyan); color: var(--cyan); }
+.debrief-close-btn {
+  width: 100%; padding: 10px 16px; margin-top: 2px;
+  background: transparent; border: 1px solid var(--border);
+  color: var(--text-dim); border-radius: 4px;
+  font-family: var(--mono); font-size: 11px; letter-spacing: 0.5px;
+  cursor: pointer; transition: all .15s; text-transform: uppercase;
+}
+.debrief-close-btn:hover { border-color: var(--red); color: var(--red); }
+
+/* ── SESSIE-AFSLUITING OVERLAY ─────────────────────────────── */
+#session-end-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.85); z-index: 999;
+  align-items: center; justify-content: center;
+}
+#session-end-overlay.visible { display: flex; }
+#session-end-box {
+  background: var(--bg2); border: 1px solid var(--border-hi);
+  border-radius: 8px; padding: 36px 40px; max-width: 420px; width: 90%;
+  text-align: center;
+}
+#session-end-box .end-icon { font-size: 32px; margin-bottom: 12px; }
+#session-end-box .end-title {
+  font-family: var(--cond); font-size: 20px; font-weight: 700;
+  color: var(--text-bright); margin-bottom: 8px;
+}
+#session-end-box .end-sub {
+  font-family: var(--mono); font-size: 12px; color: var(--text-dim);
+  margin-bottom: 28px; line-height: 1.6;
+}
+#session-end-box .end-btn-row { display: flex; gap: 10px; justify-content: center; }
+.end-btn-primary {
+  padding: 9px 24px; background: var(--bg3);
+  border: 1px solid var(--cyan); color: var(--cyan);
+  border-radius: 4px; font-family: var(--mono); font-size: 12px;
+  cursor: pointer; transition: all .15s; letter-spacing: 0.5px;
+}
+.end-btn-primary:hover { background: var(--cyan); color: var(--bg); }
+.end-btn-secondary {
+  padding: 9px 24px; background: transparent;
+  border: 1px solid var(--border); color: var(--text-dim);
+  border-radius: 4px; font-family: var(--mono); font-size: 12px;
+  cursor: pointer; transition: all .15s; letter-spacing: 0.5px;
+}
+.end-btn-secondary:hover { border-color: var(--text-dim); color: var(--text); }
+#tab-content-debrief { display: none; flex-direction: column; overflow: hidden; }
+#tab-content-debrief.active { display: flex; }
+#debrief-body { flex: 1; overflow-y: auto; min-height: 0; }
+#debrief-body::-webkit-scrollbar { width:4px; }
+#debrief-body::-webkit-scrollbar-thumb { background:var(--border-hi); }
+
+/* Laadstatus */
+#debrief-loading {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 16px; padding: 48px 24px; flex: 1;
+}
+.debrief-spinner {
+  width: 36px; height: 36px;
+  border: 3px solid var(--border); border-top-color: var(--cyan);
+  border-radius: 50%; animation: spin .8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.debrief-loading-txt { font-family:var(--mono); font-size:12px; color:var(--text-dim); letter-spacing:1px; }
+
+/* Debriefing header */
+#debrief-header {
+  padding: 14px 16px; background: var(--bg2);
+  border-bottom: 2px solid var(--border); flex-shrink: 0;
+}
+#debrief-title-row { display:flex; justify-content:space-between; margin-bottom:12px; }
+.debrief-lbl { font-family:var(--mono); font-size:10px; color:var(--text-dim); letter-spacing:1.5px; text-transform:uppercase; margin-bottom:3px; }
+#debrief-scenario-name { font-family:var(--cond); font-size:14px; font-weight:700; color:var(--text-bright); }
+#debrief-participant-name { font-family:var(--cond); font-size:14px; font-weight:700; color:var(--cyan); }
+
+#debrief-score-row { display:flex; align-items:center; gap:16px; }
+#debrief-score-wrap { display:flex; align-items:center; gap:10px; flex:1; }
+#debrief-score-num { font-family:var(--mono); font-size:30px; font-weight:700; color:var(--cyan); line-height:1; min-width:36px; }
+#debrief-score-bar-wrap { flex:1; height:6px; background:var(--bg3); border-radius:3px; overflow:hidden; }
+#debrief-score-bar { height:100%; width:0%; border-radius:3px; background:var(--cyan); transition:width 1s ease; }
+#debrief-score-label { font-family:var(--mono); font-size:11px; color:var(--text-dim); }
+#debrief-duration-wrap { text-align:right; flex-shrink:0; }
+#debrief-duration { font-family:var(--mono); font-size:15px; color:var(--text-bright); }
+
+/* Uitklapbare secties */
+.debrief-section { border-bottom:1px solid var(--border); flex-shrink:0; }
+.debrief-sec-hdr {
+  display:flex; align-items:center; gap:10px;
+  padding:12px 16px; cursor:pointer; background:var(--bg2);
+  transition:background .15s; user-select:none;
+}
+.debrief-sec-hdr:hover { background:var(--bg3); }
+.ds-icon { font-size:14px; color:var(--cyan); flex-shrink:0; width:18px; text-align:center; }
+.ds-title { font-family:var(--cond); font-size:13px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--text); flex:1; }
+.ds-chev { font-size:11px; color:var(--text-dim); transition:transform .2s; }
+.ds-chev.open { transform:rotate(90deg); }
+.debrief-sec-body { display:none; padding:14px 16px; background:var(--bg); }
+.debrief-sec-body.open { display:block; }
+
+/* Tijdlijn */
+#timeline-track { position:relative; padding:8px 0 8px 0; }
+.tl-event { display:flex; align-items:flex-start; gap:10px; margin-bottom:12px; }
+.tl-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; margin-top:4px; }
+.tl-dot.alarm-hi  { background:var(--red);   box-shadow:0 0 5px var(--red); }
+.tl-dot.alarm-med { background:var(--amber); box-shadow:0 0 5px var(--amber); }
+.tl-dot.alarm-lo  { background:var(--blue);  box-shadow:0 0 4px var(--blue); }
+.tl-dot.camera    { background:var(--green); box-shadow:0 0 4px var(--green); }
+.tl-dot.decision  { background:var(--cyan);  box-shadow:0 0 4px var(--cyan); }
+.tl-dot.milestone { background:var(--text-dim); }
+.tl-time { font-family:var(--mono); font-size:11px; color:var(--text-dim); flex-shrink:0; min-width:38px; margin-top:3px; }
+.tl-text { font-size:13px; color:var(--text); line-height:1.55; }
+.tl-text strong { color:var(--text-bright); }
+.tl-tag { display:inline-block; font-family:var(--mono); font-size:10px; padding:1px 6px; border-radius:3px; margin-right:4px; text-transform:uppercase; letter-spacing:.5px; }
+.tl-tag.alarm  { background:var(--red-dim);   color:var(--red); }
+.tl-tag.camera { background:var(--green-dim); color:var(--green); }
+.tl-tag.action { background:var(--blue-dim);  color:var(--blue); }
+
+/* Competentierasters */
+#competency-grid { display:flex; flex-direction:column; gap:12px; }
+.comp-row { display:flex; flex-direction:column; gap:4px; }
+.comp-label { display:flex; justify-content:space-between; align-items:center; }
+.comp-name { font-family:var(--cond); font-size:13px; font-weight:700; letter-spacing:.5px; color:var(--text); }
+.comp-score-txt { font-family:var(--mono); font-size:12px; color:var(--text-dim); }
+.comp-bar-wrap { height:5px; background:var(--bg3); border-radius:3px; overflow:hidden; }
+.comp-bar { height:100%; border-radius:3px; width:0%; transition:width 1.2s ease; }
+.comp-bar.high   { background:var(--green); }
+.comp-bar.medium { background:var(--amber); }
+.comp-bar.low    { background:var(--red); }
+.comp-feedback { font-size:12px; color:var(--text-dim); line-height:1.55; margin-top:2px; }
+
+/* Leerpunten */
+#learning-points { display:flex; flex-direction:column; gap:12px; }
+.learn-item { padding:12px 14px; border-radius:5px; border-left:3px solid; line-height:1.65; }
+.learn-item.strong  { background:var(--green-dim); border-color:var(--green); }
+.learn-item.improve { background:var(--amber-dim); border-color:var(--amber); }
+.learn-item.core    { background:var(--cyan-dim);  border-color:var(--cyan);  }
+.learn-item-tag { font-family:var(--mono); font-size:10px; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:5px; display:block; }
+.learn-item.strong  .learn-item-tag { color:var(--green); }
+.learn-item.improve .learn-item-tag { color:var(--amber); }
+.learn-item.core    .learn-item-tag { color:var(--cyan);  }
+.learn-item-text { font-size:13px; color:var(--text-bright); }
+
+.msg { display:flex; flex-direction:column; }
+.msg.sys   { align-self:center;      max-width:92%; }
+.msg.ai    { align-self:flex-start;  max-width:85%; }
+.msg.user  { align-self:flex-end;    max-width:85%; }
+.msg.alarm { align-self:flex-start;  max-width:92%; }
+
+.msg-meta {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  margin-bottom: 4px;
+  padding: 0 4px;
+  opacity: 0;
+  animation: msgEntryUser .3s ease .05s forwards;
+}
+.msg.user .msg-meta { text-align:right; }
+
+.msg-bub {
+  padding: 10px 14px;
+  border-radius: 5px;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.msg.ai .msg-bub {
+  background: var(--panel);
+  border: 1px solid var(--border-hi);
+  border-left: 3px solid var(--cyan);
+  color: var(--text-bright);
+  opacity: 0;
+  animation: msgEntryAi 2s ease forwards;
+}
+/* Instructeur — aparte styling buiten het operationele scenario */
+.msg.instructor .msg-bub {
+  background: var(--cyan-dim);
+  border: 1px solid rgba(32,216,255,.5);
+  border-left: 3px solid var(--cyan);
+  color: #c8f0ff;
+  opacity: 0;
+  animation: msgEntryAi 2s ease forwards;
+}
+.msg.instructor .radio-pfx {
+  color: var(--cyan);
+  letter-spacing: 1px;
+  font-weight: 600;
+}
+.msg.instructor .msg-meta { color: var(--cyan); opacity: .7; }
+.msg.user .msg-bub {
+  background: var(--blue-dim);
+  border: 1px solid var(--blue);
+  color: #c8e4ff;
+  opacity: 0;
+  animation: msgEntryUser .35s ease forwards;
+}
+.msg.sys .msg-bub {
+  background: transparent;
+  border: 1px solid var(--border-hi);
+  color: var(--text-dim);
+  font-family: var(--mono);
+  font-size: 12px;
+  text-align: center;
+  padding: 5px 16px;
+  border-radius: 20px;
+  opacity: 0;
+  animation: msgEntryUser .3s ease forwards;
+}
+.msg.alarm .msg-bub {
+  background: rgba(255,78,64,.12);
+  border: 1px solid var(--red);
+  color: #ff9888;
+  font-family: var(--mono);
+  font-size: 13px;
+  opacity: 0;
+  animation: msgEntryAlarm 2.2s ease forwards;
+}
+.radio-pfx {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--cyan);
+  display: block;
+  margin-bottom: 4px;
+  letter-spacing: 0.5px;
+}
+
+/* Typewriter cursor achter tekst tijdens typen */
+.tw-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  background: var(--cyan);
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  animation: cursor .6s step-end infinite;
+}
+.tw-cursor.done { display: none; }
+
+/* Typing indicator */
+#typing {
+  display: none;
+  margin: 0 16px 10px;
+  padding: 9px 14px;
+  background: var(--panel);
+  border: 1px solid var(--border-hi);
+  border-left: 3px solid var(--cyan);
+  border-radius: 4px;
+  gap: 6px;
+  align-items: center;
+  flex-shrink: 0;
+}
+#typing.on { display:flex; }
+.tdot {
+  width:6px; height:6px; border-radius:50%; background:var(--cyan);
+  animation: pulse 1.2s infinite;
+}
+.tdot:nth-child(2){animation-delay:.2s}
+.tdot:nth-child(3){animation-delay:.4s}
+
+
+/* ── INTRO OVERLAY ────────────────────────────────── */
+#intro {
+  position: fixed; inset:0;
+  background: var(--bg);
+  z-index: 500;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 22px;
+  padding: 40px 20px;
+}
+#intro.visible { display: flex; }
+.intro-logo {
+  font-family: var(--cond);
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: 5px;
+  color: var(--cyan);
+  text-transform: uppercase;
+}
+.intro-box {
+  background: var(--bg2);
+  border: 1px solid var(--border-hi);
+  border-top: 3px solid var(--cyan);
+  border-radius: 6px;
+  width: 100%;
+  max-width: 540px;
+  padding: 28px 32px;
+}
+.intro-box h2 {
+  font-family: var(--cond);
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--text-bright);
+  margin-bottom: 14px;
+}
+.intro-box p { font-size: 14px; line-height: 1.7; color: var(--text); margin-bottom: 12px; }
+.intro-field { margin: 12px 0; }
+.intro-field label {
+  display: block;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 6px;
+}
+.intro-field input {
+  width: 100%;
+  background: var(--bg3);
+  border: 1px solid var(--border-hi);
+  border-radius: 4px;
+  padding: 10px 14px;
+  color: var(--text-bright);
+  font-family: var(--mono);
+  font-size: 13px;
+  outline: none;
+  transition: border-color .2s;
+}
+.intro-field input:focus { border-color: var(--cyan); }
+.intro-field input.err   { border-color: var(--red); }
+
+#start-btn {
+  margin-top: 16px;
+  width: 100%;
+  background: var(--blue-dim);
+  border: 1px solid var(--blue);
+  color: #90c8f8;
+  padding: 13px;
+  border-radius: 4px;
+  font-family: var(--cond);
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all .15s;
+}
+#start-btn:hover { background:var(--blue); color:#fff; }
+
+/* ── BOOT SEQUENCE OVERLAY ────────────────────────── */
+#boot-overlay {
+  display: none;
+  position: fixed; inset: 0;
+  background: var(--bg);
+  z-index: 800;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+}
+#boot-overlay.active { display: flex; }
+
+#boot-logo {
+  font-family: var(--cond);
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: 6px;
+  color: var(--cyan);
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  opacity: 0;
+  transition: opacity .6s ease;
+}
+#boot-logo em { color: var(--text-dim); font-style: normal; font-weight: 400; }
+#boot-logo.visible { opacity: 1; }
+
+#boot-scenario-title {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-dim);
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  margin-bottom: 48px;
+  opacity: 0;
+  transition: opacity .5s ease;
+}
+#boot-scenario-title.visible { opacity: 1; }
+
+#boot-checklist {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 340px;
+  margin-bottom: 40px;
+}
+.boot-item {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  opacity: 0;
+  transform: translateX(-8px);
+  transition: opacity .35s ease, transform .35s ease;
+}
+.boot-item.visible {
+  opacity: 1;
+  transform: translateX(0);
+}
+.boot-item-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border-hi);
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  transition: all .3s ease;
+}
+.boot-item-icon.spin {
+  border-color: var(--cyan);
+  border-top-color: transparent;
+  animation: boot-spin .7s linear infinite;
+}
+.boot-item-icon.ok {
+  border-color: var(--green);
+  background: var(--green-dim);
+  color: var(--green);
+}
+@keyframes boot-spin {
+  to { transform: rotate(360deg); }
+}
+.boot-item-label {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-dim);
+  letter-spacing: 1px;
+  flex: 1;
+}
+.boot-item-label.active { color: var(--text); }
+.boot-item-status {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  letter-spacing: 1px;
+  min-width: 60px;
+  text-align: right;
+}
+.boot-item-status.ok   { color: var(--green); }
+.boot-item-status.live { color: var(--cyan); }
+
+#boot-activate-bar {
+  width: 340px;
+  height: 2px;
+  background: var(--bg3);
+  border-radius: 1px;
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity .3s ease;
+}
+#boot-activate-bar.visible { opacity: 1; }
+#boot-activate-fill {
+  height: 100%;
+  width: 0%;
+  background: var(--cyan);
+  border-radius: 1px;
+  transition: width 1.2s cubic-bezier(.4,0,.2,1);
+}
+
+#boot-go-label {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--cyan);
+  margin-top: 18px;
+  opacity: 0;
+  transition: opacity .4s ease;
+}
+#boot-go-label.visible { opacity: 1; }
+
+/* ── VERLOPEN OVERLAY ─────────────────────────────── */
+#expired-overlay {
+  display: none; position: fixed; inset: 0;
+  background: rgba(0,0,0,.92); z-index: 1000;
+  align-items: center; justify-content: center;
+}
+#expired-overlay.visible { display: flex; }
+#expired-box {
+  background: var(--bg2); border: 1px solid var(--red);
+  border-radius: 8px; padding: 40px 44px; max-width: 440px; width: 90%;
+  text-align: center;
+}
+#expired-box .exp-icon {
+  font-size: 36px; margin-bottom: 14px; color: var(--red);
+}
+#expired-box .exp-title {
+  font-family: var(--cond); font-size: 20px; font-weight: 700;
+  color: var(--text-bright); margin-bottom: 10px;
+}
+#expired-box .exp-date {
+  font-family: var(--mono); font-size: 13px;
+  color: var(--red); margin-bottom: 8px; letter-spacing: 1px;
+}
+#expired-box .exp-sub {
+  font-family: var(--mono); font-size: 12px;
+  color: var(--text-dim); line-height: 1.7; margin-bottom: 28px;
+}
+#expired-box .exp-btn {
+  padding: 10px 28px; background: transparent;
+  border: 1px solid var(--border-hi); color: var(--text-dim);
+  border-radius: 4px; font-family: var(--mono); font-size: 12px;
+  cursor: pointer; transition: all .15s; letter-spacing: 0.5px;
+}
+#expired-box .exp-btn:hover { border-color: var(--text); color: var(--text); }
+
+/* ── DEBRIEFING OVERLAY ───────────────────────────── */
+
+/* ── TAALKEUZE OVERLAY ───────────────────────────── */
+#lang-overlay {
+  position:fixed; inset:0; background:var(--bg);
+  display:none; flex-direction:column;
+  align-items:center; justify-content:center;
+  gap:32px; z-index:600;
+}
+#lang-overlay.visible { display: flex; }
+#lang-overlay .lang-logo {
+  font-family:var(--cond); font-size:26px; font-weight:700;
+  color:var(--cyan); letter-spacing:4px; text-transform:uppercase;
+}
+#lang-overlay .lang-logo em { color:var(--text-dim); font-style:normal; font-weight:500; }
+#lang-overlay .lang-sub { font-family:var(--mono); font-size:12px; color:var(--text-dim); letter-spacing:2px; text-transform:uppercase; margin-top:-20px; }
+.lang-btns { display:flex; gap:16px; }
+.lang-btn { padding:18px 40px; border-radius:6px; font-family:var(--cond); font-size:20px; font-weight:700; letter-spacing:3px; text-transform:uppercase; cursor:pointer; transition:all .2s; border:2px solid var(--border-hi); background:var(--bg2); color:var(--text); }
+.lang-btn:hover { border-color:var(--cyan); color:var(--cyan); background:var(--cyan-dim); }
+.lang-flag { font-size:28px; display:block; margin-bottom:6px; text-align:center; }
+#lang-switch {
+  font-family:var(--mono); font-size:11px;
+  background:transparent; border:1px solid var(--border-hi);
+  color:var(--text-dim); padding:4px 10px; border-radius:3px;
+  cursor:pointer; transition:all .15s; letter-spacing:1px;
+  flex-shrink:0; margin-left:auto;
+}
+#lang-switch:hover { border-color:var(--cyan); color:var(--cyan); }
+
+#pause-btn {
+  display: none;
+  font-family: var(--mono); font-size: 11px;
+  background: transparent; border: 1px solid var(--border-hi);
+  color: var(--text-dim); padding: 4px 12px; border-radius: 3px;
+  cursor: pointer; transition: all .15s; letter-spacing: 1px;
+  flex-shrink: 0;
+}
+#pause-btn.visible { display: block; }
+#pause-btn:hover   { border-color: var(--amber); color: var(--amber); }
+#pause-btn.paused  { border-color: var(--green); color: var(--green); background: var(--green-dim); }
+</style>
+</head>
+<body>
+
+
+<!-- VERLOPEN OVERLAY -->
+<div id="expired-overlay">
+  <div id="expired-box">
+    <div class="exp-icon">⊘</div>
+    <div class="exp-title" id="exp-title">Toegang verlopen</div>
+    <div class="exp-date" id="exp-date"></div>
+    <div class="exp-sub" id="exp-sub">
+      Dit configuratiebestand is niet meer geldig.<br>
+      Neem contact op met de trainer voor een bijgewerkt bestand.
+    </div>
+    <button class="exp-btn" onclick="document.getElementById('expired-overlay').classList.remove('visible')">
+      ← Terug
+    </button>
+  </div>
+</div>
+
+<!-- BOOT SEQUENCE OVERLAY -->
+<div id="boot-overlay">
+  <div id="boot-logo">OIP <em>·</em> Live Scenario</div>
+  <div id="boot-scenario-title" id="boot-scenario-title"></div>
+  <div id="boot-checklist">
+    <div class="boot-item" id="bitem-0">
+      <div class="boot-item-icon" id="bicon-0"></div>
+      <div class="boot-item-label" id="blabel-0"></div>
+      <div class="boot-item-status" id="bstatus-0"></div>
+    </div>
+    <div class="boot-item" id="bitem-1">
+      <div class="boot-item-icon" id="bicon-1"></div>
+      <div class="boot-item-label" id="blabel-1"></div>
+      <div class="boot-item-status" id="bstatus-1"></div>
+    </div>
+    <div class="boot-item" id="bitem-2">
+      <div class="boot-item-icon" id="bicon-2"></div>
+      <div class="boot-item-label" id="blabel-2"></div>
+      <div class="boot-item-status" id="bstatus-2"></div>
+    </div>
+    <div class="boot-item" id="bitem-3">
+      <div class="boot-item-icon" id="bicon-3"></div>
+      <div class="boot-item-label" id="blabel-3"></div>
+      <div class="boot-item-status" id="bstatus-3"></div>
+    </div>
+  </div>
+  <div id="boot-activate-bar"><div id="boot-activate-fill"></div></div>
+  <div id="boot-go-label" id="boot-go-label"></div>
+</div>
+
+<!-- TAALKEUZE OVERLAY -->
+<div id="lang-overlay" class="visible">
+  <div class="lang-logo">OIP <em>·</em> Live Scenario</div>
+  <div class="lang-sub">Select language · Kies taal</div>
+  <div class="lang-btns">
+    <button class="lang-btn" onclick="initLang('nl')">
+      <span class="lang-flag">🇳🇱</span>Nederlands
+    </button>
+    <button class="lang-btn" onclick="initLang('en')">
+      <span class="lang-flag">🇬🇧</span>English
+    </button>
+  </div>
+</div>
+
+<!-- ── INTRO ─────────────────────────────────────── -->
+<div id="intro">
+  <div class="intro-logo">OIP · Live Scenario</div>
+  <div class="intro-box">
+    <h2>Scenario starten</h2>
+    <p>Laad het scenario-configuratiebestand dat je van de trainer hebt ontvangen.</p>
+    <div class="intro-field">
+      <label>Scenario JSON (van de controller) *</label>
+      <div style="display:flex;gap:8px;align-items:center">
+        <input type="text" id="json-filename" placeholder="Nog geen bestand geladen..."
+          readonly style="flex:1;cursor:default;opacity:.7"/>
+        <button onclick="document.getElementById('json-file-input').click()"
+          style="background:var(--bg3);border:1px solid var(--border-hi);color:var(--text);
+                 padding:9px 14px;border-radius:4px;font-family:var(--cond);font-size:13px;
+                 font-weight:700;letter-spacing:1px;cursor:pointer;white-space:nowrap;
+                 transition:all .15s"
+          onmouseover="this.style.borderColor='var(--cyan)'"
+          onmouseout="this.style.borderColor='var(--border-hi)'">
+          Bladeren...
+        </button>
+        <input type="file" id="json-file-input" accept=".json"
+          style="display:none" onchange="loadConfigFile(this)"/>
+      </div>
+      <div id="json-status" style="font-family:var(--mono);font-size:11px;margin-top:5px;color:var(--text-dim)">
+        Selecteer een JSON-bestand van de OIP Live Scenario
+      </div>
+    </div>
+
+    <!-- API-sleutel: alleen zichtbaar als JSON geen sleutel bevat -->
+    <div class="intro-field" id="apikey-field" style="display:none">
+      <label>Anthropic API-sleutel *</label>
+      <input type="password" id="api-key-input" placeholder="sk-ant-api03-..." autocomplete="off"/>
+      <div style="font-family:var(--mono);font-size:11px;margin-top:5px;color:var(--text-dim)">
+        Geen API-sleutel in het configuratiebestand. Voer de sleutel handmatig in.
+      </div>
+    </div>
+    <div id="apikey-ok" style="display:none;font-family:var(--mono);font-size:11px;
+         color:var(--green);margin:8px 0 4px;padding:6px 10px;
+         background:var(--green-dim);border-radius:4px;border:1px solid var(--green)">
+      ✓ API-sleutel geladen uit configuratie
+    </div>
+
+    <button id="start-btn" onclick="startScenario()">Scenario starten →</button>
+  </div>
+</div>
+
+<!-- ── TOP BAR ───────────────────────────────────── -->
+<div id="topbar">
+  <div class="logo">OIP <em>·</em> Live Scenario</div>
+  <div class="topbar-sep"></div>
+  <div id="scenario-title">Biodiesel inslag T-204 — Pompstation Noord</div>
+  <div id="status-badge" class="s-normal">NORMAAL</div>
+  <div class="topbar-sep"></div>
+  <div id="participant-display">
+    <span class="pd-label">In Control:</span>
+    <span class="pd-name" id="participant-name-top"></span>
+  </div>
+  <div class="topbar-sep" id="participant-sep" style="display:none"></div>
+  <div id="sim-clock-wrap" style="display:flex;align-items:center;gap:6px;flex-shrink:0">
+    <span style="font-family:var(--mono);font-size:10px;color:var(--text-dim);letter-spacing:1px;text-transform:uppercase">Tijd</span>
+    <div id="sim-clock">--:--</div>
+  </div>
+  <button id="pause-btn" onclick="togglePause()">⏸ Pauze</button>
+  <div class="topbar-sep"></div>
+  <button id="lang-switch" onclick="showLangOverlay()">NL</button>
+</div>
+
+<!-- ── MAIN GRID ─────────────────────────────────── -->
+<div id="main">
+
+  <!-- LEFT: ALARM + CONTEXT + CAMERA LOG -->
+  <div id="alarm-panel">
+    <div class="panel-hdr">
+      <div class="led" id="alarm-led"></div>
+      DCS Alarmen
+    </div>
+    <div id="alarm-list"></div>
+
+    <div id="situation">
+      <div class="lbl">Situatie</div>
+      <div id="situation-text">Laden...</div>
+    </div>
+
+    <div id="phase-timer">
+      <div id="phase-timer-header">
+        <div>
+          <div id="phase-timer-label">Fase</div>
+          <div id="phase-timer-name"></div>
+        </div>
+        <div id="phase-timer-countdown"></div>
+      </div>
+      <div id="phase-timer-bar-wrap">
+        <div id="phase-timer-bar"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CENTRE: STORYLINE IFRAME + ZENDINVOER -->
+  <div id="centre-panel">
+    <div id="storyline-header">
+      <div class="lbl">Camerabewaking</div>
+      <div id="storyline-url-display">geen module geladen</div>
+      <div id="phase-controls"></div>
+      <button id="expand-btn" onclick="expandStoryline()" title="Vergroot weergave">⤢</button>
+    </div>
+
+    <!-- Deelnemer-banner — zichtbaar als naam bekend is -->
+    <div id="participant-banner">
+      <div class="pb-company-row" id="pb-company-row" style="display:none">
+        <span class="pb-company-name" id="pb-company-name"></span>
+        <span class="pb-company-tag" id="pb-company-tags"></span>
+      </div>
+      <div class="pb-name-row">
+        <span class="pb-label">In Control</span>
+        <span class="pb-sep"></span>
+        <span class="pb-name" id="participant-name-banner"></span>
+      </div>
+    </div>
+
+    <div id="storyline-frame-wrap">
+      <div id="iframe-blocker"></div>
+      <button id="expand-close-btn" onclick="collapseStoryline()">✕ &nbsp;Terug</button>
+      <div id="storyline-placeholder">
+        <div class="ph-icon"></div>
+        <p>Geen Storyline module</p>
+        <small>Voer een module-URL in bij het opstarten, of gebruik de testmodus.</small>
+      </div>
+      <iframe id="storyline-frame" style="display:none"
+        sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
+        allow="fullscreen; autoplay"
+        allowfullscreen></iframe>
+    </div>
+
+    <!-- Zendgebied onder de Storyline module -->
+    <div id="centre-input-area">
+      <div id="centre-input-header">
+        <div class="led g" id="send-led"></div>
+        Radiocommunicatie — Zend bericht
+      </div>
+      <div id="centre-input-body">
+        <textarea id="user-input-large"
+          placeholder="Typ je reactie als operator... (Enter om te zenden, Shift+Enter voor nieuwe regel)"
+          onkeydown="handleKeyCentre(event)"
+          oninput="autoResizeCentre(this)"
+          disabled></textarea>
+        <div id="centre-send-row">
+          <span class="centre-radio-lbl">▶ ZEND:</span>
+          <div style="flex:1"></div>
+          <span class="input-hint" id="input-hint">Enter om te zenden · Shift+Enter nieuwe regel</span>
+          <button id="centre-send-btn" onclick="sendMessage()" disabled>Zend →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: RADIO PANEL — tabbladen -->
+  <div id="radio-panel">
+
+    <!-- Tabblad-header -->
+    <div id="panel-tabs">
+      <button class="ptab active" id="tab-radio" onclick="switchTab('radio')">
+        <span class="ptab-dot" id="tab-radio-dot"></span>
+        Radio
+      </button>
+      <button class="ptab" id="tab-debrief" onclick="switchTab('debrief')" disabled>
+        Debriefing
+      </button>
+    </div>
+
+    <!-- Tab: Radio -->
+    <div id="tab-content-radio" class="tab-content active">
+      <div id="messages"></div>
+      <div id="typing">
+        <div class="tdot"></div><div class="tdot"></div><div class="tdot"></div>
+      </div>
+    </div>
+
+    <!-- Tab: Debriefing -->
+    <div id="tab-content-debrief" class="tab-content">
+
+      <!-- Laadstatus -->
+      <div id="debrief-loading">
+        <div class="debrief-spinner"></div>
+        <div class="debrief-loading-txt">Debriefing wordt opgesteld...</div>
+      </div>
+
+      <!-- Inhoud (gevuld na API-aanroep) -->
+      <div id="debrief-body" style="display:none">
+
+        <!-- Kop met naam en score -->
+        <div id="debrief-header">
+          <div id="debrief-title-row">
+            <div>
+              <div class="debrief-lbl">Scenario</div>
+              <div id="debrief-scenario-name"></div>
+            </div>
+            <div style="text-align:right">
+              <div class="debrief-lbl">Deelnemer</div>
+              <div id="debrief-participant-name"></div>
+            </div>
+          </div>
+          <div id="debrief-score-row">
+            <div id="debrief-score-wrap">
+              <div id="debrief-score-num">—</div>
+              <div id="debrief-score-bar-wrap">
+                <div id="debrief-score-bar"></div>
+              </div>
+              <div id="debrief-score-label">van 10</div>
+            </div>
+            <div id="debrief-duration-wrap">
+              <div class="debrief-lbl">Duur scenario</div>
+              <div id="debrief-duration"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Sectie 1: Tijdlijn -->
+        <div class="debrief-section" id="ds-timeline">
+          <div class="debrief-sec-hdr" onclick="toggleSection('timeline')">
+            <span class="ds-icon">⏱</span>
+            <span class="ds-title">Tijdlijn</span>
+            <span class="ds-chev" id="chev-timeline">▶</span>
+          </div>
+          <div class="debrief-sec-body" id="body-timeline">
+            <div id="timeline-track"></div>
+          </div>
+        </div>
+
+        <!-- Sectie 2: Gedragsanalyse -->
+        <div class="debrief-section" id="ds-analysis">
+          <div class="debrief-sec-hdr" onclick="toggleSection('analysis')">
+            <span class="ds-icon">◈</span>
+            <span class="ds-title">Gedragsanalyse</span>
+            <span class="ds-chev" id="chev-analysis">▶</span>
+          </div>
+          <div class="debrief-sec-body" id="body-analysis">
+            <div id="competency-grid"></div>
+          </div>
+        </div>
+
+        <!-- Sectie 3: Leerpunten -->
+        <div class="debrief-section" id="ds-learning">
+          <div class="debrief-sec-hdr" onclick="toggleSection('learning')">
+            <span class="ds-icon">→</span>
+            <span class="ds-title">Leerpunten</span>
+            <span class="ds-chev" id="chev-learning">▶</span>
+          </div>
+          <div class="debrief-sec-body" id="body-learning">
+            <div id="learning-points"></div>
+          </div>
+        </div>
+
+        <!-- Export-balk: zie buiten debrief-body hieronder -->
+
+      </div><!-- #debrief-body -->
+
+      <!-- Export-balk: altijd zichtbaar onderaan, scrollt niet mee -->
+      <div id="debrief-export-bar" style="display:none">
+        <button class="debrief-export-btn" onclick="exportDebriefPDF()">
+          <span>⬇</span> PDF-rapport
+        </button>
+        <button class="debrief-export-btn" onclick="exportDebriefExcel()">
+          <span>⬇</span> Excel-rij
+        </button>
+      </div>
+
+      <!-- Sessie beëindigen -->
+      <div id="debrief-close-bar" style="display:none; padding: 0 16px 16px;">
+        <button class="debrief-close-btn" onclick="confirmEndSession()">
+          ✕ &nbsp;Sessie beëindigen
+        </button>
+      </div>
+
+    </div><!-- #tab-content-debrief -->
+
+  </div><!-- #radio-panel -->
+
+</div><!-- #main -->
+
+<!-- Sessie-afsluiting overlay -->
+<div id="session-end-overlay">
+  <div id="session-end-box">
+    <div class="end-icon">✓</div>
+    <div class="end-title" id="end-title">Training afgerond</div>
+    <div class="end-sub" id="end-sub">
+      De debriefing is voltooid en de rapporten zijn beschikbaar.<br>
+      Sluit dit venster of start een nieuwe sessie.
+    </div>
+    <div class="end-btn-row">
+      <button class="end-btn-primary" onclick="location.reload()">↺ Nieuwe sessie</button>
+      <button class="end-btn-secondary" onclick="closeEndOverlay()">Terug naar debriefing</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════
+let apiKey = '';
+let conversationHistory = [];
+let scenarioPhase = 'normal';
+let messageCount   = 0;
+let alarmsFired    = [];
+let clockInterval  = null;
+let simStartMs     = 0;   // Tijdstip van scenario-start (Date.now())
+let scenarioConfig = null;  // Gevuld vanuit de geladen JSON
+let pendingDebrief  = false; // Wacht op laatste antwoord deelnemer voor debriefing
+let lastDebriefData = null;  // Bewaard voor export
+let lang = 'nl';               // Taalinstelling
+let firstResponseReceived = false; // Openingsbericht verwerkt — fase-tokens daarna toegestaan
+let phaseTimers = []; // Timeouts voor automatische fase-overgangen
+let isPaused    = false;
+let pausedAt    = 0;       // simStartMs-equivalent bij pauze
+let phaseTimerSchedule = []; // [{delay, fn}] — herplanbaar bij resume
+
+// Camera-definitie — dynamisch opgebouwd vanuit scenarioConfig,
+// of fallback naar hardcoded demo-waarden als geen JSON is geladen
+
+// ═══════════════════════════════════════════════════════════════
+// SYSTEM PROMPT
+// ═══════════════════════════════════════════════════════════════
+function buildSystemPrompt() {
+  const sc = scenarioConfig?.aiScenario;
+
+  // ── ROUTE A: JSON geladen met systemPromptExtra ────────────────
+  // De controller heeft al alles samengesteld: rollen, fasen, instructies.
+  // Gebruik die direct als basis en voeg alleen de live camera-context toe.
+  if (sc?.systemPromptExtra) {
+    return `Je bent de AI-kern van een controlekamer-training voor tankterminalbeheer.
+Je speelt ALLE rollen die hieronder zijn gedefinieerd tegelijk.
+
+${lang==='en' ? 'IMPORTANT: Communicate EXCLUSIVELY in English. All radio messages, instructor lines and DCS alerts in English.' : 'BELANGRIJK: Communiceer UITSLUITEND in het Nederlands. Alle radio-communicatie, instructeur-berichten en DCS-meldingen in het Nederlands.'}
+
+${sc.systemPromptExtra}
+
+════════════════════════════════════
+LIVE CAMERA STATUS
+════════════════════════════════════
+
+FORMAT — gebruik per beurt wat relevant is:
+INSTRUCTEUR: [begeleidingstekst, alleen als nodig]
+${buildRoleFormatLines(sc)}
+[DCS-ALARM]: TAG | OMSCHRIJVING | PRIORITEIT: HOOG/MED/LAAG
+
+BELANGRIJK: Stuur per beurt maximaal één Instructeur-regel + één of twee radio-regels. Wacht daarna altijd op de reactie van de deelnemer. Eindig het scenario pas na een reflectiegesprek met de deelnemer — nooit abrupt.`;
+  }
+
+  // ── ROUTE B: Geen JSON — fallback demo-template ────────────────
+  const diff = 3;
+  return `Je bent de AI-kern van een controlekamer-training voor tankterminalbeheer.
+Je speelt ALLE onderstaande rollen tegelijk — inclusief de INSTRUCTEUR.
+
+${lang==='en' ? 'IMPORTANT: Communicate EXCLUSIVELY in English.' : 'BELANGRIJK: Communiceer UITSLUITEND in het Nederlands.'}
+
+════════════════════════════════════
+SYSTEEMROL: INSTRUCTEUR
+════════════════════════════════════
+De Instructeur staat BUITEN het operationele scenario. Hij is de stem van de training.
+Taken:
+- Bewaakt fase-overgangen en geeft het sein voor de volgende fase
+- Geeft bij moeilijkheidsgraad LAAG subtiele hints als deelnemer vastloopt
+- Stelt open begeleidingsvragen zonder de oplossing weg te geven
+- Sluit het scenario NIET abrupt af. Laat de Instructeur eerst een open reflectievraag stellen aan de deelnemer — over hoe hij de situatie heeft ervaren, welke beslissing hij achteraf anders zou nemen, of wat hij als eerste signaal heeft herkend. Wacht op het antwoord. Sluit daarna pas af met [SCENARIO-EINDE] op een aparte regel.
+- Verschijnt NOOIT als onderdeel van de radiocommunicatie
+
+════════════════════════════════════
+OPERATIONELE ROLLEN (demo)
+════════════════════════════════════
+- DISPATCH: centrale dispatcher. Beknopt, professioneel, radiojargon.
+- JAN: veldoperator. Praktisch, soms bezorgd, geeft observaties door.
+- [DCS-ALARM]: automatische systeemberichten
+
+════════════════════════════════════
+SCENARIO (demo)
+════════════════════════════════════
+Tank T-204 ontvangt biodiesel. Subtiele afwijkingen leiden tot escalatie.
+Fase 1: Oriëntatie · Fase 2: Eerste signalen · Fase 3: Escalatie · Fase 4: Afhandeling
+Moeilijkheidsgraad: MIDDEL
+Na fase 4: eindig NIET abrupt. Laat de Instructeur eerst de deelnemer aanspreken met een open reflectievraag, bijvoorbeeld over hoe hij de situatie heeft ervaren of welke beslissing hij achteraf anders zou nemen. Wacht op het antwoord van de deelnemer. Sluit daarna pas af met [SCENARIO-EINDE] op een aparte regel.
+
+════════════════════════════════════
+SPELREGELS
+════════════════════════════════════
+- Altijd in character, nooit als AI of assistent
+- Stuur per beurt MAXIMAAL: één Instructeur-regel (indien nodig) + één of twee operationele radio-regels + één DCS-alarm (indien van toepassing)
+- Wacht na elk bericht op de reactie van de deelnemer — stuur nooit meerdere beurten achter elkaar
+- Vertakken op basis van beslissingen van de deelnemer
+- Camera-log actief gebruiken: als kritieke camera niet bekeken is, escaleer zonder waarschuwing
+- DCS-alarm format: [DCS-ALARM] TAG | OMSCHRIJVING | PRIORITEIT: HOOG/MED/LAAG
+
+FORMAT:
+INSTRUCTEUR: [begeleidingstekst]
+DISPATCH: [radiotekst]
+JAN: [radiotekst]
+[DCS-ALARM]: TAG | OMSCHRIJVING | PRIORITEIT: HOOG/MED/LAAG
+`;
+}
+
+// Bouw FORMAT-regels op basis van rolnamen uit config
+function buildRoleFormatLines(sc) {
+  const roles = sc?.roles || [];
+  if (!roles.length) return 'DISPATCH: [radiotekst]\nJAN: [radiotekst]';
+  return roles
+    .filter(r => r.name)
+    .map(r => `${r.name.toUpperCase()}: [radiotekst]`)
+    .join('\n');
+}
+
+
+// ═══════════════════════════════════════════════════════════════
+// TIMER — telt op vanaf scenario-start
+// ═══════════════════════════════════════════════════════════════
+function startClock() {
+  simStartMs = Date.now();
+  clockInterval = setInterval(() => {
+    document.getElementById('sim-clock').textContent = getElapsedStr();
+  }, 1000);
+  document.getElementById('sim-clock').textContent = '00:00';
+}
+
+let phaseTimerInterval = null; // Interval voor de visuele countdown
+
+function startPhaseTimers() {
+  clearPhaseTimers();
+  phaseTimerSchedule = [];
+
+  const phases = scenarioConfig?.aiScenario?.phases || [];
+  if (!phases.length) return;
+
+  startPhaseTimerDisplay(0);
+
+  let cumulative = 0;
+  phases.forEach((phase, i) => {
+    cumulative += (phase.durationHint || 120);
+    const nextPhaseNum = i + 2;
+
+    if (nextPhaseNum <= phases.length) {
+      const delay = cumulative * 1000;
+      const fn = () => {
+        if (currentPhaseIndex < i + 1) {
+          firstResponseReceived = true;
+          handlePhaseTransition(nextPhaseNum);
+        }
+      };
+      phaseTimerSchedule.push({ delay, fn });
+      phaseTimers.push(setTimeout(fn, delay));
+    } else {
+      const endDelay = cumulative * 1000;
+      const fn = () => { if (clockInterval) forceScenarioEnd(); };
+      phaseTimerSchedule.push({ delay: endDelay, fn });
+      phaseTimers.push(setTimeout(fn, endDelay));
+    }
+  });
+}
+
+function startPhaseTimerDisplay(phaseIdx) {
+  if (phaseTimerInterval) { clearInterval(phaseTimerInterval); phaseTimerInterval = null; }
+
+  const phases = scenarioConfig?.aiScenario?.phases || [];
+  const phase  = phases[phaseIdx];
+  if (!phase) { hidePhaseTimer(); return; }
+
+  const duration = phase.durationHint || 120;
+  const startMs  = Date.now();
+  const isEN     = lang === 'en';
+
+  const timerEl  = document.getElementById('phase-timer');
+  const labelEl  = document.getElementById('phase-timer-label');
+  const nameEl   = document.getElementById('phase-timer-name');
+  const countEl  = document.getElementById('phase-timer-countdown');
+  const barEl    = document.getElementById('phase-timer-bar');
+  if (!timerEl) return;
+
+  labelEl.textContent = isEN
+    ? `Phase ${phaseIdx + 1} of ${phases.length}`
+    : `Fase ${phaseIdx + 1} van ${phases.length}`;
+  nameEl.textContent = phase.label || (isEN ? `Phase ${phaseIdx + 1}` : `Fase ${phaseIdx + 1}`);
+  timerEl.classList.add('visible');
+  barEl.style.transition = 'none';
+  barEl.style.width = '100%';
+  barEl.style.backgroundColor = 'var(--cyan)';
+
+  function tick() {
+    const elapsed   = (Date.now() - startMs) / 1000;
+    const remaining = Math.max(0, duration - elapsed);
+    const pct       = (remaining / duration) * 100;
+
+    barEl.style.transition = 'width 1s linear, background-color .5s';
+    barEl.style.width = pct + '%';
+
+    if (remaining <= 30) {
+      barEl.style.backgroundColor = 'var(--red)';
+      countEl.className = 'critical';
+    } else if (remaining <= 60) {
+      barEl.style.backgroundColor = 'var(--amber)';
+      countEl.className = 'urgent';
+    } else {
+      barEl.style.backgroundColor = 'var(--cyan)';
+      countEl.className = '';
+    }
+
+    const m = Math.floor(remaining / 60);
+    const s = Math.floor(remaining % 60);
+    countEl.textContent = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+  }
+
+  tick();
+  phaseTimerInterval = setInterval(tick, 1000);
+}
+
+function hidePhaseTimer() {
+  const el = document.getElementById('phase-timer');
+  if (el) el.classList.remove('visible');
+  if (phaseTimerInterval) { clearInterval(phaseTimerInterval); phaseTimerInterval = null; }
+}
+
+function forceScenarioEnd() {
+  const isEN = lang === 'en';
+
+  setStatus('brief');
+  clearInterval(clockInterval);
+  clockInterval = null;
+  clearPhaseTimers();
+  hidePhaseTimer();
+  blockIframe(true);
+  document.getElementById('pause-btn')?.classList.remove('visible');
+
+  // Vraag Claude om een reflectievraag te stellen — zelfde pad als bij [SCENARIO-EINDE]
+  const reflectionPrompt = isEN
+    ? `The scenario time has elapsed. The scenario is now ending. As Instructor, ask the participant one open reflection question about how they experienced the situation or which decision they would make differently in hindsight. Wait for their answer. Do NOT send [SCENARIO-EINDE] in this message.`
+    : `De scenariotijd is verstreken. Het scenario wordt nu afgesloten. Stel als Instructeur de deelnemer één open reflectievraag over hoe hij de situatie heeft ervaren of welke beslissing hij achteraf anders zou nemen. Wacht op het antwoord. Stuur GEEN [SCENARIO-EINDE] in dit bericht.`;
+
+  // Na Claude's reflectievraag staat invoer open via pendingDebrief
+  waitForQueue(() => {
+    pendingDebrief = true;
+    callClaude(reflectionPrompt, false);
+  });
+}
+
+function blockIframe(block) {
+  const el = document.getElementById('iframe-blocker');
+  if (el) el.classList.toggle('active', block);
+}
+
+function expandStoryline() {
+  const wrap     = document.getElementById('storyline-frame-wrap');
+  const closeBtn = document.getElementById('expand-close-btn');
+  const expandBtn = document.getElementById('expand-btn');
+  if (!wrap) return;
+  wrap.classList.add('expanded');
+  if (closeBtn)  closeBtn.classList.add('visible');
+  if (expandBtn) expandBtn.classList.remove('visible');
+}
+
+function collapseStoryline() {
+  const wrap     = document.getElementById('storyline-frame-wrap');
+  const closeBtn = document.getElementById('expand-close-btn');
+  const expandBtn = document.getElementById('expand-btn');
+  if (!wrap) return;
+  wrap.classList.remove('expanded');
+  if (closeBtn)  closeBtn.classList.remove('visible');
+  if (expandBtn) expandBtn.classList.add('visible');
+}
+
+function clearPhaseTimers() {
+  phaseTimers.forEach(t => clearTimeout(t));
+  phaseTimers = [];
+}
+
+function togglePause() {
+  if (isPaused) resumeScenario(); else pauseScenario();
+}
+
+function pauseScenario() {
+  if (isPaused || !clockInterval) return;
+  isPaused = true;
+  pausedAt = Date.now();
+
+  // Klok bevriezen
+  clearInterval(clockInterval);
+  clockInterval = null;
+
+  // Fase-timers bevriezen — resterende tijd bewaren
+  clearPhaseTimers();
+  if (phaseTimerInterval) { clearInterval(phaseTimerInterval); phaseTimerInterval = null; }
+
+  // UI updaten
+  const btn = document.getElementById('pause-btn');
+  const isEN = lang === 'en';
+  if (btn) {
+    btn.textContent = isEN ? '▶ Resume' : '▶ Hervatten';
+    btn.classList.add('paused');
+  }
+  setInput(false);
+  addMsg('sys', null, lang === 'en' ? '── Scenario paused ──' : '── Scenario gepauzeerd ──');
+}
+
+function resumeScenario() {
+  if (!isPaused) return;
+  const pauseDuration = Date.now() - pausedAt;
+  isPaused = false;
+
+  // Klok hervatten — simStartMs verschuiven met de pauzetijd
+  simStartMs += pauseDuration;
+  clockInterval = setInterval(() => {
+    document.getElementById('sim-clock').textContent = getElapsedStr();
+  }, 1000);
+
+  // Fase-timers herplannen met gecorrigeerde resterende tijd
+  const elapsed = (Date.now() - simStartMs);
+  phaseTimers = phaseTimerSchedule
+    .map(({ delay, fn }) => {
+      const remaining = delay - elapsed;
+      if (remaining > 0) return setTimeout(fn, remaining);
+      return null;
+    })
+    .filter(Boolean);
+
+  // Visuele fase-timer hervatten
+  startPhaseTimerDisplay(currentPhaseIndex >= 0 ? currentPhaseIndex : 0);
+
+  // UI herstellen
+  const btn = document.getElementById('pause-btn');
+  const isEN = lang === 'en';
+  if (btn) {
+    btn.textContent = isEN ? '⏸ Pause' : '⏸ Pauze';
+    btn.classList.remove('paused');
+  }
+  setInput(true);
+  addMsg('sys', null, lang === 'en' ? '── Scenario resumed ──' : '── Scenario hervat ──');
+}
+
+// Geeft verstreken tijd als MM:SS
+function getElapsedStr() {
+  const elapsed = Math.floor((Date.now() - simStartMs) / 1000);
+  const m = Math.floor(elapsed / 60);
+  const s = elapsed % 60;
+  return String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+}
+
+// Tijdstempel voor meldingen en berichten — zelfde formaat
+function getSimTimeStr() {
+  return getElapsedStr();
+}
+
+function getSimElapsed() {
+  return Math.floor((Date.now() - simStartMs) / 1000);
+}
+
+
+
+// ═══════════════════════════════════════════════════════════════
+// CAMERA LOG
+// ═══════════════════════════════════════════════════════════════
+
+function renderPhaseControls() {
+  const sc = scenarioConfig?.aiScenario;
+  const phases = sc?.phases || [];
+  const cameras = sc?.cameras || [];
+  const ctrl = document.getElementById('phase-controls');
+  if (!ctrl) return;
+
+  // Alleen tonen als er fase-states zijn geconfigureerd
+  const hasCamStates = cameras.some(cam =>
+    phases.some(p => cam.phaseStates?.[p.id])
+  );
+  if (!hasCamStates || phases.length < 2) { ctrl.classList.remove('visible'); return; }
+
+  ctrl.innerHTML = phases.map((p, i) =>
+    `<button class="phase-btn${i === 0 ? ' active' : ''}" id="phasebtn-${i}"
+      onclick="triggerPhaseManual(${i+1})"
+      title="${p.label||'Fase '+(i+1)}">
+      F${i+1}
+    </button>`
+  ).join('');
+  ctrl.classList.add('visible');
+}
+
+function triggerPhaseManual(phaseNum) {
+  firstResponseReceived = true; // Trainer handelt bewust — guards overslaan
+  handlePhaseTransition(phaseNum);
+  console.log(`[OIP] Fase ${phaseNum} handmatig geactiveerd`);
+}
+
+
+
+// ═══════════════════════════════════════════════════════════════
+// I18N — Meertalige UI
+// ═══════════════════════════════════════════════════════════════
+const UI = {
+  nl: {
+    'intro.title':      'Scenario starten',
+    'intro.desc':       'Laad het scenario-configuratiebestand dat je van de trainer hebt ontvangen.',
+    'intro.json_label': 'Scenario JSON (van de controller) *',
+    'intro.browse':     'Bladeren...',
+    'intro.json_hint':  'Selecteer een JSON-bestand van de OIP Live Scenario Controller',
+    'intro.key_label':  'Anthropic API-sleutel *',
+    'intro.key_hint':   'Geen API-sleutel in het configuratiebestand. Voer de sleutel handmatig in.',
+    'intro.key_ok':     '✓ API-sleutel geladen uit configuratie',
+    'intro.start':      'Scenario starten →',
+    'status.normal':    'NORMAAL',
+    'status.alert':     'VERHOOGD',
+    'status.alarm':     'ALARM',
+    'status.brief':     'DEBRIEFING',
+    'panel.alarm':      'Alarmen',
+    'panel.situation':  'SITUATIE',
+    'panel.cameras':    'CAMERA LOG',
+    'cam.header':       'Camerabewaking',
+    'cam.no_module':    'geen module geladen',
+    'cam.not_connected':'NIET VERBONDEN',
+    'cam.no_storyline': 'Geen Storyline module',
+    'cam.no_sl_hint':   'Voer een module-URL in bij het opstarten, of gebruik de testmodus.',
+    'send.header':      'Radiocommunicatie — Zend bericht',
+    'send.placeholder': 'Typ je reactie als operator... (Enter om te zenden, Shift+Enter voor nieuwe regel)',
+    'send.hint':        'Enter om te zenden · Shift+Enter nieuwe regel',
+    'send.btn':         'Zend →',
+    'radio.header':     'Radio — Communicatielogboek',
+    'tab.radio':        'Radio',
+    'tab.debrief':      'Debriefing',
+    'debrief.loading':  'Debriefing wordt opgesteld...',
+    'debrief.scenario': 'Scenario',
+    'debrief.participant':'Deelnemer',
+    'debrief.score':    'van 10',
+    'debrief.duration': 'Duur scenario',
+    'debrief.timeline': 'Tijdlijn',
+    'debrief.analysis': 'Gedragsanalyse',
+    'debrief.learning': 'Leerpunten',
+    'timer.label':      'Tijd',
+    'in_control':       'In Control',
+  },
+  en: {
+    'intro.title':      'Start scenario',
+    'intro.desc':       'Load the scenario configuration file you received from the trainer.',
+    'intro.json_label': 'Scenario JSON (from controller) *',
+    'intro.browse':     'Browse...',
+    'intro.json_hint':  'Select a JSON file from the OIP Live Scenario Controller',
+    'intro.key_label':  'Anthropic API key *',
+    'intro.key_hint':   'No API key found in the configuration file. Enter the key manually.',
+    'intro.key_ok':     '✓ API key loaded from configuration',
+    'intro.start':      'Start scenario →',
+    'status.normal':    'NORMAL',
+    'status.alert':     'ELEVATED',
+    'status.alarm':     'ALARM',
+    'status.brief':     'DEBRIEF',
+    'panel.alarm':      'Alarms',
+    'panel.situation':  'SITUATION',
+    'panel.cameras':    'CAMERA LOG',
+    'cam.header':       'Camera monitoring',
+    'cam.no_module':    'no module loaded',
+    'cam.not_connected':'NOT CONNECTED',
+    'cam.no_storyline': 'No Storyline module',
+    'cam.no_sl_hint':   'Enter a module URL at startup, or use test mode.',
+    'send.header':      'Radio communication — Send message',
+    'send.placeholder': 'Type your response as operator... (Enter to send, Shift+Enter for new line)',
+    'send.hint':        'Enter to send · Shift+Enter new line',
+    'send.btn':         'Send →',
+    'radio.header':     'Radio — Communication log',
+    'tab.radio':        'Radio',
+    'tab.debrief':      'Debrief',
+    'debrief.loading':  'Preparing debrief...',
+    'debrief.scenario': 'Scenario',
+    'debrief.participant':'Participant',
+    'debrief.score':    'out of 10',
+    'debrief.duration': 'Scenario duration',
+    'debrief.timeline': 'Timeline',
+    'debrief.analysis': 'Behaviour analysis',
+    'debrief.learning': 'Learning points',
+    'timer.label':      'Time',
+    'in_control':       'In Control',
+  }
+};
+
+function ui(key) { return UI[lang]?.[key] || UI['nl'][key] || key; }
+
+function initLang(l) {
+  lang = l;
+  localStorage.setItem('oip_lang', l);
+  document.getElementById('lang-overlay').classList.remove('visible');
+  document.getElementById('intro').classList.add('visible');
+  const sw = document.getElementById('lang-switch');
+  if (sw) sw.textContent = l.toUpperCase();
+  applyUILang();
+}
+
+function showLangOverlay() {
+  // Markeer de actieve taal visueel
+  document.querySelectorAll('.lang-btn').forEach(btn => {
+    const isActive = (lang === 'nl' && btn.textContent.includes('Nederlands'))
+                  || (lang === 'en' && btn.textContent.includes('English'));
+    btn.style.borderColor = isActive ? 'var(--cyan)' : '';
+    btn.style.color       = isActive ? 'var(--cyan)' : '';
+    btn.style.background  = isActive ? 'var(--cyan-dim)' : '';
+  });
+  document.getElementById('lang-overlay').classList.add('visible');
+}
+
+function applyUILang() {
+  const introBox = document.querySelector('.intro-box h2');
+  const introP   = document.querySelector('.intro-box > p');
+  if (introBox) introBox.textContent = ui('intro.title');
+  if (introP)   introP.textContent   = ui('intro.desc');
+
+  const introLabels = document.querySelectorAll('.intro-field label');
+  if (introLabels[0]) introLabels[0].textContent = ui('intro.json_label');
+  const browseBtn = document.querySelector('.intro-box button[onclick*="json-file-input"]');
+  if (browseBtn) browseBtn.textContent = ui('intro.browse');
+  const jsonStatus = document.getElementById('json-status');
+  if (jsonStatus && !jsonStatus.textContent.startsWith('✓') && !jsonStatus.textContent.startsWith('✕')) {
+    jsonStatus.textContent = ui('intro.json_hint');
+  }
+  const apikeyHint = document.querySelector('#apikey-field div');
+  if (apikeyHint) apikeyHint.textContent = ui('intro.key_hint');
+  const apikeyOk = document.getElementById('apikey-ok');
+  if (apikeyOk) apikeyOk.textContent = ui('intro.key_ok');
+  const startBtn = document.getElementById('start-btn');
+  if (startBtn) startBtn.textContent = ui('intro.start');
+
+  const timerLbl = document.querySelector('#sim-clock-wrap span');
+  if (timerLbl) timerLbl.textContent = ui('timer.label');
+
+  const camLbl = document.querySelector('#storyline-header .lbl');
+  if (camLbl) camLbl.textContent = ui('cam.header');
+  const slDisp = document.getElementById('storyline-url-display');
+  if (slDisp && (slDisp.textContent === 'geen module geladen' || slDisp.textContent === 'no module loaded')) {
+    slDisp.textContent = ui('cam.no_module');
+  }
+
+  const sendHdr = document.getElementById('centre-input-header');
+  if (sendHdr) {
+    const led = sendHdr.querySelector('.led');
+    sendHdr.innerHTML = '';
+    if (led) sendHdr.appendChild(led);
+    sendHdr.insertAdjacentText('beforeend', ' ' + ui('send.header'));
+  }
+
+  const ta = document.getElementById('user-input-large');
+  if (ta) ta.placeholder = ui('send.placeholder');
+  const sendBtn = document.getElementById('centre-send-btn');
+  if (sendBtn) sendBtn.textContent = ui('send.btn');
+  const hint = document.getElementById('input-hint');
+  if (hint) hint.textContent = ui('send.hint');
+
+  const tabRadio = document.getElementById('tab-radio');
+  if (tabRadio) {
+    const dot = tabRadio.querySelector('.ptab-dot');
+    tabRadio.textContent = ui('tab.radio');
+    if (dot) tabRadio.prepend(dot);
+  }
+  const tabDebrief = document.getElementById('tab-debrief');
+  if (tabDebrief) {
+    const dot = tabDebrief.querySelector('.ptab-dot');
+    tabDebrief.textContent = ui('tab.debrief');
+    if (dot) tabDebrief.prepend(dot);
+  }
+
+  const loadTxt = document.querySelector('.debrief-loading-txt');
+  if (loadTxt) loadTxt.textContent = ui('debrief.loading');
+  const scoreLbl = document.getElementById('debrief-score-label');
+  if (scoreLbl) scoreLbl.textContent = ui('debrief.score');
+
+  const secTitles = document.querySelectorAll('.ds-title');
+  const secKeys = ['debrief.timeline','debrief.analysis','debrief.learning'];
+  secTitles.forEach((el, i) => { if (secKeys[i]) el.textContent = ui(secKeys[i]); });
+
+  const phP = document.querySelector('#storyline-placeholder p');
+  const phS = document.querySelector('#storyline-placeholder small');
+  if (phP) phP.textContent = ui('cam.no_storyline');
+  if (phS) phS.textContent = ui('cam.no_sl_hint');
+}
+
+
+// ═══════════════════════════════════════════════════════════════
+// JSON CONFIG LADEN
+// ═══════════════════════════════════════════════════════════════
+function loadConfigFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const parsed = JSON.parse(e.target.result);
+
+      // Valideer minimale structuur
+      if (!parsed.aiScenario) {
+        setJsonStatus('err', '✕ Ongeldig bestand — geen aiScenario blok gevonden. Gebruik een bestand van de OIP Controller.');
+        return;
+      }
+
+      // Vervaldatum controleren
+      if (parsed._meta?.expiresAt) {
+        const expiry = new Date(parsed._meta.expiresAt);
+        if (expiry < new Date()) {
+          const isEN = lang === 'en';
+          const dateStr = expiry.toLocaleDateString(isEN ? 'en-GB' : 'nl-NL', {
+            day: 'numeric', month: 'long', year: 'numeric'
+          });
+          // Overlay vullen en tonen
+          document.getElementById('exp-title').textContent =
+            isEN ? 'Access expired' : 'Toegang verlopen';
+          document.getElementById('exp-date').textContent =
+            (isEN ? 'Expired on: ' : 'Verlopen op: ') + dateStr;
+          document.getElementById('exp-sub').innerHTML = isEN
+            ? 'This configuration file is no longer valid.<br>Contact the trainer for an updated file.'
+            : 'Dit configuratiebestand is niet meer geldig.<br>Neem contact op met de trainer voor een bijgewerkt bestand.';
+          document.querySelector('#expired-box .exp-btn').textContent =
+            isEN ? '← Back' : '← Terug';
+          document.getElementById('expired-overlay').classList.add('visible');
+          // Statusregel ook bijwerken
+          setJsonStatus('err', isEN
+            ? `✕ Expired on ${dateStr} — contact your trainer for an updated file.`
+            : `✕ Verlopen op ${dateStr} — vraag de trainer om een bijgewerkt bestand.`);
+          return;
+        }
+      }
+
+      scenarioConfig = parsed;
+      const sc = parsed.aiScenario;
+
+      // Taalinstelling overnemen uit JSON (ingesteld via controller)
+      if (parsed.language && ['nl','en'].includes(parsed.language)) {
+        lang = parsed.language;
+        localStorage.setItem('oip_lang', lang);
+        document.getElementById('lang-overlay').classList.remove('visible');
+        document.getElementById('intro').classList.add('visible');
+        const sw = document.getElementById('lang-switch');
+        if (sw) sw.textContent = lang.toUpperCase();
+        applyUILang();
+      }
+
+      // API-sleutel — uit JSON of handmatig invoerveld tonen
+      const jsonApiKey = sc.apiKey?.trim() || '';
+      if (jsonApiKey) {
+        apiKey = jsonApiKey;
+        document.getElementById('apikey-field').style.display = 'none';
+        document.getElementById('apikey-ok').style.display    = 'block';
+      } else {
+        apiKey = '';
+        document.getElementById('apikey-field').style.display = 'block';
+        document.getElementById('apikey-ok').style.display    = 'none';
+      }
+      const participantName = parsed.participant?.name ? ` · ${parsed.participant.name}` : '';
+      const camCount   = sc.cameras?.length   || 0;
+      const phaseCount = sc.phases?.length    || 0;
+      const hasSit     = !!(sc.initialSituation?.trim());
+      const hasPrompt  = !!(sc.systemPromptExtra?.trim());
+      const roleNames  = (sc.roles||[]).map(r=>r.name).filter(Boolean).join(', ') || '—';
+      const isEN = lang === 'en';
+
+      // Vervaldatum in statusregel vermelden als aanwezig
+      let expiryNote = '';
+      if (parsed._meta?.expiresAt) {
+        const expiry = new Date(parsed._meta.expiresAt);
+        const dateStr = expiry.toLocaleDateString(isEN ? 'en-GB' : 'nl-NL', { day: 'numeric', month: 'long', year: 'numeric' });
+        const daysLeft = Math.ceil((expiry - new Date()) / (1000 * 60 * 60 * 24));
+        expiryNote = isEN
+          ? ` · Valid until ${dateStr} (${daysLeft}d)`
+          : ` · Geldig t/m ${dateStr} (${daysLeft}d)`;
+      }
+
+      setJsonStatus('ok',
+        `✓ ${sc.scenarioTitle || 'Scenario'} ${isEN?'loaded':'geladen'}${participantName} · ${camCount} camera${camCount!==1?'s':''} · ${phaseCount} ${isEN?'phase':'fase'}${phaseCount!==1?(isEN?'s':'n'):''} · ${isEN?'roles':'rollen'}: ${roleNames}${expiryNote}`
+      );
+
+      // Extra console-log voor diagnose
+      console.log('[OIP] JSON geladen:', {
+        titel: sc.scenarioTitle,
+        situatie: sc.initialSituation,
+        rollen: sc.roles?.map(r=>r.name),
+        cameras: sc.cameras?.map(c=>c.id),
+        promptLengte: sc.systemPromptExtra?.length || 0
+      });
+
+      // Bestandsnaam tonen
+      document.getElementById('json-filename').value = file.name;
+
+    } catch(err) {
+      setJsonStatus('err', '✕ Bestand kon niet worden gelezen. Controleer of het een geldig JSON-bestand is.');
+    }
+  };
+  reader.readAsText(file);
+}
+
+function setJsonStatus(type, msg) {
+  const el = document.getElementById('json-status');
+  el.textContent = msg;
+  el.style.color = type === 'ok'  ? 'var(--green)'
+                 : type === 'err' ? 'var(--red)'
+                 : 'var(--text-dim)';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// START
+// ═══════════════════════════════════════════════════════════════
+function startScenario() {
+  if (!apiKey) {
+    const manualKey = document.getElementById('api-key-input')?.value.trim() || '';
+    if (!manualKey || !manualKey.startsWith('sk-ant')) {
+      const inp = document.getElementById('api-key-input');
+      if (inp) { inp.classList.add('err'); inp.focus(); }
+      return;
+    }
+    apiKey = manualKey;
+  }
+
+  getAudioCtx();
+
+  // Storyline iframe laden — gebruik slideUrl van fase 1
+  const fase1Url = scenarioConfig?.aiScenario?.phases?.[0]?.slideUrl?.trim()
+                || scenarioConfig?.aiScenario?.storylineUrl || '';
+  if (fase1Url) {
+    const frame = document.getElementById('storyline-frame');
+    const ph    = document.getElementById('storyline-placeholder');
+    document.getElementById('storyline-url-display').textContent = fase1Url;
+    frame.src = fase1Url;
+    frame.style.display = 'block';
+    document.getElementById('expand-btn')?.classList.add('visible');
+    ph.style.display = 'none';
+  }
+
+  document.getElementById('intro').classList.remove('visible');
+  runBootSequence();
+}
+
+function runBootSequence() {
+  const sc  = scenarioConfig?.aiScenario;
+  const par = scenarioConfig?.participant || {};
+  const isEN = lang === 'en';
+
+  const checks = isEN ? [
+    { label: 'AI ENGINE',        status: 'ONLINE' },
+    { label: 'SCENARIO CONFIG',  status: 'LOADED' },
+    { label: 'COMMUNICATION',    status: 'ACTIVE' },
+    { label: 'SCENARIO',         status: 'ACTIVE' },
+  ] : [
+    { label: 'AI SYSTEEM',       status: 'ONLINE' },
+    { label: 'SCENARIO CONFIG',  status: 'GELADEN' },
+    { label: 'COMMUNICATIE',     status: 'ACTIEF' },
+    { label: 'SCENARIO',         status: 'ACTIEF' },
+  ];
+
+  const overlay = document.getElementById('boot-overlay');
+  overlay.classList.add('active');
+
+  // Logo en scenario-titel
+  setTimeout(() => {
+    document.getElementById('boot-logo').classList.add('visible');
+  }, 80);
+  setTimeout(() => {
+    const titleEl = document.getElementById('boot-scenario-title');
+    titleEl.textContent = sc?.scenarioTitle || (isEN ? 'Live Scenario Player' : 'Live Scenario Player');
+    titleEl.classList.add('visible');
+  }, 400);
+
+  // Checklist items één voor één
+  let t = 800;
+  checks.forEach((check, i) => {
+    setTimeout(() => {
+      const item   = document.getElementById('bitem-' + i);
+      const icon   = document.getElementById('bicon-' + i);
+      const label  = document.getElementById('blabel-' + i);
+      const status = document.getElementById('bstatus-' + i);
+      label.textContent  = check.label;
+      status.textContent = '...';
+      icon.className     = 'boot-item-icon spin';
+      label.className    = 'boot-item-label active';
+      item.classList.add('visible');
+    }, t);
+    t += 320;
+
+    setTimeout(() => {
+      const icon   = document.getElementById('bicon-' + i);
+      const label  = document.getElementById('blabel-' + i);
+      const status = document.getElementById('bstatus-' + i);
+      icon.className     = 'boot-item-icon ok';
+      icon.textContent   = '✓';
+      label.className    = 'boot-item-label';
+      status.textContent = check.status;
+      status.className   = 'boot-item-status ' + (i < 3 ? 'ok' : 'live');
+    }, t + 80);
+    t += 180;
+  });
+
+  // Activatiebalk
+  const barStart = t + 200;
+  setTimeout(() => {
+    document.getElementById('boot-activate-bar').classList.add('visible');
+    setTimeout(() => {
+      document.getElementById('boot-activate-fill').style.width = '100%';
+    }, 60);
+  }, barStart);
+
+  // Go-label
+  setTimeout(() => {
+    const goEl = document.getElementById('boot-go-label');
+    goEl.textContent = isEN ? '— SCENARIO ACTIVE —' : '— SCENARIO ACTIEF —';
+    goEl.classList.add('visible');
+  }, barStart + 900);
+
+  // Overlay sluiten en scenario starten
+  const totalDuration = barStart + 1600;
+  setTimeout(() => {
+    overlay.style.transition = 'opacity .5s ease';
+    overlay.style.opacity = '0';
+    setTimeout(() => {
+      overlay.classList.remove('active');
+      overlay.style.opacity = '';
+      overlay.style.transition = '';
+      startClock();
+      initScenario();
+    }, 500);
+  }, totalDuration);
+}
+
+function initScenario() {
+  const sc = scenarioConfig?.aiScenario;
+
+  // Situatietekst — uit JSON, of demo-default als geen JSON geladen
+  const situation = (sc?.initialSituation?.trim())
+    || (sc ? '' : 'T-204 · Biodiesel inslag van MS Rosita · Pomp P-12 · Debiet 380 m³/h · Niveau 67% ↑');
+  setSituation(situation || '—');
+
+  // Scenario-titel in topbar vanuit JSON
+  if (sc?.scenarioTitle) {
+    document.getElementById('scenario-title').textContent = sc.scenarioTitle;
+  }
+
+  // Deelnemer weergeven in topbar en banner
+  const participantName = scenarioConfig?.participant?.name;
+  if (participantName) {
+    document.getElementById('participant-name-top').textContent = participantName;
+    document.getElementById('participant-display').classList.add('visible');
+    document.getElementById('participant-sep').style.display = 'block';
+    document.getElementById('participant-name-banner').textContent = participantName;
+    document.getElementById('participant-banner').classList.add('visible');
+  }
+
+  // Bedrijfsprofiel tonen in banner (indien aanwezig in JSON)
+  const companyCtx = sc?.companyContext?.trim();
+  if (companyCtx) {
+    const nameLine = companyCtx.split('\n').find(l => l.startsWith('Bedrijf:') || l.startsWith('Company:'));
+    const companyName = nameLine ? nameLine.replace(/^(Bedrijf|Company):/, '').trim() : '';
+    const regLine = companyCtx.split('\n').find(l => l.startsWith('Regelgeving:') || l.startsWith('Regulation:'));
+    const tags = regLine ? regLine.replace(/^(Regelgeving|Regulation):/, '').trim() : '';
+    if (companyName) {
+      document.getElementById('pb-company-name').textContent = companyName;
+      document.getElementById('pb-company-tags').textContent = tags;
+      document.getElementById('pb-company-tags').style.display = tags ? 'inline' : 'none';
+      document.getElementById('pb-company-row').style.display = 'flex';
+      document.getElementById('participant-banner').classList.add('visible');
+    }
+  }
+
+  addAlarm('inf', 'SYS', 'Systeem operationeel', '');
+
+  const welcomeMsg = participantName
+    ? `── Scenario gestart · ${participantName} · ${getSimTimeStr()} ──`
+    : `── Scenario gestart · ${getSimTimeStr()} ──`;
+  addMsg('sys', null, welcomeMsg);
+
+  firstResponseReceived = false;
+  currentPhaseIndex = -1;
+  isPaused = false;
+  const pauseBtn = document.getElementById('pause-btn');
+  if (pauseBtn) {
+    pauseBtn.textContent = lang === 'en' ? '⏸ Pause' : '⏸ Pauze';
+    pauseBtn.classList.remove('paused');
+    pauseBtn.classList.add('visible');
+  }
+  renderPhaseControls();
+  startPhaseTimers();
+  callClaude('START', true);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// UI HELPERS
+// ═══════════════════════════════════════════════════════════════
+function setSituation(txt) {
+  document.getElementById('situation-text').textContent = txt;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// ALARM AUDIO (Web Audio API — geen externe bestanden nodig)
+// ═══════════════════════════════════════════════════════════════
+let audioCtx = null;
+
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  // Browser vereist user-gesture voor AudioContext — resume als gesuspend
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+// Speelt een toon-sequentie af
+// tones: array van { freq, dur, vol } — dur en vol optioneel
+function playTones(tones) {
+  try {
+    const ctx  = getAudioCtx();
+    const now  = ctx.currentTime;
+    let   time = now;
+
+    tones.forEach(({ freq, dur = 0.12, vol = 0.18, gap = 0.04 }) => {
+      const osc  = ctx.createOscillator();
+      const gain = ctx.createGain();
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.type      = 'sine';
+      osc.frequency.setValueAtTime(freq, time);
+
+      // Zachte aanslag en uitloop — voorkomt klikgeluid
+      gain.gain.setValueAtTime(0, time);
+      gain.gain.linearRampToValueAtTime(vol, time + 0.015);
+      gain.gain.setValueAtTime(vol, time + dur - 0.02);
+      gain.gain.linearRampToValueAtTime(0, time + dur);
+
+      osc.start(time);
+      osc.stop(time + dur);
+
+      time += dur + gap;
+    });
+  } catch(e) {
+    // Audio niet beschikbaar — stille fallback
+  }
+}
+
+// Drie niveaus — karakter gebaseerd op DCS-praktijk
+function playAlarmSound(type) {
+  if (type === 'inf') return; // Informatief — geen geluid
+
+  if (type === 'lo') {
+    // Laag — één korte, zachte toon
+    playTones([
+      { freq: 880, dur: 0.14, vol: 0.12 }
+    ]);
+  }
+
+  else if (type === 'med') {
+    // Middel — twee tonen, iets luider
+    playTones([
+      { freq: 1047, dur: 0.13, vol: 0.20, gap: 0.06 },
+      { freq: 1175, dur: 0.13, vol: 0.20 }
+    ]);
+  }
+
+  else if (type === 'hi') {
+    // Hoog — drie tonen, dalend, urgent karakter
+    playTones([
+      { freq: 1480, dur: 0.11, vol: 0.30, gap: 0.04 },
+      { freq: 1480, dur: 0.11, vol: 0.30, gap: 0.04 },
+      { freq: 1109, dur: 0.22, vol: 0.28 }
+    ]);
+  }
+}
+
+function addAlarm(type, tag, msg, extra) {
+  const list = document.getElementById('alarm-list');
+  const d = document.createElement('div');
+  d.className = `alarm-row ${type}`;
+  d.innerHTML = `<b>${msg} <span class="alarm-time">${getSimTimeStr()}</span></b>
+    <small>${tag}${extra ? ' · ' + extra : ''}</small>`;
+  list.appendChild(d);
+  list.scrollTop = list.scrollHeight;
+
+  const led = document.getElementById('alarm-led');
+  if (type==='hi')                                   led.className='led r';
+  else if (type==='med' && led.className!=='led r')  led.className='led a';
+  else if (led.className==='led')                    led.className='led g';
+
+  // Akoestische melding
+  playAlarmSound(type);
+}
+
+// ── BERICHT WACHTRIJ (getrapt verschijnen + typewriter) ──────────
+const msgQueue   = [];
+let   msgBusy    = false;
+const CHAR_DELAY = 22;   // ms per karakter
+const MSG_GAP    = 320;  // ms pauze tussen berichten
+
+function queueMsg(type, sender, text) {
+  msgQueue.push({ type, sender, text });
+  if (!msgBusy) drainQueue();
+}
+
+function drainQueue() {
+  if (msgQueue.length === 0) { msgBusy = false; return; }
+  msgBusy = true;
+  const item = msgQueue.shift();
+  renderMsg(item.type, item.sender, item.text, () => {
+    setTimeout(drainQueue, MSG_GAP);
+  });
+}
+
+function renderMsg(type, sender, text, onDone) {
+  const feed = document.getElementById('messages');
+  const d    = document.createElement('div');
+  d.className = `msg ${type}`;
+
+  // Prefix voor AI, instructor en alarm
+  const pfx = (type==='ai' && sender)
+    ? `<span class="radio-pfx">◀ ${sender}</span>`
+    : (type==='instructor')
+    ? `<span class="radio-pfx">◈ INSTRUCTEUR</span>`
+    : (type==='alarm')
+    ? `<span class="radio-pfx">[DCS]</span>`
+    : '';
+
+  // Bouw basisstructuur — tekstcontainer leeg, wordt gevuld door typewriter
+  const meta = (type!=='sys')
+    ? `<div class="msg-meta">${sender||'Operator'} · ${getSimTimeStr()}</div>`
+    : '';
+
+  d.innerHTML = `${meta}<div class="msg-bub">${pfx}<span class="tw-text"></span><span class="tw-cursor"></span></div>`;
+  feed.appendChild(d);
+  feed.scrollTop = feed.scrollHeight;
+
+  const textEl   = d.querySelector('.tw-text');
+  const cursor   = d.querySelector('.tw-cursor');
+
+  // Sys-berichten en user-berichten: geen typewriter, gewoon tonen
+  if (type === 'sys' || type === 'user') {
+    textEl.textContent = text;
+    cursor.classList.add('done');
+    feed.scrollTop = feed.scrollHeight;
+    if (onDone) onDone();
+    return;
+  }
+
+  // Instructeur iets langzamer typen — meer gewicht
+  const speed = type === 'alarm'      ? CHAR_DELAY * 0.8
+              : type === 'instructor' ? CHAR_DELAY * 1.2
+              : CHAR_DELAY;
+
+  let i = 0;
+
+  function typeNext() {
+    if (i < text.length) {
+      textEl.textContent += text[i];
+      i++;
+      feed.scrollTop = feed.scrollHeight;
+      setTimeout(typeNext, speed);
+    } else {
+      // Cursor 800ms laten staan, dan wegdoen
+      setTimeout(() => {
+        cursor.classList.add('done');
+        if (onDone) onDone();
+      }, 800);
+    }
+  }
+
+  // Kleine vertraging zodat de fade-in animatie eerst zichtbaar is
+  setTimeout(typeNext, 180);
+}
+
+// Publieke wrapper — gebruikt de wachtrij
+function addMsg(type, sender, text) {
+  queueMsg(type, sender, text);
+}
+
+function setStatus(s) {
+  const el = document.getElementById('status-badge');
+  const cls = {normal:'s-normal',alert:'s-alert',alarm:'s-alarm',brief:'s-brief'};
+  const lbl = {
+    normal: ui('status.normal'),
+    alert:  ui('status.alert'),
+    alarm:  ui('status.alarm'),
+    brief:  ui('status.brief')
+  };
+  el.className = cls[s] || 's-normal';
+  el.textContent = lbl[s] || s.toUpperCase();
+  scenarioPhase = s;
+}
+
+function showTyping(v) {
+  document.getElementById('typing').className = v ? 'on' : '';
+}
+
+function setInput(v) {
+  const inp = document.getElementById('user-input-large');
+  const btn = document.getElementById('centre-send-btn');
+  if (inp) inp.disabled = !v;
+  if (btn) btn.disabled = !v;
+  if (v && inp) inp.focus();
+}
+
+function handleKeyCentre(e) {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+}
+
+// Behoud ook de oude handleKey als alias
+function handleKey(e) { handleKeyCentre(e); }
+
+function autoResizeCentre(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 160) + 'px';
+}
+
+function autoResize(el) { autoResizeCentre(el); }
+
+// Wacht tot wachtrij leeg is, poll elke 100ms
+function waitForQueue(cb) {
+  function check() {
+    if (!msgBusy && msgQueue.length === 0) cb();
+    else setTimeout(check, 100);
+  }
+  check();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PARSE AI RESPONSE
+// ═══════════════════════════════════════════════════════════════
+
+// Bouw regex op basis van geladen rolnamen (aangevuld met vaste fallbacks)
+function buildSpeakerRegex() {
+  const configRoles = (scenarioConfig?.aiScenario?.roles || [])
+    .map(r => r.name?.trim())
+    .filter(Boolean);
+  if (!configRoles.length) return /^GEEN_ROL_GECONFIGUREERD:/; // Matcht nooit
+  const escaped = configRoles.map(n => n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+  return new RegExp(`^(${escaped.join('|')}):`, 'i');
+}
+
+function parseAndDisplay(text) {
+  const lines    = text.split('\n').filter(l => l.trim());
+  const speakerRx = buildSpeakerRegex();
+  let hadAlarm   = false;
+
+  for (const raw of lines) {
+    const l = raw.trim();
+    if (!l) continue;
+
+    // Fase-overgang token — [FASE:1] t/m [FASE:9]
+    // Matcht ook als het token gecombineerd staat met andere tekst op dezelfde regel
+    const faseMatch = l.match(/\[FASE:(\d+)\]/i);
+    if (faseMatch) {
+      handlePhaseTransition(parseInt(faseMatch[1]));
+      // Ga door met verwerken van de rest van de regel (bijv. als er ook tekst bij staat)
+      if (l.replace(/\[FASE:\d+\]/gi, '').trim().length === 0) continue;
+    }
+
+    // DCS-alarm
+    if (l.startsWith('[DCS-ALARM]') || l.startsWith('[DCS]')) {
+      const parts = l.replace(/^\[DCS-ALARM\]|\[DCS\]/,'').split('|').map(p=>p.trim());
+      const tag   = parts[0]||'DCS';
+      const msg   = parts[1]||l;
+      const prio  = (parts[2]||'').toLowerCase();
+      const t     = prio.includes('hoog')||prio.includes('high')?'hi':prio.includes('med')?'med':'lo';
+      addAlarm(t, tag, msg, parts[2]||'');
+      addMsg('alarm', null, `${tag}: ${msg}`);
+      hadAlarm = true;
+    }
+    // Instructeur — vaste systeemrol
+    else if (/^INSTRUCTEUR:/i.test(l) || /^INSTRUCTOR:/i.test(l)) {
+      const msg = l.slice(l.indexOf(':')+1).trim();
+      if (msg) addMsg('instructor', 'INSTRUCTEUR', msg);
+    }
+    // Operationele sprekers — dynamisch op basis van rolnamen in config
+    else if (speakerRx.test(l)) {
+      const colon  = l.indexOf(':');
+      const sender = l.slice(0, colon).trim();
+      const msg    = l.slice(colon+1).trim();
+      if (msg) addMsg('ai', sender, msg);
+    }
+    // Overige regels — alleen tonen als ze expliciet van de Instructeur zijn
+    // of als ze op een instructeur-bericht lijken (beginnen met een bekende aanduiding)
+    else if (!l.startsWith('[SCENARIO-EINDE]') && !l.match(/\[FASE:\d+\]/i) && l.length > 10) {
+      // Alleen weergeven als het echt een begeleidende zin lijkt
+      // (geen spreker-prefix, maar wel een volledige zin met leesteken)
+      if (/[.?!]$/.test(l) && l.length > 25 && !l.includes(':')) {
+        addMsg('instructor', 'INSTRUCTEUR', l);
+      }
+    }
+  }
+
+  if (hadAlarm) {
+    alarmsFired.push(...lines.filter(l=>l.includes('[DCS-ALARM]')||l.includes('[DCS]')));
+    setStatus(alarmsFired.length > 2 ? 'alarm' : 'alert');
+  }
+
+  if (text.includes('[SCENARIO-EINDE]')) {
+    setStatus('brief');
+    clearInterval(clockInterval);
+    clockInterval = null;
+    clearPhaseTimers();
+    hidePhaseTimer();
+    blockIframe(true);
+    document.getElementById('pause-btn')?.classList.remove('visible');
+    waitForQueue(() => {
+      setInput(true);
+      pendingDebrief = true;
+    });
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CLAUDE API
+// ═══════════════════════════════════════════════════════════════
+async function callClaude(userMsg, isInit=false) {
+  showTyping(true);
+  setInput(false);
+
+  const content = isInit
+    ? `START: Geef het openingsbericht van de Instructeur (één korte zin die het scenario introduceert), gevolgd door het eerste radiosignaal van de dispatcher (één zin). Stuur ook één DCS-systeembericht. Stuur daarna NIETS meer — wacht op de reactie van de deelnemer. BELANGRIJK: stuur GEEN [FASE:n] tokens in dit openingsbericht — fase 1 is al actief bij scenario-start.`
+    : userMsg;
+
+  const systemPrompt = buildSystemPrompt();
+  conversationHistory.push({ role:'user', content });
+
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 600,
+        system: systemPrompt,
+        messages: conversationHistory
+      })
+    });
+
+    // Verwerk ook niet-200 responses netjes
+    if (!res.ok) {
+      const errText = await res.text().catch(() => 'Onbekende fout');
+      let errMsg = `HTTP ${res.status}`;
+      try {
+        const errJson = JSON.parse(errText);
+        errMsg = errJson.error?.message || errMsg;
+      } catch(e) {}
+      showTyping(false);
+      conversationHistory.pop(); // verwijder de mislukte aanroep
+      addMsg('sys', null, `⚠ API fout (${res.status}): ${errMsg}`);
+      setInput(true);
+      return;
+    }
+
+    const data = await res.json();
+
+    if (data.error) {
+      showTyping(false);
+      conversationHistory.pop();
+      addMsg('sys', null, `⚠ API fout: ${data.error.message}`);
+      setInput(true);
+      return;
+    }
+
+    const reply = data.content?.[0]?.text;
+    if (!reply) {
+      showTyping(false);
+      conversationHistory.pop();
+      addMsg('sys', null, '⚠ Leeg antwoord ontvangen van API. Probeer opnieuw.');
+      setInput(true);
+      return;
+    }
+
+    conversationHistory.push({ role:'assistant', content:reply });
+    showTyping(false);
+    parseAndDisplay(reply);
+    messageCount++;
+    firstResponseReceived = true; // Openingsbericht verwerkt — fase-tokens nu toegestaan
+
+    if (!reply.includes('[SCENARIO-EINDE]')) {
+      waitForQueue(() => setInput(true));
+    }
+
+  } catch(e) {
+    showTyping(false);
+    conversationHistory.pop();
+    addMsg('sys', null, `⚠ Verbindingsfout: ${e.message || 'controleer internetverbinding en API-sleutel'}`);
+    setInput(true);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// TABBLADEN
+// ═══════════════════════════════════════════════════════════════
+function switchTab(tab) {
+  ['radio','debrief'].forEach(t => {
+    document.getElementById('tab-'+t).classList.toggle('active', t===tab);
+    document.getElementById('tab-content-'+t).classList.toggle('active', t===tab);
+  });
+  // Iframe enkel bedienbaar in radio-tab en alleen als scenario nog actief is
+  if (tab === 'radio' && clockInterval) blockIframe(false);
+  if (tab === 'debrief') blockIframe(true);
+}
+
+function toggleSection(id) {
+  const body = document.getElementById('body-'+id);
+  const chev = document.getElementById('chev-'+id);
+  const open = body.classList.toggle('open');
+  chev.classList.toggle('open', open);
+}
+
+function unlockDebriefTab() {
+  const btn = document.getElementById('tab-debrief');
+  btn.disabled = false;
+  btn.textContent = ui('tab.debrief');
+  const dot = document.createElement('span');
+  dot.className = 'ptab-dot pulse';
+  dot.id = 'tab-debrief-dot';
+  btn.prepend(dot);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// FASE-OVERGANGEN
+// ═══════════════════════════════════════════════════════════════
+let currentPhaseIndex = -1; // -1 = nog geen fase-overgang ontvangen; 0 = fase 1 actief
+
+function handlePhaseTransition(phaseNum) {
+  const sc = scenarioConfig?.aiScenario;
+  if (!sc) return;
+
+  const phases = sc.phases || [];
+  const idx    = phaseNum - 1;
+
+  if (idx < 0 || idx >= phases.length) return;
+
+  // [FASE:1] in openingsbericht negeren
+  if (phaseNum === 1 && !firstResponseReceived) {
+    currentPhaseIndex = 0;
+    return;
+  }
+
+  // Dubbele trigger negeren
+  if (idx === currentPhaseIndex) return;
+
+  currentPhaseIndex = idx;
+  const phase = phases[idx];
+
+  // Knop visueel synchroniseren
+  document.querySelectorAll('.phase-btn').forEach((btn, i) => {
+    btn.classList.toggle('active', i === idx);
+  });
+
+  // Visuele fase-timer bijwerken
+  startPhaseTimerDisplay(idx);
+
+  // Laad de Storyline-slide voor deze fase (als geconfigureerd)
+  const slideUrl = phase.slideUrl?.trim();
+  if (slideUrl) {
+    const frame = document.getElementById('storyline-frame');
+    const ph    = document.getElementById('storyline-placeholder');
+    if (frame) {
+      frame.src = slideUrl;
+      frame.style.display = 'block';
+      document.getElementById('expand-btn')?.classList.add('visible');
+      if (ph) ph.style.display = 'none';
+    }
+  }
+
+  // Alarm-notitie
+  const label = phase.label || `Fase ${phaseNum}`;
+  addAlarm('inf', lang==='en'?`PHASE ${phaseNum}`:`FASE ${phaseNum}`, label, '');
+}
+// ═══════════════════════════════════════════════════════════════
+async function triggerDebriefing() {
+  const sc = scenarioConfig?.aiScenario;
+
+  // Sla eindtijd op
+  const durationSecs = Math.floor((Date.now() - simStartMs) / 1000);
+  const durMin = Math.floor(durationSecs / 60);
+  const durSec = durationSecs % 60;
+  const durationStr = `${String(durMin).padStart(2,'0')}:${String(durSec).padStart(2,'0')}`;
+
+  addMsg('instructor', 'INSTRUCTEUR',
+    lang === 'en'
+      ? 'The scenario has ended. The debrief is being prepared — one moment.'
+      : 'Het scenario is afgerond. De debriefing wordt nu opgesteld — een moment.');
+  setInput(false);
+
+  // Debriefing-tab vrijgeven en activeren
+  unlockDebriefTab();
+  blockIframe(true);
+  setTimeout(() => switchTab('debrief'), 800);
+
+  // Vul header in
+  document.getElementById('debrief-scenario-name').textContent =
+    sc?.scenarioTitle || ui('debrief.scenario');
+  document.getElementById('debrief-participant-name').textContent =
+    scenarioConfig?.participant?.name || '—';
+  document.getElementById('debrief-duration').textContent = durationStr;
+
+  // Labels
+  const titleRows = document.querySelectorAll('#debrief-title-row .debrief-lbl');
+  if (titleRows[0]) titleRows[0].textContent = ui('debrief.scenario');
+  if (titleRows[1]) titleRows[1].textContent = ui('debrief.participant');
+  const scoreLblT = document.getElementById('debrief-score-label');
+  if (scoreLblT) scoreLblT.textContent = ui('debrief.score');
+  const durLbl = document.querySelector('#debrief-duration-wrap .debrief-lbl');
+  if (durLbl) durLbl.textContent = ui('debrief.duration');
+
+  // Sectie-titels
+  const secTitles = document.querySelectorAll('.ds-title');
+  const secKeys = ['debrief.timeline','debrief.analysis','debrief.learning'];
+  secTitles.forEach((el, i) => { if (secKeys[i]) el.textContent = ui(secKeys[i]); });
+
+  const alarmDetail = alarmsFired.slice(0,10).join('\n') || 'geen alarmen';
+
+  const msgHistory = conversationHistory
+    .filter(m => m.role === 'user' && !m.content.startsWith('START'))
+    .map((m, i) => `[${i+1}] ${m.content}`)
+    .join('\n') || '(geen berichten)';
+
+  const debriefContextBlock = sc?.debriefingPrompt?.trim()
+    ? (lang==='en'
+        ? `\n\nSCENARIO AND ORGANISATION CONTEXT (tone, focus, preferences — does NOT override assessment criteria or scoring):\n${sc.debriefingPrompt.trim()}`
+        : `\n\nSCENARIO- EN ORGANISATIECONTEXT (toon, aandachtspunten, wensen — wijzigt de beoordelingscriteria en scoringsnorm NIET):\n${sc.debriefingPrompt.trim()}`)
+    : '';
+
+  const debriefPrompt = `${lang==='en'
+    ? 'You have just facilitated a control room training as Instructor. Write a sharp, honest debrief for the trainer and participant.'
+    : 'Je hebt zojuist een controlekamertraining begeleid als Instructeur. Schrijf nu een scherpe, eerlijke debriefing voor de trainer en deelnemer.'}${debriefContextBlock}
+
+TRAININGSDATA:
+Scenario: ${sc?.scenarioTitle || 'onbekend'}
+Deelnemer: ${scenarioConfig?.participant?.name || 'onbekend'}
+Duur: ${durationStr}
+Moeilijkheidsgraad: ${sc?.difficulty || 3}/5
+
+BERICHTEN VAN DE DEELNEMER (chronologisch):
+${msgHistory}
+
+ALARMEN TIJDENS SCENARIO:
+${alarmDetail}
+
+INSTRUCTIES VOOR DE EVALUATIE:
+- Wees eerlijk en direct. Een gemiddelde prestatie scoort 5-6, niet 7 of hoger.
+- Score 7-8 alleen bij aantoonbaar goed situatiebewustzijn, correcte prioriteitstelling én proactieve communicatie.
+- Score 9-10 is uitzonderlijk en alleen gerechtvaardigd bij vrijwel foutloze uitvoering.
+- Benoem concrete fouten bij naam: "Op t=XX:XX reageerde de deelnemer niet op..."
+- Als de deelnemer weinig of niets heeft gecommuniceerd, benoem dat expliciet als serieus probleem.
+- Schrijf feedback die de deelnemer iets leert, niet feedback die hem een goed gevoel geeft.
+- Verwijs in de leerpunten altijd naar een specifiek moment uit het scenario met tijdstempel.
+
+Geef je debriefing UITSLUITEND als geldig JSON-object — geen tekst erbuiten, geen markdown-fences:
+{
+  "score": <getal 1-10>,
+  "timeline": [
+    { "time": "<MM:SS>", "type": "<alarm-hi|alarm-med|alarm-lo|camera|decision|milestone>", "tag": "<korte tag>", "text": "<omschrijving>" }
+  ],
+  "competencies": [
+    { "name": "<naam>", "score": <1-5>, "feedback": "<concrete observatie met verwijzing naar specifiek moment — geen algemeenheden>" }
+  ],
+  "learningPoints": [
+    { "type": "<strong|improve|core>", "tag": "<label>", "text": "<specifieke observatie met tijdstempel of concreet moment uit het scenario>" }
+  ]
+}
+
+Competenties — gebruik precies deze vier, in deze volgorde:
+1. Situatiebewustzijn
+2. Communicatie
+3. Prioriteitstelling
+4. Procedure-opvolging
+
+Tijdlijn: max 8 momenten, alleen wat werkelijk significant was.
+Leerpunten: 2-3 items. Minimaal één "improve" of "core" — een debriefing zonder verbeterpunt is geen debriefing.
+${lang==='en' ? 'Language: English.' : 'Taal: Nederlands.'} Tone: professional and direct, not patronising.`;
+
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 45000); // 45 sec timeout
+
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1200,
+        messages: [{ role: 'user', content: debriefPrompt }]
+      }),
+      signal: controller.signal
+    });
+    clearTimeout(timeout);
+
+    if (!res.ok) {
+      const errText = await res.text().catch(() => '');
+      let errMsg = `HTTP ${res.status}`;
+      try { errMsg = JSON.parse(errText).error?.message || errMsg; } catch(e){}
+      throw new Error(errMsg);
+    }
+
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.message);
+
+    const raw = data.content?.[0]?.text || '';
+    if (!raw) throw new Error('Leeg antwoord van API');
+
+    // Strip eventuele markdown-fences en parse JSON
+    const clean = raw.replace(/^```json\s*/,'').replace(/\s*```$/,'').trim();
+    const debrief = JSON.parse(clean);
+    renderDebrief(debrief, durationStr);
+
+  } catch(e) {
+    const errEl = document.getElementById('debrief-loading');
+    const isAbort = e.name === 'AbortError';
+    const msg = isAbort
+      ? (lang==='en' ? 'Request timed out. Please check your connection and try again.' : 'Verzoek verlopen. Controleer je verbinding en probeer opnieuw.')
+      : (e.message || (lang==='en' ? 'Unknown error' : 'Onbekende fout'));
+    if (errEl) errEl.innerHTML =
+      `<div style="color:var(--red);font-family:var(--mono);font-size:12px;text-align:center;padding:24px">
+        ⚠ ${lang==='en'?'Debrief could not be prepared':'Debriefing kon niet worden opgesteld'}.<br>
+        <small>${msg}</small><br><br>
+        <button onclick="triggerDebriefing()" style="background:var(--bg3);border:1px solid var(--border-hi);color:var(--text);padding:6px 16px;border-radius:4px;cursor:pointer;font-family:var(--mono);font-size:11px">
+          ${lang==='en'?'↺ Try again':'↺ Opnieuw proberen'}
+        </button>
+      </div>`;
+  }
+}
+
+function renderDebrief(d, durationStr) {
+  try {
+  lastDebriefData = { ...d, durationStr }; // bewaar voor export
+
+  // Score
+  const score = Math.max(1, Math.min(10, Math.round(d.score || 5)));
+  const scoreNum = document.getElementById('debrief-score-num');
+  if (scoreNum) scoreNum.textContent = score;
+  const pct = (score / 10) * 100;
+  const bar = document.getElementById('debrief-score-bar');
+  if (bar) {
+    bar.style.background = score >= 7 ? 'var(--green)' : score >= 5 ? 'var(--amber)' : 'var(--red)';
+    setTimeout(() => { if (bar) bar.style.width = pct + '%'; }, 100);
+  }
+
+  // Verberg laadindicator, toon inhoud
+  const loadEl = document.getElementById('debrief-loading');
+  const bodyEl = document.getElementById('debrief-body');
+  const expBar = document.getElementById('debrief-export-bar');
+  const clsBar = document.getElementById('debrief-close-bar');
+  if (loadEl) loadEl.style.display = 'none';
+  if (bodyEl) bodyEl.style.display = 'block';
+  if (expBar) expBar.style.display = 'flex';
+  if (clsBar) clsBar.style.display = 'block';
+
+  // Open alle secties standaard
+  ['timeline','analysis','learning'].forEach(s => {
+    document.getElementById('body-'+s)?.classList.add('open');
+    document.getElementById('chev-'+s)?.classList.add('open');
+  });
+
+  // ── Tijdlijn ──
+  const track = document.getElementById('timeline-track');
+  if (track) track.innerHTML = '';
+  if (!track) { console.warn('[OIP] timeline-track niet gevonden'); }
+  if (track) track.innerHTML = '';
+  (d.timeline || []).forEach(ev => {
+    if (!track) return;
+    const tagCls = ev.type.includes('alarm') ? 'alarm'
+                 : ev.type === 'camera'      ? 'camera'
+                 : ev.type === 'decision'    ? 'action' : '';
+    track.innerHTML += `
+      <div class="tl-event">
+        <div class="tl-dot ${ev.type}"></div>
+        <div class="tl-time">${ev.time || '—'}</div>
+        <div class="tl-text">
+          ${tagCls ? `<span class="tl-tag ${tagCls}">${ev.tag||''}</span>` : ''}
+          ${ev.text || ''}
+        </div>
+      </div>`;
+  });
+  if (!d.timeline?.length && track) track.innerHTML = '<div style="color:var(--text-dim);font-size:13px">Geen tijdlijndata beschikbaar.</div>';
+
+  // ── Competenties ──
+  const grid = document.getElementById('competency-grid');
+  if (grid) grid.innerHTML = '';
+  (d.competencies || []).forEach(c => {
+    if (!grid) return;
+    const s   = Math.max(1, Math.min(5, Math.round(c.score || 3)));
+    const pct = (s / 5) * 100;
+    const cls = s >= 4 ? 'high' : s >= 3 ? 'medium' : 'low';
+    grid.innerHTML += `
+      <div class="comp-row">
+        <div class="comp-label">
+          <span class="comp-name">${c.name || '—'}</span>
+          <span class="comp-score-txt">${s}/5</span>
+        </div>
+        <div class="comp-bar-wrap">
+          <div class="comp-bar ${cls}" style="width:0%" data-pct="${pct}"></div>
+        </div>
+        <div class="comp-feedback">${c.feedback || ''}</div>
+      </div>`;
+  });
+  // Animeer bars na render
+  setTimeout(() => {
+    grid.querySelectorAll('.comp-bar').forEach(b => {
+      b.style.width = b.dataset.pct + '%';
+    });
+  }, 200);
+
+  // ── Leerpunten ──
+  const lp = document.getElementById('learning-points');
+  if (lp) lp.innerHTML = '';
+  (d.learningPoints || []).forEach(p => {
+    if (!lp) return;
+    const tagLabel = p.type === 'strong'  ? 'Sterk punt'
+                   : p.type === 'improve' ? 'Verbeterpunt'
+                   : 'Kernles';
+    lp.innerHTML += `
+      <div class="learn-item ${p.type || 'core'}">
+        <span class="learn-item-tag">${p.tag || tagLabel}</span>
+        <div class="learn-item-text">${p.text || ''}</div>
+      </div>`;
+  });
+  if (!d.learningPoints?.length && lp) lp.innerHTML = '<div style="color:var(--text-dim);font-size:13px">Geen leerpunten beschikbaar.</div>';
+  } catch(e) {
+    console.error('[OIP] renderDebrief fout:', e);
+    const bodyEl2 = document.getElementById('debrief-body');
+    if (bodyEl2) bodyEl2.style.display = 'block';
+    const expBar2 = document.getElementById('debrief-export-bar');
+    const clsBar2 = document.getElementById('debrief-close-bar');
+    if (expBar2) expBar2.style.display = 'flex';
+    if (clsBar2) clsBar2.style.display = 'block';
+    const loadEl2 = document.getElementById('debrief-loading');
+    if (loadEl2) loadEl2.style.display = 'none';
+  }
+}
+
+function closeDebrief() {
+  // Niet meer gebruikt maar behoud voor compatibiliteit
+}
+
+function confirmEndSession() {
+  const isEN = lang === 'en';
+  document.getElementById('end-title').textContent =
+    isEN ? 'Training complete' : 'Training afgerond';
+  document.getElementById('end-sub').innerHTML = isEN
+    ? 'The debrief is complete and reports are available.<br>Close this window or start a new session.'
+    : 'De debriefing is voltooid en de rapporten zijn beschikbaar.<br>Sluit dit venster of start een nieuwe sessie.';
+  document.querySelector('#session-end-box .end-btn-primary').textContent =
+    isEN ? '↺ New session' : '↺ Nieuwe sessie';
+  document.querySelector('#session-end-box .end-btn-secondary').textContent =
+    isEN ? 'Back to debrief' : 'Terug naar debriefing';
+  document.getElementById('session-end-overlay').classList.add('visible');
+}
+
+function closeEndOverlay() {
+  document.getElementById('session-end-overlay').classList.remove('visible');
+}
+
+
+// ═══════════════════════════════════════════════════════════════
+// SEND / INPUT
+// ═══════════════════════════════════════════════════════════════
+function sendMessage() {
+  const inp = document.getElementById('user-input-large');
+  const txt = inp?.value?.trim();
+  if (!txt || inp.disabled) return;
+  inp.value = '';
+  inp.style.height = 'auto';
+  addMsg('user', 'Operator', txt);
+
+  if (pendingDebrief) {
+    // Dit is het laatste antwoord van de deelnemer — ga naar debriefing
+    pendingDebrief = false;
+    setInput(false);
+    conversationHistory.push({ role:'user', content: txt });
+    setTimeout(triggerDebriefing, 1500);
+  } else {
+    callClaude(txt);
+  }
+}
+
+function handleKey(e) {
+  if (e.key==='Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// EXPORT — PDF-rapport (via print dialog)
+// ═══════════════════════════════════════════════════════════════
+function exportDebriefPDF() {
+  if (!lastDebriefData) return;
+  const d   = lastDebriefData;
+  const sc  = scenarioConfig?.aiScenario;
+  const par = scenarioConfig?.participant || {};
+  const date = new Date().toLocaleDateString(lang==='en'?'en-GB':'nl-NL');
+  const scoreNum = Math.max(1, Math.min(10, Math.round(d.score || 5)));
+  const isEN = lang === 'en';
+  const scoreColor = scoreNum >= 7 ? '#2e7d32' : scoreNum >= 5 ? '#e65100' : '#c62828';
+
+  const compRows = (d.competencies || []).map(c => {
+    const bars = Array.from({length:5}, (_,i) =>
+      `<span style="display:inline-block;width:12px;height:12px;border-radius:2px;margin-right:2px;background:${i < (c.score||0) ? '#0097a7' : '#e0e0e0'}"></span>`
+    ).join('');
+    return `<tr>
+      <td style="padding:6px 10px;font-weight:600;border:1px solid #ddd">${c.name||''}</td>
+      <td style="padding:6px 10px;border:1px solid #ddd">${bars} ${c.score||0}/5</td>
+      <td style="padding:6px 10px;border:1px solid #ddd;color:#444">${c.feedback||''}</td>
+    </tr>`;
+  }).join('');
+
+  const tlItems = (d.timeline || []).map(t => {
+    const typeColor = t.type?.includes('alarm-hi') ? '#c62828' : t.type?.includes('alarm-med') ? '#e65100' : t.type?.includes('alarm-lo') ? '#1565c0' : '#555';
+    return `<tr>
+      <td style="padding:5px 10px;font-family:monospace;border:1px solid #ddd;white-space:nowrap">${t.time||''}</td>
+      <td style="padding:5px 10px;border:1px solid #ddd"><span style="color:${typeColor};font-weight:600">${t.tag||''}</span></td>
+      <td style="padding:5px 10px;border:1px solid #ddd;color:#444">${t.text||''}</td>
+    </tr>`;
+  }).join('');
+
+  const lpTypeLabel = { strong: isEN?'Strong point':'Sterk punt', improve: isEN?'Improvement':'Verbeterpunt', core: isEN?'Core point':'Kernpunt' };
+  const lpTypeColor = { strong: '#2e7d32', improve: '#c62828', core: '#e65100' };
+  const lpItems = (d.learningPoints || []).map(lp =>
+    `<li style="margin-bottom:8px">
+      <span style="background:${lpTypeColor[lp.type]||'#555'};color:#fff;padding:1px 7px;border-radius:3px;font-size:11px;margin-right:6px">${lpTypeLabel[lp.type]||lp.type}</span>
+      <strong>${lp.tag||''}</strong><br>
+      <span style="color:#444;font-size:13px">${lp.text||''}</span>
+    </li>`
+  ).join('');
+
+  const chatLog = conversationHistory
+    .filter(m => !m.content.startsWith('START'))
+    .map(m => `<tr style="background:${m.role==='user'?'#f5f5f5':'#fff'}">
+      <td style="padding:5px 10px;font-weight:600;border:1px solid #ddd;white-space:nowrap;color:${m.role==='user'?'#1565c0':'#555'}">${m.role==='user'?(par.name||'Operator'):'AI'}</td>
+      <td style="padding:5px 10px;border:1px solid #ddd;font-size:12px;color:#333">${(m.content||'').replace(/\n/g,'<br>').replace(/\[SCENARIO-EINDE\]/g,'').trim()}</td>
+    </tr>`).join('');
+
+  const html = `<!DOCTYPE html>
+<html><head><meta charset="utf-8">
+<style>
+  body{font-family:Arial,sans-serif;font-size:13px;color:#222;max-width:800px;margin:0 auto;padding:32px}
+  h1{font-size:20px;color:#0097a7;margin-bottom:4px}
+  h2{font-size:14px;color:#555;font-weight:normal;margin-top:0}
+  h3{font-size:13px;letter-spacing:1px;text-transform:uppercase;color:#0097a7;border-bottom:2px solid #0097a7;padding-bottom:4px;margin-top:24px}
+  table{border-collapse:collapse;width:100%;margin-bottom:12px}
+  .score-box{display:inline-block;font-size:40px;font-weight:700;color:${scoreColor};border:3px solid ${scoreColor};padding:8px 18px;border-radius:6px;margin-right:16px}
+  .meta{color:#666;font-size:12px;margin-bottom:24px}
+  ul{padding-left:16px}
+  @media print {
+    body { padding: 0; max-width: 100%; }
+    h3 { page-break-after: avoid; }
+    table { page-break-inside: avoid; }
+    @page { margin: 1.5cm 2cm; size: A4; }
+  }
+</style></head><body>
+<h1>OIP Live Scenario — ${isEN?'Debrief Report':'Debriefing Rapport'}</h1>
+<h2>${sc?.scenarioTitle||''}</h2>
+<p class="meta">
+  ${isEN?'Participant':'Deelnemer'}: <strong>${par.name||'—'}</strong> &nbsp;|&nbsp;
+  ${isEN?'Function':'Functie'}: ${par.role||'—'} &nbsp;|&nbsp;
+  ${isEN?'Organisation':'Organisatie'}: ${par.org||par.organization||'—'} &nbsp;|&nbsp;
+  ${isEN?'Date':'Datum'}: ${date} &nbsp;|&nbsp;
+  ${isEN?'Duration':'Duur'}: ${d.durationStr||'—'}
+</p>
+<h3>${isEN?'Overall score':'Totaalscore'}</h3>
+<div><span class="score-box">${scoreNum}</span>
+  <span style="color:#888;font-size:13px">${isEN?'out of':'van'} 10 — ${scoreNum>=7?(isEN?'Good performance':'Goede prestatie'):scoreNum>=5?(isEN?'Average performance':'Gemiddelde prestatie'):(isEN?'Needs improvement':'Verbetering nodig')}</span>
+</div>
+<h3>${isEN?'Behaviour analysis':'Gedragsanalyse'}</h3>
+<table><thead><tr style="background:#0097a7;color:#fff">
+  <th style="padding:7px 10px;text-align:left">${isEN?'Competency':'Competentie'}</th>
+  <th style="padding:7px 10px;text-align:left">Score</th>
+  <th style="padding:7px 10px;text-align:left">Feedback</th>
+</tr></thead><tbody>${compRows}</tbody></table>
+<h3>${isEN?'Timeline':'Tijdlijn'}</h3>
+<table><thead><tr style="background:#37474f;color:#fff">
+  <th style="padding:6px 10px;text-align:left">${isEN?'Time':'Tijd'}</th>
+  <th style="padding:6px 10px;text-align:left">${isEN?'Event':'Gebeurtenis'}</th>
+  <th style="padding:6px 10px;text-align:left">${isEN?'Description':'Omschrijving'}</th>
+</tr></thead><tbody>${tlItems}</tbody></table>
+<h3>${isEN?'Learning points':'Leerpunten'}</h3>
+<ul>${lpItems}</ul>
+<h3>${isEN?'Conversation log':'Gesprekslog'}</h3>
+<table><thead><tr style="background:#455a64;color:#fff">
+  <th style="padding:6px 10px;text-align:left">${isEN?'Speaker':'Spreker'}</th>
+  <th style="padding:6px 10px;text-align:left">${isEN?'Message':'Bericht'}</th>
+</tr></thead><tbody>${chatLog}</tbody></table>
+<p style="margin-top:32px;color:#aaa;font-size:11px;border-top:1px solid #eee;padding-top:8px">
+  OIP Training &amp; Tooling — OIP Live Scenario — ${date}
+</p>
+</body></html>`;
+
+  // Print via verborgen iframe — focus verlaat de player nooit
+  let printFrame = document.getElementById('print-iframe');
+  if (!printFrame) {
+    printFrame = document.createElement('iframe');
+    printFrame.id = 'print-iframe';
+    printFrame.style.cssText = 'position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;border:none;';
+    document.body.appendChild(printFrame);
+  }
+
+  const frameDoc = printFrame.contentDocument || printFrame.contentWindow.document;
+  frameDoc.open();
+  frameDoc.write(html);
+  frameDoc.close();
+
+  printFrame.onload = () => {
+    try {
+      printFrame.contentWindow.print();
+    } catch(e) {
+      console.warn('[OIP] Print via iframe mislukt, fallback naar blob:', e);
+      // Fallback: open als blob-URL (opent nieuw tabblad, geen popup)
+      const blob = new Blob([html], { type: 'text/html' });
+      const url  = URL.createObjectURL(blob);
+      window.open(url, '_blank');
+      setTimeout(() => URL.revokeObjectURL(url), 10000);
+    }
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// EXPORT — Excel-rij (via SheetJS)
+// ═══════════════════════════════════════════════════════════════
+function exportDebriefExcel() {
+  if (!lastDebriefData) return;
+  const d   = lastDebriefData;
+  const sc  = scenarioConfig?.aiScenario;
+  const par = scenarioConfig?.participant || {};
+  const date = new Date().toLocaleDateString(lang==='en'?'en-GB':'nl-NL');
+  const isEN = lang === 'en';
+  const scoreNum = Math.max(1, Math.min(10, Math.round(d.score || 5)));
+  const comps = d.competencies || [];
+
+  // Zoek competentiescore op naam (gedeeltelijke match)
+  const cScore = (...terms) => {
+    const c = comps.find(c => terms.some(t => c.name?.toLowerCase().includes(t)));
+    return c?.score || '';
+  };
+
+  const headers = [
+    isEN?'Date':'Datum',
+    isEN?'Participant':'Deelnemer',
+    isEN?'Function':'Functie',
+    isEN?'Organisation':'Organisatie',
+    isEN?'Scenario':'Scenario',
+    isEN?'Duration':'Duur',
+    isEN?'Overall score (1-10)':'Totaalscore (1-10)',
+    isEN?'Situational awareness (1-5)':'Situatiebewustzijn (1-5)',
+    isEN?'Communication (1-5)':'Communicatie (1-5)',
+    isEN?'Prioritisation (1-5)':'Prioriteitstelling (1-5)',
+    isEN?'Procedure compliance (1-5)':'Procedure-opvolging (1-5)',
+    isEN?'Strong points':'Sterke punten',
+    isEN?'Improvement points':'Verbeterpunten',
+    isEN?'Notes':'Notities',
+  ];
+
+  const strongPts  = (d.learningPoints||[]).filter(lp=>lp.type==='strong').map(lp=>lp.text).join(' | ');
+  const improvePts = (d.learningPoints||[]).filter(lp=>lp.type!=='strong').map(lp=>lp.text).join(' | ');
+
+  const dataRow = [
+    date,
+    par.name||'',
+    par.role||'',
+    par.org||par.organization||'',
+    sc?.scenarioTitle||'',
+    d.durationStr||'',
+    scoreNum,
+    cScore('situati','aware'),
+    cScore('commun'),
+    cScore('prior'),
+    cScore('proced'),
+    strongPts,
+    improvePts,
+    '',
+  ];
+
+  const doExport = () => {
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet([headers, dataRow]);
+    ws['!cols'] = [{wch:12},{wch:22},{wch:22},{wch:24},{wch:30},{wch:8},
+      {wch:10},{wch:10},{wch:10},{wch:10},{wch:10},{wch:45},{wch:45},{wch:22}];
+    // Stijl headers vet
+    headers.forEach((_,i) => {
+      const cell = ws[XLSX.utils.encode_cell({r:0,c:i})];
+      if (cell) cell.s = { font: { bold: true }, fill: { fgColor: { rgb: '0097A7' } } };
+    });
+    XLSX.utils.book_append_sheet(wb, ws, isEN?'Debrief':'Debriefing');
+    const fname = `OIP_Debrief_${(par.name||'deelnemer').replace(/\s+/g,'_')}_${date.replace(/\//g,'-')}.xlsx`;
+    XLSX.writeFile(wb, fname);
+  };
+
+  if (typeof XLSX !== 'undefined') {
+    doExport();
+  } else {
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    script.onload = doExport;
+    script.onerror = () => alert(isEN
+      ? 'Could not load Excel library. Check your internet connection.'
+      : 'Excel-bibliotheek kon niet worden geladen. Controleer je internetverbinding.');
+    document.head.appendChild(script);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  const savedLang = localStorage.getItem('oip_lang');
+  if (savedLang && ['nl','en'].includes(savedLang)) {
+    lang = savedLang;
+    // Markeer de vorige keuze visueel in de overlay maar verberg haar NIET
+    document.querySelectorAll('.lang-btn').forEach(btn => {
+      const isActive = (savedLang === 'nl' && btn.textContent.includes('Nederlands'))
+                    || (savedLang === 'en' && btn.textContent.includes('English'));
+      btn.style.borderColor = isActive ? 'var(--cyan)' : '';
+      btn.style.color       = isActive ? 'var(--cyan)' : '';
+      btn.style.background  = isActive ? 'var(--cyan-dim)' : '';
+    });
+    const sw = document.getElementById('lang-switch');
+    if (sw) sw.textContent = savedLang.toUpperCase();
+  }
+});
+</script>
+</body>
+</html>
