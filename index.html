@@ -1704,8 +1704,14 @@ FORMAT — gebruik per beurt wat relevant is:
 INSTRUCTEUR: [begeleidingstekst, alleen als nodig]
 ${buildRoleFormatLines(sc)}
 [DCS-ALARM]: TAG | OMSCHRIJVING | PRIORITEIT: HOOG/MED/LAAG
+[FASE:n]  ← zet dit op een aparte regel zodra de overgang naar fase n van toepassing is
 
-BELANGRIJK: Stuur per beurt maximaal één Instructeur-regel + één of twee radio-regels. Wacht daarna altijd op de reactie van de deelnemer. Eindig het scenario pas na een reflectiegesprek met de deelnemer — nooit abrupt.`;
+BELANGRIJK:
+- Stuur per beurt maximaal één Instructeur-regel + één of twee radio-regels
+- Stuur [FASE:n] ALTIJD op een volledig aparte regel, direct na de dialoogregels van die beurt — nooit midden in een zin
+- [FASE:n] is een systeemtoken dat jij als AI stuurt — het is geen dialoog en geen rolnaam
+- Wacht na elk bericht op de reactie van de deelnemer
+- Eindig het scenario pas na een reflectiegesprek met de deelnemer — nooit abrupt`;
   }
 
   // ── ROUTE B: Geen JSON — fallback demo-template ────────────────
@@ -3069,15 +3075,9 @@ async function triggerDebriefing() {
     .map((m, i) => `[${i+1}] ${m.content}`)
     .join('\n') || '(geen berichten)';
 
-  const debriefContextBlock = sc?.debriefingPrompt?.trim()
-    ? (lang==='en'
-        ? `\n\nSCENARIO AND ORGANISATION CONTEXT (tone, focus, preferences — does NOT override assessment criteria or scoring):\n${sc.debriefingPrompt.trim()}`
-        : `\n\nSCENARIO- EN ORGANISATIECONTEXT (toon, aandachtspunten, wensen — wijzigt de beoordelingscriteria en scoringsnorm NIET):\n${sc.debriefingPrompt.trim()}`)
-    : '';
-
   const debriefPrompt = `${lang==='en'
     ? 'You have just facilitated a control room training as Instructor. Write a sharp, honest debrief for the trainer and participant.'
-    : 'Je hebt zojuist een controlekamertraining begeleid als Instructeur. Schrijf nu een scherpe, eerlijke debriefing voor de trainer en deelnemer.'}${debriefContextBlock}
+    : 'Je hebt zojuist een controlekamertraining begeleid als Instructeur. Schrijf nu een scherpe, eerlijke debriefing voor de trainer en deelnemer.'}${sc?.debriefingPrompt?.trim() ? `\n\n${lang==='en'?'SPECIFIC DEBRIEF INSTRUCTIONS FOR THIS SCENARIO':'SPECIFIEKE DEBRIEFING-INSTRUCTIES VOOR DIT SCENARIO'}:\n${sc.debriefingPrompt.trim()}` : ''}
 
 TRAININGSDATA:
 Scenario: ${sc?.scenarioTitle || 'onbekend'}
