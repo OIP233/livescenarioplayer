@@ -33,6 +33,8 @@
   --blue-bg:      #0c2240;
   --cyan:         #26e0ff;
   --cyan-bg:      #082c3a;
+  --purple:       #a78bfa;
+  --purple-dim:   #2e1e4e;
 
   --mono: 'Share Tech Mono', monospace;
   --sans: 'Barlow', sans-serif;
@@ -399,6 +401,9 @@ html, body {
   transition: width 1s linear, background-color .5s;
   transform-origin: left;
 }
+#phase-timer.briefing-mode #phase-timer-label { color: var(--purple, #9b8fff); }
+#phase-timer.briefing-mode #phase-timer-name  { color: var(--purple, #9b8fff); }
+#phase-timer.briefing-mode #phase-timer-bar   { background: var(--purple, #9b8fff); }
 
 /* ── CENTRE: STORYLINE + ZENDINVOER ──────────────── */
 #centre-panel {
@@ -1789,6 +1794,77 @@ function startClock() {
 
 let phaseTimerInterval = null; // Interval voor de visuele countdown
 
+// ─── Briefing-timer ────────────────────────────────────────────────────────
+// Toont een paarse timer voor de briefing-fase (vóór fase 1).
+// Schakel naar fase-timers zodra [FASE:1] ontvangen wordt (handlePhaseTransition).
+let briefingTimerInterval = null;
+let briefingTimerActive   = false;
+
+function startBriefingTimer(durationSec) {
+  if (briefingTimerInterval) { clearInterval(briefingTimerInterval); briefingTimerInterval = null; }
+  briefingTimerActive = true;
+
+  const isEN    = lang === 'en';
+  const dur     = durationSec || 120;
+  const startMs = Date.now();
+
+  const timerEl  = document.getElementById('phase-timer');
+  const labelEl  = document.getElementById('phase-timer-label');
+  const nameEl   = document.getElementById('phase-timer-name');
+  const countEl  = document.getElementById('phase-timer-countdown');
+  const barEl    = document.getElementById('phase-timer-bar');
+  if (!timerEl) return;
+
+  timerEl.classList.add('visible', 'briefing-mode');
+  labelEl.textContent = 'Briefing';
+  nameEl.textContent  = isEN ? 'Pre-scenario' : 'Voorbereidend';
+  countEl.className   = '';
+  barEl.style.transition      = 'none';
+  barEl.style.width           = '100%';
+  barEl.style.backgroundColor = 'var(--purple, #a78bfa)';
+
+  // DCS-melding "Briefing gestart" bij aanvang
+  addAlarm('lo', 'DCS', isEN ? 'Briefing started' : 'Briefing gestart', '');
+  addMsg('alarm', null, isEN ? 'DCS: Briefing started' : 'DCS: Briefing gestart');
+
+  // Automatische overgang naar fase 1 als de timer afloopt
+  const autoTransitionTimeout = setTimeout(() => {
+    if (briefingTimerActive) {
+      firstResponseReceived = true; // guards overslaan
+      handlePhaseTransition(1);
+    }
+  }, dur * 1000);
+
+  function tick() {
+    if (!briefingTimerActive) {
+      clearTimeout(autoTransitionTimeout);
+      return;
+    }
+    const elapsed   = (Date.now() - startMs) / 1000;
+    const remaining = Math.max(0, dur - elapsed);
+    const pct       = (remaining / dur) * 100;
+
+    barEl.style.transition      = 'width 1s linear';
+    barEl.style.width           = pct + '%';
+    barEl.style.backgroundColor = 'var(--purple, #a78bfa)';
+    countEl.className = remaining <= 30 ? 'critical' : remaining <= 60 ? 'urgent' : '';
+
+    const m = Math.floor(remaining / 60);
+    const s = Math.floor(remaining % 60);
+    countEl.textContent = String(m).padStart(2,'0') + ':' + String(s).padStart(2,'0');
+  }
+
+  tick();
+  briefingTimerInterval = setInterval(tick, 1000);
+}
+
+function stopBriefingTimer() {
+  briefingTimerActive = false;
+  if (briefingTimerInterval) { clearInterval(briefingTimerInterval); briefingTimerInterval = null; }
+  const timerEl = document.getElementById('phase-timer');
+  if (timerEl) timerEl.classList.remove('briefing-mode');
+}
+
 function startPhaseTimers() {
   clearPhaseTimers();
   phaseTimerSchedule = [];
@@ -1891,6 +1967,7 @@ function forceScenarioEnd() {
   clockInterval = null;
   clearPhaseTimers();
   hidePhaseTimer();
+  stopBriefingTimer();
   blockIframe(true);
   document.getElementById('pause-btn')?.classList.remove('visible');
 
@@ -1953,6 +2030,9 @@ function pauseScenario() {
   clearPhaseTimers();
   if (phaseTimerInterval) { clearInterval(phaseTimerInterval); phaseTimerInterval = null; }
 
+  // Briefing-timer bevriezen
+  if (briefingTimerInterval) { clearInterval(briefingTimerInterval); briefingTimerInterval = null; }
+
   // UI updaten
   const btn = document.getElementById('pause-btn');
   const isEN = lang === 'en';
@@ -1975,18 +2055,23 @@ function resumeScenario() {
     document.getElementById('sim-clock').textContent = getElapsedStr();
   }, 1000);
 
-  // Fase-timers herplannen met gecorrigeerde resterende tijd
-  const elapsed = (Date.now() - simStartMs);
-  phaseTimers = phaseTimerSchedule
-    .map(({ delay, fn }) => {
-      const remaining = delay - elapsed;
-      if (remaining > 0) return setTimeout(fn, remaining);
-      return null;
-    })
-    .filter(Boolean);
+  if (briefingTimerActive) {
+    // Briefing-timer hervatten (herstart de visuele tick)
+    startBriefingTimer(scenarioConfig?.aiScenario?.briefing?.dur || 120);
+  } else {
+    // Fase-timers herplannen met gecorrigeerde resterende tijd
+    const elapsed = (Date.now() - simStartMs);
+    phaseTimers = phaseTimerSchedule
+      .map(({ delay, fn }) => {
+        const remaining = delay - elapsed;
+        if (remaining > 0) return setTimeout(fn, remaining);
+        return null;
+      })
+      .filter(Boolean);
 
-  // Visuele fase-timer hervatten
-  startPhaseTimerDisplay(currentPhaseIndex >= 0 ? currentPhaseIndex : 0);
+    // Visuele fase-timer hervatten
+    startPhaseTimerDisplay(currentPhaseIndex >= 0 ? currentPhaseIndex : 0);
+  }
 
   // UI herstellen
   const btn = document.getElementById('pause-btn');
@@ -2374,14 +2459,16 @@ function startScenario() {
 
   getAudioCtx();
 
-  // Storyline iframe laden — gebruik slideUrl van fase 1
-  const fase1Url = scenarioConfig?.aiScenario?.phases?.[0]?.slideUrl?.trim()
-                || scenarioConfig?.aiScenario?.storylineUrl || '';
-  if (fase1Url) {
+  // Storyline iframe laden — briefing URL heeft voorrang op fase 1 URL
+  const briefingUrl = scenarioConfig?.aiScenario?.briefing?.slideUrl?.trim() || '';
+  const fase1Url    = scenarioConfig?.aiScenario?.phases?.[0]?.slideUrl?.trim()
+                   || scenarioConfig?.aiScenario?.storylineUrl || '';
+  const initialUrl  = briefingUrl || fase1Url;
+  if (initialUrl) {
     const frame = document.getElementById('storyline-frame');
     const ph    = document.getElementById('storyline-placeholder');
-    document.getElementById('storyline-url-display').textContent = fase1Url;
-    frame.src = fase1Url;
+    document.getElementById('storyline-url-display').textContent = initialUrl;
+    frame.src = initialUrl;
     frame.style.display = 'block';
     document.getElementById('expand-btn')?.classList.add('visible');
     ph.style.display = 'none';
@@ -2396,16 +2483,18 @@ function runBootSequence() {
   const par = scenarioConfig?.participant || {};
   const isEN = lang === 'en';
 
+  const hasBriefing = !!(sc?.briefing?.slideUrl?.trim() || sc?.briefing?.dir?.trim());
+
   const checks = isEN ? [
     { label: 'AI ENGINE',        status: 'ONLINE' },
     { label: 'SCENARIO CONFIG',  status: 'LOADED' },
     { label: 'COMMUNICATION',    status: 'ACTIVE' },
-    { label: 'SCENARIO',         status: 'ACTIVE' },
+    { label: hasBriefing ? 'BRIEFING' : 'SCENARIO', status: hasBriefing ? 'ACTIVE' : 'ACTIVE' },
   ] : [
     { label: 'AI SYSTEEM',       status: 'ONLINE' },
     { label: 'SCENARIO CONFIG',  status: 'GELADEN' },
     { label: 'COMMUNICATIE',     status: 'ACTIEF' },
-    { label: 'SCENARIO',         status: 'ACTIEF' },
+    { label: hasBriefing ? 'BRIEFING' : 'SCENARIO', status: hasBriefing ? 'ACTIEF' : 'ACTIEF' },
   ];
 
   const overlay = document.getElementById('boot-overlay');
@@ -2462,7 +2551,9 @@ function runBootSequence() {
   // Go-label
   setTimeout(() => {
     const goEl = document.getElementById('boot-go-label');
-    goEl.textContent = isEN ? '— SCENARIO ACTIVE —' : '— SCENARIO ACTIEF —';
+    goEl.textContent = hasBriefing
+      ? (isEN ? '— BRIEFING ACTIVE —' : '— BRIEFING ACTIEF —')
+      : (isEN ? '— SCENARIO ACTIVE —' : '— SCENARIO ACTIEF —');
     goEl.classList.add('visible');
   }, barStart + 900);
 
@@ -2522,6 +2613,14 @@ function initScenario() {
 
   addAlarm('inf', 'SYS', 'Systeem operationeel', '');
 
+  // Briefing aanwezig? Toon alarm + start briefing-timer; fase-timers starten pas na [FASE:1]
+  const briefingCfg = scenarioConfig?.aiScenario?.briefing;
+  const hasBriefing = !!(briefingCfg?.slideUrl?.trim() || briefingCfg?.dir?.trim());
+  if (hasBriefing) {
+    addAlarm('inf', 'BRIEFING',
+      lang === 'en' ? 'Pre-scenario briefing active' : 'Voorbereidende briefing actief', '');
+  }
+
   const welcomeMsg = participantName
     ? `── Scenario gestart · ${participantName} · ${getSimTimeStr()} ──`
     : `── Scenario gestart · ${getSimTimeStr()} ──`;
@@ -2537,7 +2636,12 @@ function initScenario() {
     pauseBtn.classList.add('visible');
   }
   renderPhaseControls();
-  startPhaseTimers();
+
+  if (hasBriefing) {
+    startBriefingTimer(briefingCfg.dur || 120);
+  } else {
+    startPhaseTimers();
+  }
   callClaude('START', true);
 }
 
@@ -2794,19 +2898,43 @@ function parseAndDisplay(text) {
   const lines    = text.split('\n').filter(l => l.trim());
   const speakerRx = buildSpeakerRegex();
   let hadAlarm   = false;
+  const inBriefing = briefingTimerActive; // snapshot — geldig voor hele response
 
   for (const raw of lines) {
     const l = raw.trim();
     if (!l) continue;
 
     // Fase-overgang token — [FASE:1] t/m [FASE:9]
-    // Matcht ook als het token gecombineerd staat met andere tekst op dezelfde regel
     const faseMatch = l.match(/\[FASE:(\d+)\]/i);
     if (faseMatch) {
       handlePhaseTransition(parseInt(faseMatch[1]));
-      // Ga door met verwerken van de rest van de regel (bijv. als er ook tekst bij staat)
       if (l.replace(/\[FASE:\d+\]/gi, '').trim().length === 0) continue;
     }
+
+    // Tijdens briefing: alleen Instructeur en DCS-berichten tonen
+    // Operationele rollen (dispatcher, velddienst etc.) zijn nog niet actief
+    if (inBriefing) {
+      if (l.startsWith('[DCS-ALARM]') || l.startsWith('[DCS]')) {
+        const parts = l.replace(/^\[DCS-ALARM\]|\[DCS\]/,'').split('|').map(p=>p.trim());
+        const tag   = parts[0]||'DCS';
+        const msg   = parts[1]||l;
+        const prio  = (parts[2]||'').toLowerCase();
+        const t     = prio.includes('hoog')||prio.includes('high')?'hi':prio.includes('med')?'med':'lo';
+        addAlarm(t, tag, msg, parts[2]||'');
+        addMsg('alarm', null, `${tag}: ${msg}`);
+        hadAlarm = true;
+      } else if (/^INSTRUCTEUR:/i.test(l) || /^INSTRUCTOR:/i.test(l)) {
+        const msg = l.slice(l.indexOf(':')+1).trim();
+        if (msg) addMsg('instructor', 'INSTRUCTEUR', msg);
+      } else if (!l.startsWith('[SCENARIO-EINDE]') && !l.match(/\[FASE:\d+\]/i)
+                 && l.length > 10 && /[.?!]$/.test(l) && !l.includes(':')) {
+        addMsg('instructor', 'INSTRUCTEUR', l);
+      }
+      // Operationele sprekers worden tijdens briefing genegeerd
+      continue;
+    }
+
+    // Normaal scenario-flow (na briefing / zonder briefing)
 
     // DCS-alarm
     if (l.startsWith('[DCS-ALARM]') || l.startsWith('[DCS]')) {
@@ -2819,7 +2947,7 @@ function parseAndDisplay(text) {
       addMsg('alarm', null, `${tag}: ${msg}`);
       hadAlarm = true;
     }
-    // Instructeur — vaste systeemrol
+    // Instructeur
     else if (/^INSTRUCTEUR:/i.test(l) || /^INSTRUCTOR:/i.test(l)) {
       const msg = l.slice(l.indexOf(':')+1).trim();
       if (msg) addMsg('instructor', 'INSTRUCTEUR', msg);
@@ -2831,11 +2959,8 @@ function parseAndDisplay(text) {
       const msg    = l.slice(colon+1).trim();
       if (msg) addMsg('ai', sender, msg);
     }
-    // Overige regels — alleen tonen als ze expliciet van de Instructeur zijn
-    // of als ze op een instructeur-bericht lijken (beginnen met een bekende aanduiding)
+    // Overige regels — alleen als ze op een instructeur-bericht lijken
     else if (!l.startsWith('[SCENARIO-EINDE]') && !l.match(/\[FASE:\d+\]/i) && l.length > 10) {
-      // Alleen weergeven als het echt een begeleidende zin lijkt
-      // (geen spreker-prefix, maar wel een volledige zin met leesteken)
       if (/[.?!]$/.test(l) && l.length > 25 && !l.includes(':')) {
         addMsg('instructor', 'INSTRUCTEUR', l);
       }
@@ -2853,6 +2978,7 @@ function parseAndDisplay(text) {
     clockInterval = null;
     clearPhaseTimers();
     hidePhaseTimer();
+    stopBriefingTimer();
     blockIframe(true);
     document.getElementById('pause-btn')?.classList.remove('visible');
     waitForQueue(() => {
@@ -2869,8 +2995,11 @@ async function callClaude(userMsg, isInit=false) {
   showTyping(true);
   setInput(false);
 
+  const briefingActive = briefingTimerActive;
   const content = isInit
-    ? `START: Geef het openingsbericht van de Instructeur (één korte zin die het scenario introduceert), gevolgd door het eerste radiosignaal van de dispatcher (één zin). Stuur ook één DCS-systeembericht. Stuur daarna NIETS meer — wacht op de reactie van de deelnemer. BELANGRIJK: stuur GEEN [FASE:n] tokens in dit openingsbericht — fase 1 is al actief bij scenario-start.`
+    ? (briefingActive
+        ? `START: Geef alleen één begeleidend openingsbericht van de Instructeur die de deelnemer verwelkomt en de briefing introduceert. Stuur GEEN berichten van operationele rollen (dispatcher, velddienst etc.) — die zijn nog niet actief. Stuur GEEN [FASE:n] tokens. Wacht daarna op de reactie van de deelnemer.`
+        : `START: Geef het openingsbericht van de Instructeur (één korte zin die het scenario introduceert), gevolgd door het eerste radiosignaal van de dispatcher (één zin). Stuur ook één DCS-systeembericht. Stuur daarna NIETS meer — wacht op de reactie van de deelnemer. BELANGRIJK: stuur GEEN [FASE:n] tokens in dit openingsbericht — fase 1 is al actief bij scenario-start.`)
     : userMsg;
 
   const systemPrompt = buildSystemPrompt();
@@ -2989,14 +3118,43 @@ function handlePhaseTransition(phaseNum) {
 
   if (idx < 0 || idx >= phases.length) return;
 
-  // [FASE:1] in openingsbericht negeren
-  if (phaseNum === 1 && !firstResponseReceived) {
+  // [FASE:1] in openingsbericht negeren (tenzij briefing actief was)
+  if (phaseNum === 1 && !firstResponseReceived && !briefingTimerActive) {
     currentPhaseIndex = 0;
     return;
   }
 
   // Dubbele trigger negeren
   if (idx === currentPhaseIndex) return;
+
+  // Briefing → Fase 1 overgang: stop briefing-timer, start fase-timers
+  if (briefingTimerActive) {
+    stopBriefingTimer();
+    // Laad fase 1 slideUrl als die verschilt van de huidige (briefing) URL
+    const fase1Url = phases[0]?.slideUrl?.trim();
+    const briefingUrl = sc.briefing?.slideUrl?.trim();
+    if (fase1Url && fase1Url !== briefingUrl) {
+      const frame = document.getElementById('storyline-frame');
+      const ph    = document.getElementById('storyline-placeholder');
+      if (frame) {
+        frame.src = fase1Url;
+        frame.style.display = 'block';
+        document.getElementById('storyline-url-display').textContent = fase1Url;
+        document.getElementById('expand-btn')?.classList.add('visible');
+        if (ph) ph.style.display = 'none';
+      }
+    }
+    startPhaseTimers();
+    // Fase 1 is nu actief — sla over naar de gewone flow maar update de index
+    currentPhaseIndex = idx;
+    document.querySelectorAll('.phase-btn').forEach((btn, i) => {
+      btn.classList.toggle('active', i === idx);
+    });
+    startPhaseTimerDisplay(idx);
+    const label = phases[idx]?.label || `Fase ${phaseNum}`;
+    addAlarm('inf', lang==='en'?`PHASE ${phaseNum}`:`FASE ${phaseNum}`, label, '');
+    return;
+  }
 
   currentPhaseIndex = idx;
   const phase = phases[idx];
