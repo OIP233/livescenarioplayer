@@ -331,6 +331,43 @@ html, body {
 .alarm-row small { font-size:11px; color:var(--text-dim); }
 .alarm-time { float:right; opacity:.6; font-size:11px; }
 
+/* Acknowledge-state */
+.alarm-row.ackable {
+  cursor: pointer;
+  transition: opacity .2s, filter .2s;
+}
+.alarm-row.ackable:hover:not(.acked) {
+  filter: brightness(1.25);
+  outline: 1px solid rgba(255,255,255,.15);
+}
+.alarm-row.acked {
+  opacity: .38;
+  filter: grayscale(.7);
+  animation: none !important;
+  cursor: default;
+}
+.alarm-row.acked b { color: var(--text-dim); }
+.ack-badge {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  background: rgba(62,232,122,.18);
+  color: var(--green);
+  border: 1px solid rgba(62,232,122,.3);
+  border-radius: 3px;
+  padding: 1px 5px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+.ack-time {
+  font-size: 10px;
+  color: var(--green);
+  opacity: .75;
+  margin-left: 4px;
+}
+
 /* Situatie blok */
 #situation {
   border-top: 2px solid var(--border);
@@ -860,6 +897,24 @@ html, body {
 .tl-dot.camera    { background:var(--green); box-shadow:0 0 4px var(--green); }
 .tl-dot.decision  { background:var(--cyan);  box-shadow:0 0 4px var(--cyan); }
 .tl-dot.milestone { background:var(--text-dim); }
+.tl-dot.ack-fast  { background:var(--green); box-shadow:0 0 4px var(--green); }
+.tl-dot.ack-ok    { background:var(--cyan);  box-shadow:0 0 4px var(--cyan); }
+.tl-dot.ack-slow  { background:var(--amber); box-shadow:0 0 4px var(--amber); }
+.tl-dot.ack-miss  { background:var(--red);   box-shadow:0 0 4px var(--red); border-radius:2px; }
+/* ACK-pijl: verbindingslijn tussen alarm-event en ack-event */
+.tl-ack-pair { position:relative; }
+.tl-ack-connector {
+  position:absolute; left:4px; top:14px;
+  width:2px; background:var(--border-hi);
+  border-radius:1px;
+}
+.tl-ack-connector.fast  { background:var(--green); opacity:.5; }
+.tl-ack-connector.ok    { background:var(--cyan);  opacity:.4; }
+.tl-ack-connector.slow  { background:var(--amber); opacity:.5; }
+.tl-ack-connector.miss  { background:var(--red);   opacity:.4; }
+.tl-tag.ack  { background:rgba(62,232,122,.15); color:var(--green); }
+.tl-tag.ack-slow { background:var(--amber-dim); color:var(--amber); }
+.tl-tag.ack-miss { background:var(--red-dim);   color:var(--red); }
 .tl-time { font-family:var(--mono); font-size:11px; color:var(--text-dim); flex-shrink:0; min-width:38px; margin-top:3px; }
 .tl-text { font-size:13px; color:var(--text); line-height:1.55; }
 .tl-text strong { color:var(--text-bright); }
@@ -1440,6 +1495,16 @@ html, body {
     <div class="panel-hdr">
       <div class="led" id="alarm-led"></div>
       DCS Alarmen
+      <span id="unack-count" style="display:none;margin-left:auto;font-family:var(--mono);font-size:10px;
+            letter-spacing:1px;background:var(--red-dim);color:var(--red);border:1px solid var(--red);
+            border-radius:3px;padding:1px 6px"></span>
+      <div id="alarm-vol-wrap" title="Alarmvolume" style="display:flex;align-items:center;gap:5px;margin-left:8px;flex-shrink:0">
+        <span id="alarm-vol-icon" style="font-size:12px;cursor:pointer;user-select:none;opacity:.7" onclick="toggleAlarmMute()">🔔</span>
+        <input type="range" id="alarm-vol-slider" min="0" max="100" value="70"
+          oninput="setAlarmVolume(this.value)"
+          style="width:52px;height:3px;accent-color:var(--cyan);cursor:pointer;opacity:.7"
+          title="Alarmvolume"/>
+      </div>
     </div>
     <div id="alarm-list"></div>
 
@@ -1578,6 +1643,15 @@ html, body {
               <div class="debrief-lbl">Duur scenario</div>
               <div id="debrief-duration"></div>
             </div>
+          </div>
+          <!-- ACK-statistieken rij -->
+          <div id="debrief-ack-row" style="display:none;margin-top:10px;padding:8px 10px;
+               background:var(--bg3);border-radius:4px;border:1px solid var(--border);
+               font-family:var(--mono);font-size:11px;gap:16px;flex-wrap:wrap;align-items:center">
+            <span id="ack-stat-total" style="color:var(--text-dim)"></span>
+            <span id="ack-stat-avg" style="color:var(--cyan)"></span>
+            <span id="ack-stat-slow" style="color:var(--amber)"></span>
+            <span id="ack-stat-unacked" style="color:var(--red)"></span>
           </div>
         </div>
 
@@ -1968,6 +2042,11 @@ function forceScenarioEnd() {
   clearPhaseTimers();
   hidePhaseTimer();
   stopBriefingTimer();
+  // Annuleer alle openstaande nudge-timeouts
+  alarmsFired.forEach(a => {
+    const el = document.getElementById(a.id);
+    if (el?._nudgeTimeout) { clearTimeout(el._nudgeTimeout); el._nudgeTimeout = null; }
+  });
   blockIframe(true);
   document.getElementById('pause-btn')?.classList.remove('visible');
 
@@ -2629,6 +2708,7 @@ function initScenario() {
   firstResponseReceived = false;
   currentPhaseIndex = -1;
   isPaused = false;
+  ackOrderCounter = 0;
   const pauseBtn = document.getElementById('pause-btn');
   if (pauseBtn) {
     pauseBtn.textContent = lang === 'en' ? '⏸ Pause' : '⏸ Pauze';
@@ -2655,94 +2735,321 @@ function setSituation(txt) {
 // ═══════════════════════════════════════════════════════════════
 // ALARM AUDIO (Web Audio API — geen externe bestanden nodig)
 // ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+// AUDIO ENGINE — Industrieel DCS-alarmgeluid (EEMUA 191-gebaseerd)
+// ═══════════════════════════════════════════════════════════════
 let audioCtx = null;
+let alarmVolume = 0.70;   // 0.0 – 1.0, instelbaar via slider
+let alarmMuted  = false;
 
 function getAudioCtx() {
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  // Browser vereist user-gesture voor AudioContext — resume als gesuspend
   if (audioCtx.state === 'suspended') audioCtx.resume();
   return audioCtx;
 }
 
-// Speelt een toon-sequentie af
-// tones: array van { freq, dur, vol } — dur en vol optioneel
-function playTones(tones) {
+function setAlarmVolume(val) {
+  alarmVolume = Math.max(0, Math.min(1, parseInt(val) / 100));
+  alarmMuted  = (alarmVolume === 0);
+  const icon = document.getElementById('alarm-vol-icon');
+  if (icon) icon.textContent = alarmMuted ? '🔇' : alarmVolume < 0.4 ? '🔉' : '🔔';
+}
+
+function toggleAlarmMute() {
+  const slider = document.getElementById('alarm-vol-slider');
+  if (alarmMuted) {
+    alarmVolume = 0.70;
+    alarmMuted  = false;
+    if (slider) slider.value = 70;
+  } else {
+    alarmVolume = 0;
+    alarmMuted  = true;
+    if (slider) slider.value = 0;
+  }
+  const icon = document.getElementById('alarm-vol-icon');
+  if (icon) icon.textContent = alarmMuted ? '🔇' : '🔔';
+}
+
+// Laagste bouwsteen: speelt één toon met opgegeven golfvorm, harmonics en envelope
+// opts: { freq, dur, vol, wave, gap, detune, harmonics }
+function playNote(ctx, startTime, opts) {
+  const {
+    freq      = 440,
+    dur       = 0.15,
+    vol       = 0.20,
+    wave      = 'sine',      // sine | square | sawtooth | triangle
+    gap       = 0.05,
+    detune    = 0,
+    harmonics = []           // [{ ratio, vol }] — extra boventonen
+  } = opts;
+
+  const master = ctx.createGain();
+  master.connect(ctx.destination);
+
+  // Envelope: attack / sustain / release
+  const attack  = Math.min(0.012, dur * 0.1);
+  const release = Math.min(0.035, dur * 0.25);
+  master.gain.setValueAtTime(0, startTime);
+  master.gain.linearRampToValueAtTime(vol, startTime + attack);
+  master.gain.setValueAtTime(vol, startTime + dur - release);
+  master.gain.linearRampToValueAtTime(0, startTime + dur);
+
+  // Hoofdtoon
+  function addOsc(frequency, volume, waveType) {
+    const osc  = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(master);
+    osc.type = waveType;
+    osc.frequency.setValueAtTime(frequency, startTime);
+    if (detune) osc.detune.setValueAtTime(detune, startTime);
+    gain.gain.setValueAtTime(volume, startTime);
+    osc.start(startTime);
+    osc.stop(startTime + dur);
+  }
+
+  addOsc(freq, 1.0, wave);
+
+  // Boventonen voor klankkleur
+  harmonics.forEach(h => addOsc(freq * h.ratio, h.vol, 'sine'));
+
+  return dur + gap;
+}
+
+// Speelt een sequentie van noten
+// sequence: array van note-opts objecten
+// volScale: extra schaalfactor (bijv. 0.6 voor nudge)
+function playSequence(sequence, volScale = 1.0) {
+  if (alarmMuted || alarmVolume === 0) return;
   try {
     const ctx  = getAudioCtx();
-    const now  = ctx.currentTime;
+    const now  = ctx.currentTime + 0.01;
     let   time = now;
-
-    tones.forEach(({ freq, dur = 0.12, vol = 0.18, gap = 0.04 }) => {
-      const osc  = ctx.createOscillator();
-      const gain = ctx.createGain();
-
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-
-      osc.type      = 'sine';
-      osc.frequency.setValueAtTime(freq, time);
-
-      // Zachte aanslag en uitloop — voorkomt klikgeluid
-      gain.gain.setValueAtTime(0, time);
-      gain.gain.linearRampToValueAtTime(vol, time + 0.015);
-      gain.gain.setValueAtTime(vol, time + dur - 0.02);
-      gain.gain.linearRampToValueAtTime(0, time + dur);
-
-      osc.start(time);
-      osc.stop(time + dur);
-
-      time += dur + gap;
+    const scale = alarmVolume * volScale;
+    sequence.forEach(note => {
+      time += playNote(ctx, time, { ...note, vol: (note.vol || 0.20) * scale });
     });
-  } catch(e) {
-    // Audio niet beschikbaar — stille fallback
-  }
+  } catch(e) { /* Audio niet beschikbaar */ }
 }
 
-// Drie niveaus — karakter gebaseerd op DCS-praktijk
+// ── ALARMGELUIDEN PER TYPE ────────────────────────────────────────────────
+// Gebaseerd op EEMUA 191 richtlijnen:
+// - Prioriteit 1 (HOOG/HI): urgent, repetitief, hoog volume, <3s herhaalbaar
+// - Prioriteit 2 (MIDDEL/MED): duidelijk maar minder urgent
+// - Prioriteit 3 (LAAG/LO): subtiel, informatief karakter
+// - Informatief (INF): zacht, neutraal
+// - Systeem: elektronisch karakter
+// - Briefing DCS: neutraal systeembericht
+// - ACK-bevestiging: positief, kort
+
 function playAlarmSound(type) {
-  if (type === 'inf') return; // Informatief — geen geluid
+  switch(type) {
 
-  if (type === 'lo') {
-    // Laag — één korte, zachte toon
-    playTones([
-      { freq: 880, dur: 0.14, vol: 0.12 }
-    ]);
-  }
+    case 'hi':
+      // PRIORITEIT 1 — Urgent repeating klaxon
+      // Twee scherpe tonen snel na elkaar, hoog + dalend — industrieel waarschuwingskarakter
+      playSequence([
+        { freq:1760, dur:0.09, vol:0.35, wave:'square',   gap:0.03,
+          harmonics:[{ratio:2,vol:0.15},{ratio:3,vol:0.07}] },
+        { freq:1318, dur:0.09, vol:0.35, wave:'square',   gap:0.03,
+          harmonics:[{ratio:2,vol:0.15}] },
+        { freq:1760, dur:0.09, vol:0.35, wave:'square',   gap:0.03,
+          harmonics:[{ratio:2,vol:0.15}] },
+        { freq:1318, dur:0.14, vol:0.32, wave:'square',   gap:0.00 }
+      ]);
+      break;
 
-  else if (type === 'med') {
-    // Middel — twee tonen, iets luider
-    playTones([
-      { freq: 1047, dur: 0.13, vol: 0.20, gap: 0.06 },
-      { freq: 1175, dur: 0.13, vol: 0.20 }
-    ]);
-  }
+    case 'med':
+      // PRIORITEIT 2 — Dubbele toon, warmer karakter (sawtooth geeft aanwezige klank)
+      playSequence([
+        { freq:987,  dur:0.13, vol:0.25, wave:'sawtooth', gap:0.05,
+          harmonics:[{ratio:1.5,vol:0.12},{ratio:2,vol:0.08}] },
+        { freq:1175, dur:0.18, vol:0.22, wave:'sawtooth', gap:0.00,
+          harmonics:[{ratio:1.5,vol:0.10}] }
+      ]);
+      break;
 
-  else if (type === 'hi') {
-    // Hoog — drie tonen, dalend, urgent karakter
-    playTones([
-      { freq: 1480, dur: 0.11, vol: 0.30, gap: 0.04 },
-      { freq: 1480, dur: 0.11, vol: 0.30, gap: 0.04 },
-      { freq: 1109, dur: 0.22, vol: 0.28 }
-    ]);
+    case 'lo':
+      // PRIORITEIT 3 — Enkelvoudige zachte ping, driehoeksgolf (zacht en niet opdringerig)
+      playSequence([
+        { freq:660,  dur:0.18, vol:0.14, wave:'triangle', gap:0.06,
+          harmonics:[{ratio:2,vol:0.06}] },
+        { freq:784,  dur:0.12, vol:0.11, wave:'triangle', gap:0.00 }
+      ]);
+      break;
+
+    case 'inf':
+      // INFORMATIEF — Zeer subtiele enkele klik/tick (systeemstatus)
+      playSequence([
+        { freq:1047, dur:0.06, vol:0.07, wave:'sine',     gap:0.00 }
+      ]);
+      break;
+
+    default:
+      break;
   }
 }
+
+// ACK-bevestigingstoon — positief, oplopend (duidelijk anders dan alarm)
+function playAckSound() {
+  playSequence([
+    { freq:880,  dur:0.06, vol:0.13, wave:'sine', gap:0.02 },
+    { freq:1320, dur:0.09, vol:0.11, wave:'sine', gap:0.00 }
+  ]);
+}
+
+// Nudge-toon — herhaling van het alarmtype, zachter (55% volume)
+function playNudgeSound(type) {
+  switch(type) {
+    case 'hi':
+      playSequence([
+        { freq:1760, dur:0.07, vol:0.35, wave:'square', gap:0.04,
+          harmonics:[{ratio:2,vol:0.10}] },
+        { freq:1318, dur:0.07, vol:0.35, wave:'square', gap:0.00 }
+      ], 0.55);
+      break;
+    case 'med':
+      playSequence([
+        { freq:987,  dur:0.10, vol:0.25, wave:'sawtooth', gap:0.05 },
+        { freq:1175, dur:0.10, vol:0.22, wave:'sawtooth', gap:0.00 }
+      ], 0.55);
+      break;
+    case 'lo':
+      playSequence([
+        { freq:660,  dur:0.12, vol:0.14, wave:'triangle', gap:0.00 }
+      ], 0.55);
+      break;
+    default:
+      break;
+  }
+}
+
+// ── ALARM ACK SYSTEEM ──────────────────────────────────────────────────────
+// alarmsFired: array van { id, tag, msg, type, firedAt (simtime str), firedMs,
+//              ackedAt, ackDelaySec, ackOrder, nudgeFired }
+// Alleen types hi/med/lo zijn acknowledgeable; inf zijn informatief
+
+let ackOrderCounter = 0; // globale teller voor volgorde van acknowledges
+const ACK_NUDGE_THRESHOLDS = { hi: 20, med: 35, lo: 60 }; // sec per type
 
 function addAlarm(type, tag, msg, extra) {
   const list = document.getElementById('alarm-list');
   const d = document.createElement('div');
-  d.className = `alarm-row ${type}`;
-  d.innerHTML = `<b>${msg} <span class="alarm-time">${getSimTimeStr()}</span></b>
-    <small>${tag}${extra ? ' · ' + extra : ''}</small>`;
+  const isAckable = (type === 'hi' || type === 'med' || type === 'lo');
+  const alarmId = 'alarm-' + Date.now() + '-' + Math.random().toString(36).slice(2,6);
+  const firedMs = Date.now();
+  const firedAt = getSimTimeStr();
+
+  d.className = `alarm-row ${type}${isAckable ? ' ackable' : ''}`;
+  d.id = alarmId;
+  d.innerHTML = `<b>${msg} <span class="alarm-time">${firedAt}</span></b>
+    <small>${tag}${extra ? ' · ' + extra : ''}${isAckable ? ` · <em style="opacity:.6">${lang === 'en' ? 'click to acknowledge' : 'klik om te bevestigen'}</em>` : ''}</small>`;
+
+  let nudgeTimeout = null;
+  if (isAckable) {
+    const record = { id: alarmId, tag, msg, type, firedAt, firedMs, ackedAt: null, ackDelaySec: null, ackOrder: null, nudgeFired: false };
+    alarmsFired.push(record);
+    d.addEventListener('click', () => acknowledgeAlarm(alarmId, d));
+
+    // Automatische nudge als alarm niet binnen drempelwaarde acknowledged wordt
+    const nudgeSec = ACK_NUDGE_THRESHOLDS[type] || 30;
+    nudgeTimeout = setTimeout(() => {
+      const rec = alarmsFired.find(a => a.id === alarmId);
+      if (rec && !rec.ackedAt && clockInterval) {
+        rec.nudgeFired = true;
+        const nudgeMsg = lang === 'en'
+          ? `Unacknowledged alarm: ${msg}`
+          : `Onbevestigd alarm: ${msg}`;
+        // Voeg een DCS-nudge toe als informatief systeembericht
+        addAlarm('inf', `DCS ⚠`, nudgeMsg, lang === 'en' ? `${nudgeSec}s without ACK` : `${nudgeSec}s zonder bevestiging`);
+        // Speel het nudge-geluid (zachter dan origineel alarm)
+        playNudgeSound(type);
+        // Flash de originele alarm-rij kort op
+        d.style.transition = 'outline .1s';
+        d.style.outline = '2px solid var(--red)';
+        setTimeout(() => { d.style.outline = ''; }, 800);
+      }
+    }, nudgeSec * 1000);
+    // Sla timeout op zodat hij gecanceld kan worden bij ACK
+    d._nudgeTimeout = nudgeTimeout;
+  }
+
   list.appendChild(d);
   list.scrollTop = list.scrollHeight;
 
-  const led = document.getElementById('alarm-led');
-  if (type==='hi')                                   led.className='led r';
-  else if (type==='med' && led.className!=='led r')  led.className='led a';
-  else if (led.className==='led')                    led.className='led g';
-
-  // Akoestische melding
+  updateAlarmLed();
+  updateUnackCount();
   playAlarmSound(type);
+}
+
+function acknowledgeAlarm(alarmId, el) {
+  if (!el || el.classList.contains('acked')) return;
+
+  const ackedMs  = Date.now();
+  const ackAt    = getSimTimeStr();
+  const record   = alarmsFired.find(a => a.id === alarmId);
+
+  if (record) {
+    record.ackedAt     = ackAt;
+    record.ackedMs     = ackedMs;
+    record.ackDelaySec = Math.round((ackedMs - record.firedMs) / 1000);
+    record.ackOrder    = ++ackOrderCounter;
+  }
+
+  // Annuleer de nudge-timeout als die nog loopt
+  const domEl = document.getElementById(alarmId);
+  if (domEl?._nudgeTimeout) { clearTimeout(domEl._nudgeTimeout); domEl._nudgeTimeout = null; }
+
+  // Visueel: acked-state, hint verwijderen, ACK-badge tonen
+  el.classList.remove('ackable');
+  el.classList.add('acked');
+
+  const small = el.querySelector('small');
+  if (small) {
+    small.innerHTML = small.innerHTML.replace(/ · <em[^>]*>(?:klik om te bevestigen|click to acknowledge)<\/em>/, '');
+  }
+
+  const titleEl = el.querySelector('b');
+  if (titleEl) {
+    const delaySec = record?.ackDelaySec ?? 0;
+    const orderLabel = record?.ackOrder ? ` #${record.ackOrder}` : '';
+    const badge = `<span class="ack-badge">✓ ACK${orderLabel}</span><span class="ack-time">${ackAt} (+${delaySec}s)</span>`;
+    titleEl.insertAdjacentHTML('beforeend', badge);
+  }
+
+  // Bevestigingstoon
+  playAckSound();
+
+  updateAlarmLed();
+  updateUnackCount();
+}
+
+function updateAlarmLed() {
+  const led = document.getElementById('alarm-led');
+  if (!led) return;
+  const unacked = alarmsFired.filter(a => a.ackedAt === null);
+  const hasHi  = unacked.some(a => a.type === 'hi');
+  const hasMed = unacked.some(a => a.type === 'med');
+  const hasLo  = unacked.some(a => a.type === 'lo');
+  if (hasHi)       led.className = 'led r';
+  else if (hasMed) led.className = 'led a';
+  else if (hasLo)  led.className = 'led g';
+  else             led.className = 'led';   // alles acknowledged → uit
+}
+
+function updateUnackCount() {
+  const el = document.getElementById('unack-count');
+  if (!el) return;
+  const n = alarmsFired.filter(a => a.ackedAt === null && (a.type === 'hi' || a.type === 'med' || a.type === 'lo')).length;
+  if (n === 0) {
+    el.style.display = 'none';
+  } else {
+    el.style.display = 'inline';
+    el.textContent = `${n} ${lang === 'en' ? 'UNACK.' : 'ONBEV.'}`;
+    el.style.borderColor = alarmsFired.some(a => !a.ackedAt && a.type === 'hi') ? 'var(--red)' : 'var(--amber)';
+    el.style.color        = alarmsFired.some(a => !a.ackedAt && a.type === 'hi') ? 'var(--red)' : 'var(--amber)';
+    el.style.background   = alarmsFired.some(a => !a.ackedAt && a.type === 'hi') ? 'var(--red-dim)' : 'var(--amber-dim)';
+  }
 }
 
 // ── BERICHT WACHTRIJ (getrapt verschijnen + typewriter) ──────────
@@ -2968,8 +3275,10 @@ function parseAndDisplay(text) {
   }
 
   if (hadAlarm) {
-    alarmsFired.push(...lines.filter(l=>l.includes('[DCS-ALARM]')||l.includes('[DCS]')));
-    setStatus(alarmsFired.length > 2 ? 'alarm' : 'alert');
+    // LED en status worden bijgehouden via addAlarm/updateAlarmLed
+    const unackedHi  = alarmsFired.some(a => !a.ackedAt && a.type === 'hi');
+    const unackedAny = alarmsFired.some(a => !a.ackedAt && (a.type === 'hi' || a.type === 'med'));
+    setStatus(unackedHi ? 'alarm' : unackedAny ? 'alert' : 'normal');
   }
 
   if (text.includes('[SCENARIO-EINDE]')) {
@@ -2979,6 +3288,10 @@ function parseAndDisplay(text) {
     clearPhaseTimers();
     hidePhaseTimer();
     stopBriefingTimer();
+    alarmsFired.forEach(a => {
+      const el = document.getElementById(a.id);
+      if (el?._nudgeTimeout) { clearTimeout(el._nudgeTimeout); el._nudgeTimeout = null; }
+    });
     blockIframe(true);
     document.getElementById('pause-btn')?.classList.remove('visible');
     waitForQueue(() => {
@@ -3221,12 +3534,65 @@ async function triggerDebriefing() {
   const durLbl = document.querySelector('#debrief-duration-wrap .debrief-lbl');
   if (durLbl) durLbl.textContent = ui('debrief.duration');
 
+  // Vul ACK-statistieken header in
+  const ackable = alarmsFired.filter(a => a.type === 'hi' || a.type === 'med' || a.type === 'lo');
+  const ackRow  = document.getElementById('debrief-ack-row');
+  if (ackable.length && ackRow) {
+    const acked    = ackable.filter(a => a.ackedAt);
+    const unacked  = ackable.filter(a => !a.ackedAt);
+    const slowOnes = acked.filter(a => a.ackDelaySec > 45);
+    const avgDelay = acked.length
+      ? Math.round(acked.reduce((s, a) => s + a.ackDelaySec, 0) / acked.length)
+      : null;
+
+    document.getElementById('ack-stat-total').textContent =
+      lang === 'en' ? `${ackable.length} alarm${ackable.length !== 1 ? 's' : ''}` : `${ackable.length} alarm${ackable.length !== 1 ? 'en' : ''}`;
+
+    const avgEl = document.getElementById('ack-stat-avg');
+    if (avgDelay !== null) {
+      avgEl.textContent = lang === 'en' ? `avg ACK ${avgDelay}s` : `gem. ACK ${avgDelay}s`;
+      avgEl.style.color = avgDelay < 15 ? 'var(--green)' : avgDelay < 45 ? 'var(--cyan)' : 'var(--amber)';
+    } else {
+      avgEl.textContent = '';
+    }
+
+    const slowEl = document.getElementById('ack-stat-slow');
+    slowEl.textContent = slowOnes.length
+      ? (lang === 'en' ? `${slowOnes.length} slow (>45s)` : `${slowOnes.length} traag (>45s)`)
+      : '';
+    slowEl.style.display = slowOnes.length ? 'inline' : 'none';
+
+    const unEl = document.getElementById('ack-stat-unacked');
+    unEl.textContent = unacked.length
+      ? (lang === 'en' ? `${unacked.length} not acknowledged` : `${unacked.length} niet bevestigd`)
+      : (lang === 'en' ? '✓ all acknowledged' : '✓ alle bevestigd');
+    unEl.style.color = unacked.length ? 'var(--red)' : 'var(--green)';
+
+    ackRow.style.display = 'flex';
+  }
+
   // Sectie-titels
   const secTitles = document.querySelectorAll('.ds-title');
   const secKeys = ['debrief.timeline','debrief.analysis','debrief.learning'];
   secTitles.forEach((el, i) => { if (secKeys[i]) el.textContent = ui(secKeys[i]); });
 
-  const alarmDetail = alarmsFired.slice(0,10).join('\n') || 'geen alarmen';
+  const alarmDetail = alarmsFired.length
+    ? alarmsFired.slice(0, 15).map((a, i) => {
+        const ackStr = a.ackedAt
+          ? `acknowledged @ ${a.ackedAt} (+${a.ackDelaySec}s, ACK-volgorde #${a.ackOrder})`
+          : 'NIET acknowledged';
+        const nudgeStr = a.nudgeFired ? ' [nudge gestuurd]' : '';
+        return `[${a.type.toUpperCase()}] ${a.tag}: ${a.msg} @ ${a.firedAt} — ${ackStr}${nudgeStr}`;
+      }).join('\n')
+    : lang === 'en' ? 'no alarms' : 'geen alarmen';
+
+  // ACK-prioriteringsvolgorde analyse (alleen als meerdere alarmen tegelijk)
+  const ackOrdered = alarmsFired.filter(a => a.ackOrder).sort((a, b) => a.ackOrder - b.ackOrder);
+  const priorityAnalysis = ackOrdered.length >= 2
+    ? (lang === 'en'
+        ? `\nACK ORDER (participant acknowledged in this sequence): ${ackOrdered.map(a => `#${a.ackOrder} ${a.type.toUpperCase()} "${a.tag}" (+${a.ackDelaySec}s)`).join(' → ')}`
+        : `\nACK-VOLGORDE (deelnemer bevestigde in deze volgorde): ${ackOrdered.map(a => `#${a.ackOrder} ${a.type.toUpperCase()} "${a.tag}" (+${a.ackDelaySec}s)`).join(' → ')}`)
+    : '';
 
   const msgHistory = conversationHistory
     .filter(m => m.role === 'user' && !m.content.startsWith('START'))
@@ -3247,7 +3613,7 @@ BERICHTEN VAN DE DEELNEMER (chronologisch):
 ${msgHistory}
 
 ALARMEN TIJDENS SCENARIO:
-${alarmDetail}
+${alarmDetail}${priorityAnalysis}
 
 INSTRUCTIES VOOR DE EVALUATIE:
 - Wees eerlijk en direct. Een gemiddelde prestatie scoort 5-6, niet 7 of hoger.
@@ -3257,6 +3623,10 @@ INSTRUCTIES VOOR DE EVALUATIE:
 - Als de deelnemer weinig of niets heeft gecommuniceerd, benoem dat expliciet als serieus probleem.
 - Schrijf feedback die de deelnemer iets leert, niet feedback die hem een goed gevoel geeft.
 - Verwijs in de leerpunten altijd naar een specifiek moment uit het scenario met tijdstempel.
+- ALARM ACKNOWLEDGEMENT: de alarmdata bevat per alarm of en hoe snel de deelnemer het bevestigde (ACK-tijd in seconden). Beoordeel dit als onderdeel van Prioriteitstelling: <15s = snel/goed, 15-45s = acceptabel, >45s = traag/problematisch. Niet-acknowledged alarmen zijn een serieus aandachtspunt. Benoem uitschieters expliciet in de feedback.
+${lang==='en' ? '- ALARM ACKNOWLEDGEMENT: the alarm data shows whether and how quickly the participant acknowledged each alarm (ACK time in seconds). Evaluate this as part of Prioritisation: <15s = fast/good, 15-45s = acceptable, >45s = slow/problematic. Unacknowledged alarms are a serious concern. Explicitly mention outliers in the feedback.' : ''}
+- ACK-VOLGORDE BIJ MEERDERE ALARMEN: als de ACK-volgorde beschikbaar is, beoordeel of de deelnemer hoog-prioriteit alarmen vóór laag-prioriteit alarmen bevestigde. Verkeerde volgorde (bijv. een LO-alarm vóór een HI-alarm) duidt op gebrekkige prioriteitstelling en moet expliciet benoemd worden.
+${lang==='en' ? '- ACK ORDER WITH MULTIPLE ALARMS: if the ACK order is available, evaluate whether the participant acknowledged high-priority alarms before low-priority ones. Wrong order (e.g. a LO alarm before a HI alarm) indicates poor prioritisation and must be explicitly mentioned.' : ''}
 
 Geef je debriefing UITSLUITEND als geldig JSON-object — geen tekst erbuiten, geen markdown-fences:
 {
@@ -3373,23 +3743,124 @@ function renderDebrief(d, durationStr) {
   const track = document.getElementById('timeline-track');
   if (track) track.innerHTML = '';
   if (!track) { console.warn('[OIP] timeline-track niet gevonden'); }
-  if (track) track.innerHTML = '';
-  (d.timeline || []).forEach(ev => {
-    if (!track) return;
-    const tagCls = ev.type.includes('alarm') ? 'alarm'
-                 : ev.type === 'camera'      ? 'camera'
-                 : ev.type === 'decision'    ? 'action' : '';
-    track.innerHTML += `
-      <div class="tl-event">
-        <div class="tl-dot ${ev.type}"></div>
-        <div class="tl-time">${ev.time || '—'}</div>
-        <div class="tl-text">
-          ${tagCls ? `<span class="tl-tag ${tagCls}">${ev.tag||''}</span>` : ''}
-          ${ev.text || ''}
-        </div>
-      </div>`;
-  });
-  if (!d.timeline?.length && track) track.innerHTML = '<div style="color:var(--text-dim);font-size:13px">Geen tijdlijndata beschikbaar.</div>';
+
+  // Bouw tijdlijn: combineer Claude-events met ACK-data
+  const tlEvents = (d.timeline || []).map(ev => ({ ...ev, _source: 'claude' }));
+
+  // Voeg ACK-events toe op basis van alarmsFired (voor alarmen die niet in Claude's tijdlijn staan)
+  // en verrijk bestaande alarm-events met ACK-info
+  const ackableAlarms = alarmsFired.filter(a => a.type === 'hi' || a.type === 'med' || a.type === 'lo');
+
+  // Render tijdlijn met ACK-paren
+  if (track) {
+    tlEvents.forEach(ev => {
+      // Zoek bijpassend ACK-record op basis van tag/msg match
+      const matchedAck = ackableAlarms.find(a =>
+        a.tag?.toLowerCase() === ev.tag?.toLowerCase() ||
+        ev.text?.toLowerCase().includes(a.tag?.toLowerCase()) ||
+        ev.tag?.toLowerCase().includes(a.tag?.toLowerCase())
+      );
+
+      const tagCls = ev.type.includes('alarm') ? 'alarm'
+                   : ev.type === 'camera'      ? 'camera'
+                   : ev.type === 'decision'    ? 'action' : '';
+
+      if (matchedAck && ev.type.includes('alarm')) {
+        // Alarm + ACK als verbonden paar
+        const delaySec = matchedAck.ackDelaySec;
+        const ackCls   = !matchedAck.ackedAt  ? 'miss'
+                       : delaySec < 15         ? 'fast'
+                       : delaySec < 45         ? 'ok'
+                       :                         'slow';
+        const connHeight = matchedAck.ackedAt ? 28 : 0;
+
+        track.innerHTML += `
+          <div class="tl-ack-pair" style="position:relative;margin-bottom:${matchedAck.ackedAt ? 4 : 12}px">
+            ${matchedAck.ackedAt && connHeight > 0 ? `<div class="tl-ack-connector ${ackCls}" style="height:${connHeight}px"></div>` : ''}
+            <div class="tl-event" style="margin-bottom:2px">
+              <div class="tl-dot ${ev.type}"></div>
+              <div class="tl-time">${ev.time || '—'}</div>
+              <div class="tl-text">
+                <span class="tl-tag ${tagCls}">${ev.tag || ''}</span>
+                ${ev.text || ''}
+              </div>
+            </div>
+            ${matchedAck.ackedAt ? `
+            <div class="tl-event" style="margin-bottom:10px;opacity:.8">
+              <div class="tl-dot ack-${ackCls}"></div>
+              <div class="tl-time">${matchedAck.ackedAt}</div>
+              <div class="tl-text">
+                <span class="tl-tag ${ackCls === 'fast' ? 'ack' : ackCls === 'ok' ? 'ack' : 'ack-slow'}">✓ ACK #${matchedAck.ackOrder || '?'}</span>
+                ${lang === 'en' ? `Acknowledged in ${delaySec}s` : `Bevestigd na ${delaySec}s`}
+                ${delaySec > 45 ? ` <em style="color:var(--amber);font-size:11px">${lang === 'en' ? '— slow response' : '— trage respons'}</em>` : ''}
+              </div>
+            </div>` : `
+            <div class="tl-event" style="margin-bottom:10px;opacity:.7">
+              <div class="tl-dot ack-miss"></div>
+              <div class="tl-time">—</div>
+              <div class="tl-text">
+                <span class="tl-tag ack-miss">${lang === 'en' ? '✗ NOT ACK' : '✗ NIET BEV.'}</span>
+                ${lang === 'en' ? 'Alarm not acknowledged' : 'Alarm niet bevestigd'}
+              </div>
+            </div>`}
+          </div>`;
+      } else {
+        // Normaal event zonder ACK-koppeling
+        track.innerHTML += `
+          <div class="tl-event">
+            <div class="tl-dot ${ev.type}"></div>
+            <div class="tl-time">${ev.time || '—'}</div>
+            <div class="tl-text">
+              ${tagCls ? `<span class="tl-tag ${tagCls}">${ev.tag || ''}</span>` : ''}
+              ${ev.text || ''}
+            </div>
+          </div>`;
+      }
+    });
+
+    // Voeg alarmen toe die Claude niet in de tijdlijn had maar wel zijn geregistreerd
+    const taggedInTimeline = new Set(tlEvents.map(e => e.tag?.toLowerCase()));
+    ackableAlarms
+      .filter(a => !taggedInTimeline.has(a.tag?.toLowerCase()))
+      .forEach(a => {
+        const delaySec = a.ackDelaySec;
+        const ackCls   = !a.ackedAt  ? 'miss'
+                       : delaySec < 15 ? 'fast'
+                       : delaySec < 45 ? 'ok'
+                       :                 'slow';
+        track.innerHTML += `
+          <div class="tl-ack-pair" style="position:relative;margin-bottom:4px">
+            ${a.ackedAt ? `<div class="tl-ack-connector ${ackCls}" style="height:28px"></div>` : ''}
+            <div class="tl-event" style="margin-bottom:2px">
+              <div class="tl-dot alarm-${a.type}"></div>
+              <div class="tl-time">${a.firedAt}</div>
+              <div class="tl-text">
+                <span class="tl-tag alarm">${a.tag}</span>${a.msg}
+              </div>
+            </div>
+            ${a.ackedAt ? `
+            <div class="tl-event" style="margin-bottom:10px;opacity:.8">
+              <div class="tl-dot ack-${ackCls}"></div>
+              <div class="tl-time">${a.ackedAt}</div>
+              <div class="tl-text">
+                <span class="tl-tag ${ackCls === 'slow' ? 'ack-slow' : 'ack'}">✓ ACK #${a.ackOrder || '?'}</span>
+                ${lang === 'en' ? `Acknowledged in ${delaySec}s` : `Bevestigd na ${delaySec}s`}
+              </div>
+            </div>` : `
+            <div class="tl-event" style="margin-bottom:10px;opacity:.7">
+              <div class="tl-dot ack-miss"></div>
+              <div class="tl-time">—</div>
+              <div class="tl-text">
+                <span class="tl-tag ack-miss">${lang === 'en' ? '✗ NOT ACK' : '✗ NIET BEV.'}</span>
+                ${lang === 'en' ? 'Alarm not acknowledged' : 'Alarm niet bevestigd'}
+              </div>
+            </div>`}
+          </div>`;
+      });
+  }
+  if (!d.timeline?.length && !ackableAlarms.length && track) {
+    track.innerHTML = `<div style="color:var(--text-dim);font-size:13px">${lang === 'en' ? 'No timeline data available.' : 'Geen tijdlijndata beschikbaar.'}</div>`;
+  }
 
   // ── Competenties ──
   const grid = document.getElementById('competency-grid');
