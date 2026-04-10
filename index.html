@@ -9,30 +9,32 @@
 
 :root {
   /* Achtergronden — middengrijzen, comfortabel leesbaar */
-  --bg:           #1e2330;
-  --bg2:          #262d3a;
-  --bg3:          #2e3648;
-  --panel:        #364050;
-  --border:       #48566a;
-  --border-hi:    #6a80a0;
+  --bg:           #191e2a;
+  --bg2:          #1f2636;
+  --bg3:          #273040;
+  --panel:        #2e3a50;
+  --border:       #3e5070;
+  --border-hi:    #6890b8;
 
   /* Tekst — hoog contrast */
-  --text:         #e0eaf4;
-  --text-dim:     #90aabf;
-  --text-bright:  #f6fbff;
+  --text:         #e8f0f8;
+  --text-dim:     #a0bacc;
+  --text-bright:  #f8fcff;
   --text-muted:   #60788e;
 
   /* Statuskleuren — helder en vol */
-  --green:        #3ee87c;
+  --green:        #28f076;
   --green-bg:     #122e1e;
-  --amber:        #ffbe3a;
+  --amber:        #ffc840;
   --amber-bg:     #2e1e06;
-  --red:          #ff5548;
+  --red:          #ff4438;
   --red-bg:       #2e1010;
   --blue:         #52c0f8;
   --blue-bg:      #0c2240;
-  --cyan:         #26e0ff;
+  --cyan:         #00e8ff;
   --cyan-bg:      #082c3a;
+  --cyan-dim:     #082836;
+  --blue-dim:     #0c2240;
   --purple:       #a78bfa;
   --purple-dim:   #2e1e4e;
 
@@ -120,7 +122,7 @@ html, body {
 }
 #participant-display .pd-label {
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 13px;
   color: var(--text-dim);
   letter-spacing: 1px;
   text-transform: uppercase;
@@ -151,11 +153,11 @@ html, body {
   display: flex; align-items: center; gap: 10px; margin-bottom: 2px;
 }
 #participant-banner .pb-company-name {
-  font-family: var(--mono); font-size: 11px; color: var(--cyan);
+  font-family: var(--mono); font-size: 13px; color: var(--cyan);
   letter-spacing: 2px; text-transform: uppercase; opacity: .75;
 }
 #participant-banner .pb-company-tag {
-  font-family: var(--mono); font-size: 10px; padding: 1px 7px;
+  font-family: var(--mono); font-size: 13px; padding: 1px 7px;
   border-radius: 8px; border: 1px solid rgba(32,216,255,.35);
   color: var(--cyan); opacity: .7; letter-spacing: 1px;
 }
@@ -163,7 +165,7 @@ html, body {
   display: flex; align-items: center; gap: 12px;
 }
 #participant-banner .pb-label {
-  font-family: var(--mono); font-size: 11px; color: var(--cyan);
+  font-family: var(--mono); font-size: 13px; color: var(--cyan);
   letter-spacing: 2px; text-transform: uppercase; opacity: .8;
 }
 #participant-banner .pb-name {
@@ -217,7 +219,7 @@ html, body {
 
 #status-badge {
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: 13px;
   padding: 4px 12px;
   border-radius: 3px;
   letter-spacing: 1.5px;
@@ -300,25 +302,25 @@ html, body {
   border-left: 3px solid;
   border-radius: 0 4px 4px 0;
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.6;
 }
 .alarm-row.hi  {
   border-color:var(--red);
   background:rgba(255,78,64,.12);
-  color:#ff9080;
+  color:var(--red);
   animation: alarmEntryHi 2.4s ease forwards;
 }
 .alarm-row.med {
   border-color:var(--amber);
   background:rgba(255,176,48,.10);
-  color:#ffc860;
+  color:var(--amber);
   animation: alarmEntryMed 2.2s ease forwards;
 }
 .alarm-row.lo  {
   border-color:var(--blue);
   background:rgba(74,174,240,.10);
-  color:#80c8f8;
+  color:var(--blue);
   animation: alarmEntryLo 2s ease forwards;
 }
 .alarm-row.inf {
@@ -328,8 +330,8 @@ html, body {
   animation: alarmEntryInf .4s ease forwards;
 }
 .alarm-row b   { display:block; font-weight:600; font-size:13px; color:var(--text-bright); }
-.alarm-row small { font-size:11px; color:var(--text-dim); }
-.alarm-time { float:right; opacity:.6; font-size:11px; }
+.alarm-row small { font-size: 13px; color:var(--text-dim); }
+.alarm-time { float:right; opacity:.6; font-size: 13px; }
 
 /* Acknowledge-state */
 .alarm-row.ackable {
@@ -350,7 +352,7 @@ html, body {
 .ack-badge {
   display: inline-block;
   font-family: var(--mono);
-  font-size: 9px;
+  font-size: 13px;
   letter-spacing: 1px;
   text-transform: uppercase;
   background: rgba(62,232,122,.18);
@@ -362,7 +364,7 @@ html, body {
   vertical-align: middle;
 }
 .ack-time {
-  font-size: 10px;
+  font-size: 13px;
   color: var(--green);
   opacity: .75;
   margin-left: 4px;
@@ -377,7 +379,7 @@ html, body {
 }
 #situation .lbl {
   font-family: var(--cond);
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
   letter-spacing: 2px;
   text-transform: uppercase;
@@ -403,7 +405,7 @@ html, body {
 }
 #phase-timer-label {
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 13px;
   letter-spacing: 1.5px;
   text-transform: uppercase;
   color: var(--text-dim);
@@ -417,7 +419,7 @@ html, body {
 }
 #phase-timer-countdown {
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-dim);
   letter-spacing: 1px;
   transition: color .5s;
@@ -475,7 +477,7 @@ html, body {
   display: none;
   margin-left: auto;
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 13px;
   padding: 3px 10px;
   border-radius: 3px;
   border: 1px solid var(--border-hi);
@@ -492,7 +494,7 @@ html, body {
 
 #storyline-url-display {
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 13px;
   color: var(--text-dim);
   flex: 1;
   overflow: hidden;
@@ -511,7 +513,7 @@ html, body {
 #phase-controls.visible { display: flex; }
 .phase-btn {
   font-family: var(--mono);
-  font-size: 10px;
+  font-size: 13px;
   padding: 3px 9px;
   border-radius: 3px;
   border: 1px solid var(--border-hi);
@@ -547,7 +549,7 @@ html, body {
   right: 14px;
   z-index: 401;
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 13px;
   padding: 5px 14px;
   border-radius: 3px;
   border: 1px solid var(--border-hi);
@@ -608,7 +610,7 @@ html, body {
   text-align: center;
 }
 #storyline-placeholder small {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-dim);
   text-align: center;
   max-width: 240px;
@@ -628,7 +630,7 @@ html, body {
   padding: 10px 16px 8px;
   border-bottom: 1px solid var(--border);
   font-family: var(--cond);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 700;
   letter-spacing: 2px;
   text-transform: uppercase;
@@ -678,7 +680,7 @@ html, body {
 
 .centre-radio-lbl {
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: 13px;
   color: var(--cyan);
   letter-spacing: 1px;
   flex-shrink: 0;
@@ -687,7 +689,7 @@ html, body {
 #centre-send-btn {
   background: var(--blue-dim);
   border: 1px solid var(--blue);
-  color: #90c8f8;
+  color: var(--text-bright);
   padding: 12px 24px;
   border-radius: 4px;
   font-family: var(--cond);
@@ -706,7 +708,7 @@ html, body {
 /* Hint onder invoerveld */
 .input-hint {
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 13px;
   color: var(--text-dim);
   text-align: right;
   opacity: .7;
@@ -784,7 +786,7 @@ html, body {
   flex: 1; padding: 8px 12px;
   background: var(--bg3); border: 1px solid var(--border-hi);
   color: var(--text); border-radius: 4px;
-  font-family: var(--mono); font-size: 11px; letter-spacing: 0.5px;
+  font-family: var(--mono); font-size: 13px; letter-spacing: 0.5px;
   cursor: pointer; transition: all .15s; text-transform: uppercase;
 }
 .debrief-export-btn:hover { border-color: var(--cyan); color: var(--cyan); }
@@ -792,7 +794,7 @@ html, body {
   width: 100%; padding: 10px 16px; margin-top: 2px;
   background: transparent; border: 1px solid var(--border);
   color: var(--text-dim); border-radius: 4px;
-  font-family: var(--mono); font-size: 11px; letter-spacing: 0.5px;
+  font-family: var(--mono); font-size: 13px; letter-spacing: 0.5px;
   cursor: pointer; transition: all .15s; text-transform: uppercase;
 }
 .debrief-close-btn:hover { border-color: var(--red); color: var(--red); }
@@ -815,21 +817,21 @@ html, body {
   color: var(--text-bright); margin-bottom: 8px;
 }
 #session-end-box .end-sub {
-  font-family: var(--mono); font-size: 12px; color: var(--text-dim);
+  font-family: var(--mono); font-size: 13px; color: var(--text-dim);
   margin-bottom: 28px; line-height: 1.6;
 }
 #session-end-box .end-btn-row { display: flex; gap: 10px; justify-content: center; }
 .end-btn-primary {
   padding: 9px 24px; background: var(--bg3);
   border: 1px solid var(--cyan); color: var(--cyan);
-  border-radius: 4px; font-family: var(--mono); font-size: 12px;
+  border-radius: 4px; font-family: var(--mono); font-size: 13px;
   cursor: pointer; transition: all .15s; letter-spacing: 0.5px;
 }
 .end-btn-primary:hover { background: var(--cyan); color: var(--bg); }
 .end-btn-secondary {
   padding: 9px 24px; background: transparent;
   border: 1px solid var(--border); color: var(--text-dim);
-  border-radius: 4px; font-family: var(--mono); font-size: 12px;
+  border-radius: 4px; font-family: var(--mono); font-size: 13px;
   cursor: pointer; transition: all .15s; letter-spacing: 0.5px;
 }
 .end-btn-secondary:hover { border-color: var(--text-dim); color: var(--text); }
@@ -851,7 +853,7 @@ html, body {
   border-radius: 50%; animation: spin .8s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
-.debrief-loading-txt { font-family:var(--mono); font-size:12px; color:var(--text-dim); letter-spacing:1px; }
+.debrief-loading-txt { font-family:var(--mono); font-size: 13px; color:var(--text-dim); letter-spacing:1px; }
 
 /* Debriefing header */
 #debrief-header {
@@ -859,7 +861,7 @@ html, body {
   border-bottom: 2px solid var(--border); flex-shrink: 0;
 }
 #debrief-title-row { display:flex; justify-content:space-between; margin-bottom:12px; }
-.debrief-lbl { font-family:var(--mono); font-size:10px; color:var(--text-dim); letter-spacing:1.5px; text-transform:uppercase; margin-bottom:3px; }
+.debrief-lbl { font-family:var(--mono); font-size: 13px; color:var(--text-dim); letter-spacing:1.5px; text-transform:uppercase; margin-bottom:3px; }
 #debrief-scenario-name { font-family:var(--cond); font-size:14px; font-weight:700; color:var(--text-bright); }
 #debrief-participant-name { font-family:var(--cond); font-size:14px; font-weight:700; color:var(--cyan); }
 
@@ -868,7 +870,7 @@ html, body {
 #debrief-score-num { font-family:var(--mono); font-size:30px; font-weight:700; color:var(--cyan); line-height:1; min-width:36px; }
 #debrief-score-bar-wrap { flex:1; height:6px; background:var(--bg3); border-radius:3px; overflow:hidden; }
 #debrief-score-bar { height:100%; width:0%; border-radius:3px; background:var(--cyan); transition:width 1s ease; }
-#debrief-score-label { font-family:var(--mono); font-size:11px; color:var(--text-dim); }
+#debrief-score-label { font-family:var(--mono); font-size: 13px; color:var(--text-dim); }
 #debrief-duration-wrap { text-align:right; flex-shrink:0; }
 #debrief-duration { font-family:var(--mono); font-size:15px; color:var(--text-bright); }
 
@@ -882,7 +884,7 @@ html, body {
 .debrief-sec-hdr:hover { background:var(--bg3); }
 .ds-icon { font-size:14px; color:var(--cyan); flex-shrink:0; width:18px; text-align:center; }
 .ds-title { font-family:var(--cond); font-size:13px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--text); flex:1; }
-.ds-chev { font-size:11px; color:var(--text-dim); transition:transform .2s; }
+.ds-chev { font-size: 13px; color:var(--text-dim); transition:transform .2s; }
 .ds-chev.open { transform:rotate(90deg); }
 .debrief-sec-body { display:none; padding:14px 16px; background:var(--bg); }
 .debrief-sec-body.open { display:block; }
@@ -915,10 +917,10 @@ html, body {
 .tl-tag.ack  { background:rgba(62,232,122,.15); color:var(--green); }
 .tl-tag.ack-slow { background:var(--amber-dim); color:var(--amber); }
 .tl-tag.ack-miss { background:var(--red-dim);   color:var(--red); }
-.tl-time { font-family:var(--mono); font-size:11px; color:var(--text-dim); flex-shrink:0; min-width:38px; margin-top:3px; }
+.tl-time { font-family:var(--mono); font-size: 13px; color:var(--text-dim); flex-shrink:0; min-width:38px; margin-top:3px; }
 .tl-text { font-size:13px; color:var(--text); line-height:1.55; }
 .tl-text strong { color:var(--text-bright); }
-.tl-tag { display:inline-block; font-family:var(--mono); font-size:10px; padding:1px 6px; border-radius:3px; margin-right:4px; text-transform:uppercase; letter-spacing:.5px; }
+.tl-tag { display:inline-block; font-family:var(--mono); font-size: 13px; padding:1px 6px; border-radius:3px; margin-right:4px; text-transform:uppercase; letter-spacing:.5px; }
 .tl-tag.alarm  { background:var(--red-dim);   color:var(--red); }
 .tl-tag.camera { background:var(--green-dim); color:var(--green); }
 .tl-tag.action { background:var(--blue-dim);  color:var(--blue); }
@@ -928,13 +930,13 @@ html, body {
 .comp-row { display:flex; flex-direction:column; gap:4px; }
 .comp-label { display:flex; justify-content:space-between; align-items:center; }
 .comp-name { font-family:var(--cond); font-size:13px; font-weight:700; letter-spacing:.5px; color:var(--text); }
-.comp-score-txt { font-family:var(--mono); font-size:12px; color:var(--text-dim); }
+.comp-score-txt { font-family:var(--mono); font-size: 13px; color:var(--text-dim); }
 .comp-bar-wrap { height:5px; background:var(--bg3); border-radius:3px; overflow:hidden; }
 .comp-bar { height:100%; border-radius:3px; width:0%; transition:width 1.2s ease; }
 .comp-bar.high   { background:var(--green); }
 .comp-bar.medium { background:var(--amber); }
 .comp-bar.low    { background:var(--red); }
-.comp-feedback { font-size:12px; color:var(--text-dim); line-height:1.55; margin-top:2px; }
+.comp-feedback { font-size: 13px; color:var(--text-dim); line-height:1.55; margin-top:2px; }
 
 /* Leerpunten */
 #learning-points { display:flex; flex-direction:column; gap:12px; }
@@ -942,7 +944,7 @@ html, body {
 .learn-item.strong  { background:var(--green-dim); border-color:var(--green); }
 .learn-item.improve { background:var(--amber-dim); border-color:var(--amber); }
 .learn-item.core    { background:var(--cyan-dim);  border-color:var(--cyan);  }
-.learn-item-tag { font-family:var(--mono); font-size:10px; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:5px; display:block; }
+.learn-item-tag { font-family:var(--mono); font-size: 13px; letter-spacing:1.5px; text-transform:uppercase; margin-bottom:5px; display:block; }
 .learn-item.strong  .learn-item-tag { color:var(--green); }
 .learn-item.improve .learn-item-tag { color:var(--amber); }
 .learn-item.core    .learn-item-tag { color:var(--cyan);  }
@@ -956,7 +958,7 @@ html, body {
 
 .msg-meta {
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 13px;
   color: var(--text-dim);
   margin-bottom: 4px;
   padding: 0 4px;
@@ -982,9 +984,9 @@ html, body {
 /* Instructeur — aparte styling buiten het operationele scenario */
 .msg.instructor .msg-bub {
   background: var(--cyan-dim);
-  border: 1px solid rgba(32,216,255,.5);
+  border: 1px solid rgba(0,232,255,.3);
   border-left: 3px solid var(--cyan);
-  color: #c8f0ff;
+  color: var(--text-bright);
   opacity: 0;
   animation: msgEntryAi 2s ease forwards;
 }
@@ -997,7 +999,7 @@ html, body {
 .msg.user .msg-bub {
   background: var(--blue-dim);
   border: 1px solid var(--blue);
-  color: #c8e4ff;
+  color: var(--text-bright);
   opacity: 0;
   animation: msgEntryUser .35s ease forwards;
 }
@@ -1006,7 +1008,7 @@ html, body {
   border: 1px solid var(--border-hi);
   color: var(--text-dim);
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: 13px;
   text-align: center;
   padding: 5px 16px;
   border-radius: 20px;
@@ -1014,9 +1016,9 @@ html, body {
   animation: msgEntryUser .3s ease forwards;
 }
 .msg.alarm .msg-bub {
-  background: rgba(255,78,64,.12);
+  background: var(--red-bg);
   border: 1px solid var(--red);
-  color: #ff9888;
+  color: var(--text-bright);
   font-family: var(--mono);
   font-size: 13px;
   opacity: 0;
@@ -1024,7 +1026,7 @@ html, body {
 }
 .radio-pfx {
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 13px;
   color: var(--cyan);
   display: block;
   margin-bottom: 4px;
@@ -1109,7 +1111,7 @@ html, body {
 .intro-field label {
   display: block;
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 13px;
   color: var(--text-dim);
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -1135,7 +1137,7 @@ html, body {
   width: 100%;
   background: var(--blue-dim);
   border: 1px solid var(--blue);
-  color: #90c8f8;
+  color: var(--text-bright);
   padding: 13px;
   border-radius: 4px;
   font-family: var(--cond);
@@ -1177,7 +1179,7 @@ html, body {
 
 #boot-scenario-title {
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-dim);
   letter-spacing: 3px;
   text-transform: uppercase;
@@ -1215,7 +1217,7 @@ html, body {
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
+  font-size: 13px;
   transition: all .3s ease;
 }
 .boot-item-icon.spin {
@@ -1233,7 +1235,7 @@ html, body {
 }
 .boot-item-label {
   font-family: var(--mono);
-  font-size: 12px;
+  font-size: 13px;
   color: var(--text-dim);
   letter-spacing: 1px;
   flex: 1;
@@ -1241,7 +1243,7 @@ html, body {
 .boot-item-label.active { color: var(--text); }
 .boot-item-status {
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 13px;
   color: var(--text-dim);
   letter-spacing: 1px;
   min-width: 60px;
@@ -1270,7 +1272,7 @@ html, body {
 
 #boot-go-label {
   font-family: var(--mono);
-  font-size: 11px;
+  font-size: 13px;
   letter-spacing: 3px;
   text-transform: uppercase;
   color: var(--cyan);
@@ -1304,13 +1306,13 @@ html, body {
   color: var(--red); margin-bottom: 8px; letter-spacing: 1px;
 }
 #expired-box .exp-sub {
-  font-family: var(--mono); font-size: 12px;
+  font-family: var(--mono); font-size: 13px;
   color: var(--text-dim); line-height: 1.7; margin-bottom: 28px;
 }
 #expired-box .exp-btn {
   padding: 10px 28px; background: transparent;
   border: 1px solid var(--border-hi); color: var(--text-dim);
-  border-radius: 4px; font-family: var(--mono); font-size: 12px;
+  border-radius: 4px; font-family: var(--mono); font-size: 13px;
   cursor: pointer; transition: all .15s; letter-spacing: 0.5px;
 }
 #expired-box .exp-btn:hover { border-color: var(--text); color: var(--text); }
@@ -1330,13 +1332,13 @@ html, body {
   color:var(--cyan); letter-spacing:4px; text-transform:uppercase;
 }
 #lang-overlay .lang-logo em { color:var(--text-dim); font-style:normal; font-weight:500; }
-#lang-overlay .lang-sub { font-family:var(--mono); font-size:12px; color:var(--text-dim); letter-spacing:2px; text-transform:uppercase; margin-top:-20px; }
+#lang-overlay .lang-sub { font-family:var(--mono); font-size: 13px; color:var(--text-dim); letter-spacing:2px; text-transform:uppercase; margin-top:-20px; }
 .lang-btns { display:flex; gap:16px; }
 .lang-btn { padding:18px 40px; border-radius:6px; font-family:var(--cond); font-size:20px; font-weight:700; letter-spacing:3px; text-transform:uppercase; cursor:pointer; transition:all .2s; border:2px solid var(--border-hi); background:var(--bg2); color:var(--text); }
 .lang-btn:hover { border-color:var(--cyan); color:var(--cyan); background:var(--cyan-dim); }
 .lang-flag { font-size:28px; display:block; margin-bottom:6px; text-align:center; }
 #lang-switch {
-  font-family:var(--mono); font-size:11px;
+  font-family:var(--mono); font-size: 13px;
   background:transparent; border:1px solid var(--border-hi);
   color:var(--text-dim); padding:4px 10px; border-radius:3px;
   cursor:pointer; transition:all .15s; letter-spacing:1px;
@@ -1344,9 +1346,66 @@ html, body {
 }
 #lang-switch:hover { border-color:var(--cyan); color:var(--cyan); }
 
+/* ── DAG-MODUS ────────────────────────────────────── */
+body.light {
+  --bg:           #eef2f7;
+  --bg2:          #e0e8f0;
+  --bg3:          #d0dce8;
+  --panel:        #c4d4e4;
+  --border:       #a0b8cc;
+  --border-hi:    #6890b0;
+  --text:         #18283a;
+  --text-dim:     #456078;
+  --text-bright:  #0a1828;
+  --text-muted:   #809cb0;
+  --green:        #0a8038;
+  --green-bg:     #c8edd8;
+  --amber:        #b06000;
+  --amber-bg:     #fce8c0;
+  --red:          #c81810;
+  --red-bg:       #fad0cc;
+  --blue:         #1060b0;
+  --blue-bg:      #c8ddf4;
+  --blue-dim:     #d8eaf8;
+  --cyan:         #006080;
+  --cyan-bg:      #c0e4f0;
+  --cyan-dim:     #cce8f4;
+  --purple:       #5828a0;
+  --purple-dim:   #ddd0f4;
+}
+body.light #lang-overlay   { background: var(--bg); }
+body.light .lang-btn       { background: var(--bg2); color: var(--text); border-color: var(--border-hi); }
+body.light .lang-btn:hover { border-color: var(--cyan); color: var(--cyan); background: var(--cyan-bg); }
+
+/* Licht-modus: chatbubbels aanpassen voor donkere tekst op lichte achtergrond */
+body.light .msg.ai .msg-bub {
+  background: #e8f4fa;
+  border-color: var(--cyan);
+  color: var(--text-bright);
+}
+body.light .msg.instructor .msg-bub {
+  background: var(--cyan-dim);
+  border-color: var(--cyan);
+  color: var(--text-bright);
+}
+body.light .msg.user .msg-bub {
+  background: var(--blue-dim);
+  border-color: var(--blue);
+  color: var(--text-bright);
+}
+body.light .msg.alarm .msg-bub {
+  background: var(--red-bg);
+  border-color: var(--red);
+  color: var(--text-bright);
+}
+body.light .alarm-row.hi  { background: var(--red-bg);   color: var(--red); }
+body.light .alarm-row.med { background: var(--amber-bg); color: var(--amber); }
+body.light .alarm-row.lo  { background: var(--blue-bg);  color: var(--blue); }
+body.light .msg.sys .msg-bub { color: var(--text-dim); }
+
 #pause-btn {
   display: none;
-  font-family: var(--mono); font-size: 11px;
+  font-family: var(--mono); font-size: 13px;
   background: transparent; border: 1px solid var(--border-hi);
   color: var(--text-dim); padding: 4px 12px; border-radius: 3px;
   cursor: pointer; transition: all .15s; letter-spacing: 1px;
@@ -1484,6 +1543,7 @@ html, body {
   </div>
   <button id="pause-btn" onclick="togglePause()">⏸ Pauze</button>
   <div class="topbar-sep"></div>
+  <button id="daymode-btn" onclick="toggleDayMode()" title="Dag/nacht modus" style="font-family:var(--mono);font-size:14px;background:transparent;border:1px solid var(--border-hi);color:var(--text-dim);padding:5px 9px;border-radius:3px;cursor:pointer;transition:all .15s;flex-shrink:0;line-height:1">☀</button>
   <button id="lang-switch" onclick="showLangOverlay()">NL</button>
 </div>
 
@@ -1697,17 +1757,17 @@ html, body {
 
       <!-- Export-balk: altijd zichtbaar onderaan, scrollt niet mee -->
       <div id="debrief-export-bar" style="display:none">
-        <button class="debrief-export-btn" onclick="exportDebriefPDF()">
+        <button class="debrief-export-btn" id="btn-pdf" onclick="exportDebriefPDF()">
           <span>⬇</span> PDF-rapport
         </button>
-        <button class="debrief-export-btn" onclick="exportDebriefExcel()">
+        <button class="debrief-export-btn" id="btn-excel" onclick="exportDebriefExcel()">
           <span>⬇</span> Excel-rij
         </button>
       </div>
 
       <!-- Sessie beëindigen -->
       <div id="debrief-close-bar" style="display:none; padding: 0 16px 16px;">
-        <button class="debrief-close-btn" onclick="confirmEndSession()">
+        <button class="debrief-close-btn" id="btn-end-session" onclick="confirmEndSession()">
           ✕ &nbsp;Sessie beëindigen
         </button>
       </div>
@@ -1728,8 +1788,8 @@ html, body {
       Sluit dit venster of start een nieuwe sessie.
     </div>
     <div class="end-btn-row">
-      <button class="end-btn-primary" onclick="location.reload()">↺ Nieuwe sessie</button>
-      <button class="end-btn-secondary" onclick="closeEndOverlay()">Terug naar debriefing</button>
+      <button class="end-btn-primary" id="btn-new-session" onclick="location.reload()">↺ Nieuwe sessie</button>
+      <button class="end-btn-secondary" id="btn-back-debrief" onclick="closeEndOverlay()">Terug naar debriefing</button>
     </div>
   </div>
 </div>
@@ -1882,6 +1942,15 @@ function startBriefingTimer(durationSec) {
   const dur     = durationSec || 120;
   const startMs = Date.now();
 
+  // Blokkeer invoer als er een Storyline-module is — deelnemer werkt door de module
+  const hasBriefingSlideNow = !!(scenarioConfig?.aiScenario?.briefing?.slideUrl?.trim());
+  if (hasBriefingSlideNow) {
+    const inp = document.getElementById('user-input-large');
+    const btn = document.getElementById('centre-send-btn');
+    if (inp) { inp.disabled = true; inp.placeholder = isEN ? 'Complete the briefing module first...' : 'Doorloop eerst de briefing-module...'; }
+    if (btn) btn.disabled = true;
+  }
+
   const timerEl  = document.getElementById('phase-timer');
   const labelEl  = document.getElementById('phase-timer-label');
   const nameEl   = document.getElementById('phase-timer-name');
@@ -1904,8 +1973,14 @@ function startBriefingTimer(durationSec) {
   // Automatische overgang naar fase 1 als de timer afloopt
   const autoTransitionTimeout = setTimeout(() => {
     if (briefingTimerActive) {
+      stopBriefingTimer();
+      const isEN = lang === 'en';
+      // Claude aanroepen om de briefing af te sluiten en deelnemer naar fase 1 te begeleiden
+      const transitionPrompt = isEN
+        ? `BRIEFING END: The preparatory briefing module has now ended. As the Instructor, briefly close the briefing phase (one sentence), then guide the participant toward the start of the scenario. Tell them the scenario is about to begin and what their first focus should be. Then send the first operational radio signal and one DCS system message to open phase 1. Do NOT send [FASE:1] yet — wait for the participant's first response.`
+        : `BRIEFING EINDE: De voorbereidende briefing-module is nu afgelopen. Sluit als Instructeur de briefingfase kort af (één zin), begeleid de deelnemer naar de start van het scenario. Vertel dat het scenario begint en wat hun eerste aandachtspunt is. Stuur daarna het eerste operationele radiosignaal en één DCS-systeembericht om fase 1 te openen. Stuur GEEN [FASE:1] — wacht op de eerste reactie van de deelnemer.`;
       firstResponseReceived = true; // guards overslaan
-      handlePhaseTransition(1);
+      callClaude(transitionPrompt, false);
     }
   }, dur * 1000);
 
@@ -1937,6 +2012,15 @@ function stopBriefingTimer() {
   if (briefingTimerInterval) { clearInterval(briefingTimerInterval); briefingTimerInterval = null; }
   const timerEl = document.getElementById('phase-timer');
   if (timerEl) timerEl.classList.remove('briefing-mode');
+  // Herstel invoerveld placeholder na briefing
+  const inp = document.getElementById('user-input-large');
+  if (inp && inp.disabled) {
+    const isEN = lang === 'en';
+    inp.placeholder = isEN
+      ? 'Type your response as operator... (Enter to send, Shift+Enter for new line)'
+      : 'Typ je reactie als operator... (Enter om te zenden, Shift+Enter voor nieuwe regel)';
+    // setInput(true) wordt aangeroepen zodra Claude's antwoord binnenkomt
+  }
 }
 
 function startPhaseTimers() {
@@ -2260,6 +2344,14 @@ const UI = {
     'debrief.learning': 'Leerpunten',
     'timer.label':      'Tijd',
     'in_control':       'In Control',
+    'debrief.pdf':      '⬇ PDF-rapport',
+    'debrief.excel':    '⬇ Excel-rij',
+    'debrief.close':    '✕  Sessie beëindigen',
+    'instructor.label': 'INSTRUCTEUR',
+    'end.title':        'Training afgerond',
+    'end.sub':          'De debriefing is voltooid en de rapporten zijn beschikbaar.<br>Sluit dit venster of start een nieuwe sessie.',
+    'end.new':          '↺ Nieuwe sessie',
+    'end.back':         'Terug naar debriefing',
   },
   en: {
     'intro.title':      'Start scenario',
@@ -2300,6 +2392,14 @@ const UI = {
     'debrief.learning': 'Learning points',
     'timer.label':      'Time',
     'in_control':       'In Control',
+    'debrief.pdf':      '⬇ PDF report',
+    'debrief.excel':    '⬇ Excel row',
+    'debrief.close':    '✕  End session',
+    'instructor.label': 'INSTRUCTOR',
+    'end.title':        'Training complete',
+    'end.sub':          'The debrief is complete and reports are available.<br>Close this window or start a new session.',
+    'end.new':          '↺ New session',
+    'end.back':         'Back to debrief',
   }
 };
 
@@ -2325,6 +2425,17 @@ function showLangOverlay() {
     btn.style.background  = isActive ? 'var(--cyan-dim)' : '';
   });
   document.getElementById('lang-overlay').classList.add('visible');
+}
+
+function toggleDayMode() {
+  const btn = document.getElementById('daymode-btn');
+  if (document.body.classList.toggle('light')) {
+    if (btn) { btn.textContent = '🌙'; btn.title = 'Schakel naar nachtmodus'; }
+    localStorage.setItem('oip_player_theme', 'light');
+  } else {
+    if (btn) { btn.textContent = '☀'; btn.title = 'Schakel naar dagmodus'; }
+    localStorage.setItem('oip_player_theme', 'dark');
+  }
 }
 
 function applyUILang() {
@@ -2399,6 +2510,24 @@ function applyUILang() {
   const phS = document.querySelector('#storyline-placeholder small');
   if (phP) phP.textContent = ui('cam.no_storyline');
   if (phS) phS.textContent = ui('cam.no_sl_hint');
+
+  // Debriefing export-balk
+  const btnPdf   = document.getElementById('btn-pdf');
+  const btnExcel = document.getElementById('btn-excel');
+  const btnEnd   = document.getElementById('btn-end-session');
+  if (btnPdf)   btnPdf.innerHTML   = ui('debrief.pdf');
+  if (btnExcel) btnExcel.innerHTML = ui('debrief.excel');
+  if (btnEnd)   btnEnd.textContent = ui('debrief.close');
+
+  // Sessie-afsluiting overlay
+  const endTitle   = document.getElementById('end-title');
+  const endSub     = document.getElementById('end-sub');
+  const btnNewSess = document.getElementById('btn-new-session');
+  const btnBack    = document.getElementById('btn-back-debrief');
+  if (endTitle)   endTitle.textContent = ui('end.title');
+  if (endSub)     endSub.innerHTML     = ui('end.sub');
+  if (btnNewSess) btnNewSess.textContent = ui('end.new');
+  if (btnBack)    btnBack.textContent    = ui('end.back');
 }
 
 
@@ -3081,7 +3210,7 @@ function renderMsg(type, sender, text, onDone) {
   const pfx = (type==='ai' && sender)
     ? `<span class="radio-pfx">◀ ${sender}</span>`
     : (type==='instructor')
-    ? `<span class="radio-pfx">◈ INSTRUCTEUR</span>`
+    ? `<span class="radio-pfx">◈ ${ui('instructor.label')}</span>`
     : (type==='alarm')
     ? `<span class="radio-pfx">[DCS]</span>`
     : '';
@@ -3232,10 +3361,10 @@ function parseAndDisplay(text) {
         hadAlarm = true;
       } else if (/^INSTRUCTEUR:/i.test(l) || /^INSTRUCTOR:/i.test(l)) {
         const msg = l.slice(l.indexOf(':')+1).trim();
-        if (msg) addMsg('instructor', 'INSTRUCTEUR', msg);
+        if (msg) addMsg('instructor', ui('instructor.label'), msg);
       } else if (!l.startsWith('[SCENARIO-EINDE]') && !l.match(/\[FASE:\d+\]/i)
                  && l.length > 10 && /[.?!]$/.test(l) && !l.includes(':')) {
-        addMsg('instructor', 'INSTRUCTEUR', l);
+        addMsg('instructor', ui('instructor.label'), l);
       }
       // Operationele sprekers worden tijdens briefing genegeerd
       continue;
@@ -3257,7 +3386,7 @@ function parseAndDisplay(text) {
     // Instructeur
     else if (/^INSTRUCTEUR:/i.test(l) || /^INSTRUCTOR:/i.test(l)) {
       const msg = l.slice(l.indexOf(':')+1).trim();
-      if (msg) addMsg('instructor', 'INSTRUCTEUR', msg);
+      if (msg) addMsg('instructor', ui('instructor.label'), msg);
     }
     // Operationele sprekers — dynamisch op basis van rolnamen in config
     else if (speakerRx.test(l)) {
@@ -3269,7 +3398,7 @@ function parseAndDisplay(text) {
     // Overige regels — alleen als ze op een instructeur-bericht lijken
     else if (!l.startsWith('[SCENARIO-EINDE]') && !l.match(/\[FASE:\d+\]/i) && l.length > 10) {
       if (/[.?!]$/.test(l) && l.length > 25 && !l.includes(':')) {
-        addMsg('instructor', 'INSTRUCTEUR', l);
+        addMsg('instructor', ui('instructor.label'), l);
       }
     }
   }
@@ -3308,11 +3437,25 @@ async function callClaude(userMsg, isInit=false) {
   showTyping(true);
   setInput(false);
 
+  const briefingCfgNow = scenarioConfig?.aiScenario?.briefing;
+  const hasBriefingSlide = !!(briefingCfgNow?.slideUrl?.trim());
   const briefingActive = briefingTimerActive;
+  const isEN = lang === 'en';
   const content = isInit
-    ? (briefingActive
-        ? `START: Geef alleen één begeleidend openingsbericht van de Instructeur die de deelnemer verwelkomt en de briefing introduceert. Stuur GEEN berichten van operationele rollen (dispatcher, velddienst etc.) — die zijn nog niet actief. Stuur GEEN [FASE:n] tokens. Wacht daarna op de reactie van de deelnemer.`
-        : `START: Geef het openingsbericht van de Instructeur (één korte zin die het scenario introduceert), gevolgd door het eerste radiosignaal van de dispatcher (één zin). Stuur ook één DCS-systeembericht. Stuur daarna NIETS meer — wacht op de reactie van de deelnemer. BELANGRIJK: stuur GEEN [FASE:n] tokens in dit openingsbericht — fase 1 is al actief bij scenario-start.`)
+    ? (briefingActive && hasBriefingSlide
+        // Briefing MET Storyline-module: welkom + verwijzing → daarna stil
+        ? (isEN
+            ? `START: You are now in the BRIEFING phase. Send ONE short welcoming message as the Instructor. Welcome the participant by name (if known), mention that a preparatory module is now active in the left panel, and ask them to work through it. Then stay SILENT — do not send any more messages until the briefing ends. Do NOT send operational role messages. Do NOT send [FASE:n] tokens. Do NOT ask questions. Just welcome and refer to the module.`
+            : `START: Je bent nu in de BRIEFING-fase. Stuur ÉÉN korte welkomstgroet als Instructeur. Verwelkom de deelnemer (bij naam als bekend), benoem dat er een voorbereidende module actief is in het linkerpaneel en vraag de deelnemer deze door te nemen. Blijf daarna STIL — stuur geen verdere berichten totdat de briefing afloopt. Stuur GEEN operationele rollen. Stuur GEEN [FASE:n] tokens. Geen vragen, alleen welkom en verwijzing naar de module.`)
+        : briefingActive
+        // Briefing ZONDER Storyline-module: verwelkom + leidt briefing in
+        ? (isEN
+            ? `START: You are now in the BRIEFING phase. Send ONE welcoming message as the Instructor introducing the scenario context. Stay available for participant questions. Do NOT send operational role messages yet. Do NOT send [FASE:n] tokens.`
+            : `START: Je bent nu in de BRIEFING-fase. Stuur ÉÉN welkomstbericht als Instructeur dat de scenario-context introduceert. Blijf beschikbaar voor vragen van de deelnemer. Stuur GEEN operationele rollen. Stuur GEEN [FASE:n] tokens.`)
+        // Geen briefing: normaal openingsbericht
+        : (isEN
+            ? `START: Send the opening message from the Instructor (one short sentence introducing the scenario), followed by the first radio signal from the dispatcher (one sentence). Also send one DCS system message. Then wait for the participant's response. Do NOT send [FASE:n] tokens in this opening message — phase 1 is already active.`
+            : `START: Geef het openingsbericht van de Instructeur (één korte zin die het scenario introduceert), gevolgd door het eerste radiosignaal van de dispatcher (één zin). Stuur ook één DCS-systeembericht. Stuur daarna NIETS meer — wacht op de reactie van de deelnemer. BELANGRIJK: stuur GEEN [FASE:n] tokens in dit openingsbericht — fase 1 is al actief bij scenario-start.`))
     : userMsg;
 
   const systemPrompt = buildSystemPrompt();
@@ -3507,7 +3650,7 @@ async function triggerDebriefing() {
   const durSec = durationSecs % 60;
   const durationStr = `${String(durMin).padStart(2,'0')}:${String(durSec).padStart(2,'0')}`;
 
-  addMsg('instructor', 'INSTRUCTEUR',
+  addMsg('instructor', ui('instructor.label'),
     lang === 'en'
       ? 'The scenario has ended. The debrief is being prepared — one moment.'
       : 'Het scenario is afgerond. De debriefing wordt nu opgesteld — een moment.');
@@ -4187,6 +4330,14 @@ function exportDebriefExcel() {
 // INIT
 // ═══════════════════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
+  // Thema herstellen
+  const savedTheme = localStorage.getItem('oip_player_theme');
+  if (savedTheme === 'light') {
+    document.body.classList.add('light');
+    const btn = document.getElementById('daymode-btn');
+    if (btn) { btn.textContent = '🌙'; btn.title = 'Schakel naar nachtmodus'; }
+  }
+
   const savedLang = localStorage.getItem('oip_lang');
   if (savedLang && ['nl','en'].includes(savedLang)) {
     lang = savedLang;
