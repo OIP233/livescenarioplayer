@@ -1521,6 +1521,26 @@ body.light .msg.sys .msg-bub { color: var(--text-dim); }
       ✓ API-sleutel geladen uit configuratie
     </div>
 
+    <!-- Uitvoeringstaal — onafhankelijk van UI-taal -->
+    <div class="intro-field" id="execlang-field">
+      <label id="execlang-label">Uitvoeringstaal scenario (AI-communicatie)</label>
+      <select id="execlang-select" style="width:100%;background:var(--bg3);border:1px solid var(--border-hi);
+              border-radius:4px;padding:10px 13px;color:var(--text-bright);font-family:var(--sans);
+              font-size:15px;outline:none;transition:border-color .2s"
+              onchange="onExecLangChange()">
+        <option value="">— Same as UI language —</option>
+        <option value="nl">🇳🇱 Nederlands</option>
+        <option value="en">🇬🇧 English</option>
+        <option value="de">🇩🇪 Deutsch</option>
+        <option value="es">🇪🇸 Español</option>
+        <option value="fr">🇫🇷 Français</option>
+        <option value="pl">🇵🇱 Polski</option>
+      </select>
+      <div id="execlang-hint" style="font-family:var(--mono);font-size:11px;margin-top:5px;color:var(--text-dim)">
+        The AI will conduct the scenario in this language. Useful for EVOS terminals in Germany or Spain.
+      </div>
+    </div>
+
     <button id="start-btn" onclick="startScenario()">Scenario starten →</button>
   </div>
 </div>
@@ -1795,6 +1815,98 @@ body.light .msg.sys .msg-bub { color: var(--text-dim); }
 </div>
 
 <script>
+  (function() {
+
+  // ── Zelfde geheime sleutel als in de landing page ────────
+  // Zorg dat dit EXACT overeenkomt met TOKEN_SECRET in index.html
+  const TOKEN_SECRET = 'oip-platform-2025-geheim';
+
+  // ── Blokkeerscherm HTML ───────────────────────────────────
+  function toonBlokkeerscherm() {
+    document.documentElement.style.overflow = 'hidden';
+    document.body.style.cssText = `
+      margin:0; padding:0;
+      background:#141820;
+      font-family:'Share Tech Mono',monospace;
+      display:flex; align-items:center; justify-content:center;
+      min-height:100vh;
+    `;
+    document.body.innerHTML = `
+      <div style="text-align:center; max-width:420px; padding:40px 24px;">
+        <div style="font-size:48px; margin-bottom:24px;">🔒</div>
+        <div style="
+          font-family:'Barlow Condensed',sans-serif;
+          font-size:28px; font-weight:800;
+          color:#f0f8ff; letter-spacing:3px;
+          text-transform:uppercase; margin-bottom:12px;
+        ">Geen Toegang</div>
+        <div style="
+          font-size:13px; color:#9db8cc; line-height:1.7;
+          margin-bottom:32px;
+        ">
+          Deze applicatie is alleen toegankelijk via het OIP Live Scenario platform.
+          Ga terug naar de portal om in te loggen.
+        </div>
+        <a href="https://livescenario-start.netlify.app" style="
+          display:inline-block;
+          padding:12px 28px;
+          background:rgba(32,216,255,0.08);
+          border:1px solid #20d8ff;
+          border-radius:4px;
+          color:#20d8ff;
+          font-family:'Barlow Condensed',sans-serif;
+          font-size:14px; font-weight:700;
+          letter-spacing:2px; text-transform:uppercase;
+          text-decoration:none;
+          transition:all 0.2s;
+        ">← Naar de Portal</a>
+        <div style="margin-top:24px; font-size:10px; color:#353f55; letter-spacing:2px;">
+          OIP LIVE SCENARIO PLATFORM
+        </div>
+      </div>
+    `;
+  }
+
+  // ── Token controleren ─────────────────────────────────────
+  function controleerToken(token) {
+    try {
+      const decoded = atob(token);
+      const delen   = decoded.split('|');
+      if (delen.length !== 3) return false;
+      const [klantcode, vervalt, hashStr] = delen;
+
+      // Verlopen?
+      if (Date.now() > parseInt(vervalt)) return false;
+
+      // Handtekening controleren
+      const payload = klantcode + '|' + vervalt;
+      let hash = 0;
+      const str = payload + TOKEN_SECRET;
+      for (let i = 0; i < str.length; i++) {
+        hash = ((hash << 5) - hash) + str.charCodeAt(i);
+        hash |= 0;
+      }
+      return Math.abs(hash).toString(36) === hashStr;
+    } catch {
+      return false;
+    }
+  }
+
+  // ── Token ophalen uit URL ─────────────────────────────────
+  const params = new URLSearchParams(window.location.search);
+  const token  = params.get('oiptoken');
+
+  if (!token || !controleerToken(token)) {
+    // Wacht tot DOM geladen is voordat we het scherm vervangen
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', toonBlokkeerscherm);
+    } else {
+      toonBlokkeerscherm();
+    }
+  }
+
+})();
+
 // ═══════════════════════════════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════════════════════════════
@@ -1808,7 +1920,38 @@ let simStartMs     = 0;   // Tijdstip van scenario-start (Date.now())
 let scenarioConfig = null;  // Gevuld vanuit de geladen JSON
 let pendingDebrief  = false; // Wacht op laatste antwoord deelnemer voor debriefing
 let lastDebriefData = null;  // Bewaard voor export
-let lang = 'nl';               // Taalinstelling
+let lang = 'nl';               // UI-taalinstelling (nl/en)
+let scenarioLang = '';         // Uitvoeringstaal AI ('' = gelijk aan lang)
+
+// Geeft de effectieve uitvoeringstaal terug (scenarioLang heeft voorrang boven lang)
+function getEffectiveLang() {
+  return scenarioLang || lang;
+}
+
+// Geeft de volledige taalinstructie voor het AI system prompt
+function getScenarioLangInstruction() {
+  const target = getEffectiveLang();
+  const langNames = {
+    nl: 'Dutch',
+    en: 'English',
+    de: 'German',
+    es: 'Spanish',
+    fr: 'French',
+    pl: 'Polish'
+  };
+  const langName = langNames[target] || 'English';
+  return `LANGUAGE INSTRUCTION: Conduct ALL scenario communication strictly in ${langName}.
+This includes: radio messages from all roles, DCS alarm text, instructor messages, and the debrief report.
+The scenario configuration may have been written in a different language — translate and adapt all content to ${langName}.
+Role names from the config may appear in the original language; use natural ${langName} equivalents in your responses.`;
+}
+
+// Callback bij handmatige wijziging van de uitvoeringstaal-dropdown
+function onExecLangChange() {
+  const sel = document.getElementById('execlang-select');
+  scenarioLang = sel?.value || '';
+}
+
 let firstResponseReceived = false; // Openingsbericht verwerkt — fase-tokens daarna toegestaan
 let phaseTimers = []; // Timeouts voor automatische fase-overgangen
 let isPaused    = false;
@@ -1831,7 +1974,7 @@ function buildSystemPrompt() {
     return `Je bent de AI-kern van een controlekamer-training voor tankterminalbeheer.
 Je speelt ALLE rollen die hieronder zijn gedefinieerd tegelijk.
 
-${lang==='en' ? 'IMPORTANT: Communicate EXCLUSIVELY in English. All radio messages, instructor lines and DCS alerts in English.' : 'BELANGRIJK: Communiceer UITSLUITEND in het Nederlands. Alle radio-communicatie, instructeur-berichten en DCS-meldingen in het Nederlands.'}
+${getScenarioLangInstruction()}
 
 ${sc.systemPromptExtra}
 
@@ -1858,7 +2001,7 @@ BELANGRIJK:
   return `Je bent de AI-kern van een controlekamer-training voor tankterminalbeheer.
 Je speelt ALLE onderstaande rollen tegelijk — inclusief de INSTRUCTEUR.
 
-${lang==='en' ? 'IMPORTANT: Communicate EXCLUSIVELY in English.' : 'BELANGRIJK: Communiceer UITSLUITEND in het Nederlands.'}
+${getScenarioLangInstruction()}
 
 ════════════════════════════════════
 SYSTEEMROL: INSTRUCTEUR
@@ -2459,6 +2602,21 @@ function applyUILang() {
   const startBtn = document.getElementById('start-btn');
   if (startBtn) startBtn.textContent = ui('intro.start');
 
+  // Uitvoeringstaal veld
+  const execLangLbl = document.getElementById('execlang-label');
+  if (execLangLbl) execLangLbl.textContent = lang === 'en'
+    ? 'Scenario execution language (AI communication)'
+    : 'Uitvoeringstaal scenario (AI-communicatie)';
+  const execLangHint = document.getElementById('execlang-hint');
+  if (execLangHint) execLangHint.textContent = lang === 'en'
+    ? 'The AI will conduct the scenario in this language. Useful for EVOS terminals in Germany or Spain.'
+    : 'De AI voert het scenario uit in deze taal. Handig voor EVOS-terminals in Duitsland of Spanje.';
+  const execSel = document.getElementById('execlang-select');
+  if (execSel) {
+    const firstOpt = execSel.options[0];
+    if (firstOpt) firstOpt.text = lang === 'en' ? '— Same as UI language —' : '— Gelijk aan UI-taal —';
+  }
+
   const timerLbl = document.querySelector('#sim-clock-wrap span');
   if (timerLbl) timerLbl.textContent = ui('timer.label');
 
@@ -2590,6 +2748,18 @@ function loadConfigFile(input) {
         applyUILang();
       }
 
+      // Uitvoeringstaal overnemen uit JSON (ingesteld via controller export)
+      const execSel = document.getElementById('execlang-select');
+      if (execSel) {
+        if (parsed.executionLanguage && ['nl','en','de','es','fr','pl'].includes(parsed.executionLanguage)) {
+          execSel.value = parsed.executionLanguage;
+          scenarioLang  = parsed.executionLanguage;
+        } else {
+          execSel.value = '';
+          scenarioLang  = '';
+        }
+      }
+
       // API-sleutel — uit JSON of handmatig invoerveld tonen
       const jsonApiKey = sc.apiKey?.trim() || '';
       if (jsonApiKey) {
@@ -2664,6 +2834,10 @@ function startScenario() {
     }
     apiKey = manualKey;
   }
+
+  // Uitvoeringstaal inlezen uit dropdown (overschrijft eventuele JSON-waarde)
+  const execSel = document.getElementById('execlang-select');
+  scenarioLang = execSel?.value || '';
 
   getAudioCtx();
 
@@ -3441,21 +3615,23 @@ async function callClaude(userMsg, isInit=false) {
   const hasBriefingSlide = !!(briefingCfgNow?.slideUrl?.trim());
   const briefingActive = briefingTimerActive;
   const isEN = lang === 'en';
+  const effLang = getEffectiveLang();
+
+  // START-berichten in de effectieve uitvoeringstaal
+  // Claude krijgt via het system prompt al de taalinstructie — de START-tekst
+  // is een instructie aan Claude (mag in het Engels), maar vermelden we de
+  // gewenste taal ook expliciet voor maximale betrouwbaarheid.
+  const langNote = `Respond in ${({'nl':'Dutch','en':'English','de':'German','es':'Spanish','fr':'French','pl':'Polish'}[effLang]||'English')} as instructed in the system prompt.`;
+
   const content = isInit
     ? (briefingActive && hasBriefingSlide
-        // Briefing MET Storyline-module: welkom + verwijzing → daarna stil
-        ? (isEN
-            ? `START: You are now in the BRIEFING phase. Send ONE short welcoming message as the Instructor. Welcome the participant by name (if known), mention that a preparatory module is now active in the left panel, and ask them to work through it. Then stay SILENT — do not send any more messages until the briefing ends. Do NOT send operational role messages. Do NOT send [FASE:n] tokens. Do NOT ask questions. Just welcome and refer to the module.`
-            : `START: Je bent nu in de BRIEFING-fase. Stuur ÉÉN korte welkomstgroet als Instructeur. Verwelkom de deelnemer (bij naam als bekend), benoem dat er een voorbereidende module actief is in het linkerpaneel en vraag de deelnemer deze door te nemen. Blijf daarna STIL — stuur geen verdere berichten totdat de briefing afloopt. Stuur GEEN operationele rollen. Stuur GEEN [FASE:n] tokens. Geen vragen, alleen welkom en verwijzing naar de module.`)
+        // Briefing MET Storyline-module
+        ? `START: You are now in the BRIEFING phase. Send ONE short welcoming message as the Instructor. Welcome the participant by name (if known), mention that a preparatory module is now active in the left panel, and ask them to work through it. Then stay SILENT — do not send any more messages until the briefing ends. Do NOT send operational role messages. Do NOT send [FASE:n] tokens. Do NOT ask questions. Just welcome and refer to the module. ${langNote}`
         : briefingActive
-        // Briefing ZONDER Storyline-module: verwelkom + leidt briefing in
-        ? (isEN
-            ? `START: You are now in the BRIEFING phase. Send ONE welcoming message as the Instructor introducing the scenario context. Stay available for participant questions. Do NOT send operational role messages yet. Do NOT send [FASE:n] tokens.`
-            : `START: Je bent nu in de BRIEFING-fase. Stuur ÉÉN welkomstbericht als Instructeur dat de scenario-context introduceert. Blijf beschikbaar voor vragen van de deelnemer. Stuur GEEN operationele rollen. Stuur GEEN [FASE:n] tokens.`)
+        // Briefing ZONDER Storyline-module
+        ? `START: You are now in the BRIEFING phase. Send ONE welcoming message as the Instructor introducing the scenario context. Stay available for participant questions. Do NOT send operational role messages yet. Do NOT send [FASE:n] tokens. ${langNote}`
         // Geen briefing: normaal openingsbericht
-        : (isEN
-            ? `START: Send the opening message from the Instructor (one short sentence introducing the scenario), followed by the first radio signal from the dispatcher (one sentence). Also send one DCS system message. Then wait for the participant's response. Do NOT send [FASE:n] tokens in this opening message — phase 1 is already active.`
-            : `START: Geef het openingsbericht van de Instructeur (één korte zin die het scenario introduceert), gevolgd door het eerste radiosignaal van de dispatcher (één zin). Stuur ook één DCS-systeembericht. Stuur daarna NIETS meer — wacht op de reactie van de deelnemer. BELANGRIJK: stuur GEEN [FASE:n] tokens in dit openingsbericht — fase 1 is al actief bij scenario-start.`))
+        : `START: Send the opening message from the Instructor (one short sentence introducing the scenario), followed by the first radio signal from the dispatcher (one sentence). Also send one DCS system message. Then wait for the participant's response. Do NOT send [FASE:n] tokens in this opening message — phase 1 is already active. ${langNote}`)
     : userMsg;
 
   const systemPrompt = buildSystemPrompt();
@@ -3793,7 +3969,7 @@ Competenties — gebruik precies deze vier, in deze volgorde:
 
 Tijdlijn: max 8 momenten, alleen wat werkelijk significant was.
 Leerpunten: 2-3 items. Minimaal één "improve" of "core" — een debriefing zonder verbeterpunt is geen debriefing.
-${lang==='en' ? 'Language: English.' : 'Taal: Nederlands.'} Tone: professional and direct, not patronising.`;
+${(()=>{const el=getEffectiveLang();return el==='de'?'Language: German.':el==='es'?'Language: Spanish.':el==='fr'?'Language: French.':el==='pl'?'Language: Polish.':el==='en'?'Language: English.':'Taal: Nederlands.';})()} Tone: professional and direct, not patronising.`;
 
   try {
     const controller = new AbortController();
@@ -4117,9 +4293,10 @@ function exportDebriefPDF() {
   const d   = lastDebriefData;
   const sc  = scenarioConfig?.aiScenario;
   const par = scenarioConfig?.participant || {};
-  const date = new Date().toLocaleDateString(lang==='en'?'en-GB':'nl-NL');
+  const effL = getEffectiveLang();
+  const date = new Date().toLocaleDateString(effL==='en'?'en-GB':effL==='de'?'de-DE':effL==='es'?'es-ES':effL==='fr'?'fr-FR':'nl-NL');
   const scoreNum = Math.max(1, Math.min(10, Math.round(d.score || 5)));
-  const isEN = lang === 'en';
+  const isEN = effL === 'en';
   const scoreColor = scoreNum >= 7 ? '#2e7d32' : scoreNum >= 5 ? '#e65100' : '#c62828';
 
   const compRows = (d.competencies || []).map(c => {
@@ -4142,7 +4319,17 @@ function exportDebriefPDF() {
     </tr>`;
   }).join('');
 
-  const lpTypeLabel = { strong: isEN?'Strong point':'Sterk punt', improve: isEN?'Improvement':'Verbeterpunt', core: isEN?'Core point':'Kernpunt' };
+  const lpTypeLabel = {
+    strong:  effL==='de'?'Stärke':effL==='es'?'Punto fuerte':effL==='fr'?'Point fort':'Strong point',
+    improve: effL==='de'?'Verbesserung':effL==='es'?'Mejora':effL==='fr'?'Amélioration':'Improvement',
+    core:    effL==='de'?'Kernpunkt':effL==='es'?'Punto clave':effL==='fr'?'Point clé':'Core point'
+  };
+  // For NL override (isEN is false and not DE/ES/FR)
+  if (!isEN && !['de','es','fr'].includes(effL)) {
+    lpTypeLabel.strong  = 'Sterk punt';
+    lpTypeLabel.improve = 'Verbeterpunt';
+    lpTypeLabel.core    = 'Kernpunt';
+  }
   const lpTypeColor = { strong: '#2e7d32', improve: '#c62828', core: '#e65100' };
   const lpItems = (d.learningPoints || []).map(lp =>
     `<li style="margin-bottom:8px">
@@ -4151,6 +4338,32 @@ function exportDebriefPDF() {
       <span style="color:#444;font-size:13px">${lp.text||''}</span>
     </li>`
   ).join('');
+
+  // Meertalige PDF-labels
+  const lbl = {
+    title:       effL==='de'?'Auswertungsbericht':effL==='es'?'Informe de evaluación':effL==='fr'?'Rapport de débriefing':isEN?'Debrief Report':'Debriefing Rapport',
+    participant: effL==='de'?'Teilnehmer':effL==='es'?'Participante':effL==='fr'?'Participant':isEN?'Participant':'Deelnemer',
+    func:        effL==='de'?'Funktion':effL==='es'?'Función':effL==='fr'?'Fonction':isEN?'Function':'Functie',
+    org:         effL==='de'?'Organisation':effL==='es'?'Organización':effL==='fr'?'Organisation':isEN?'Organisation':'Organisatie',
+    date:        effL==='de'?'Datum':effL==='es'?'Fecha':effL==='fr'?'Date':isEN?'Date':'Datum',
+    duration:    effL==='de'?'Dauer':effL==='es'?'Duración':effL==='fr'?'Durée':isEN?'Duration':'Duur',
+    score:       effL==='de'?'Gesamtpunktzahl':effL==='es'?'Puntuación total':effL==='fr'?'Score global':isEN?'Overall score':'Totaalscore',
+    outof:       effL==='de'?'von':effL==='es'?'de':effL==='fr'?'sur':isEN?'out of':'van',
+    good:        effL==='de'?'Gute Leistung':effL==='es'?'Buen rendimiento':effL==='fr'?'Bonne performance':isEN?'Good performance':'Goede prestatie',
+    avg:         effL==='de'?'Durchschnittliche Leistung':effL==='es'?'Rendimiento promedio':effL==='fr'?'Performance moyenne':isEN?'Average performance':'Gemiddelde prestatie',
+    poor:        effL==='de'?'Verbesserungsbedarf':effL==='es'?'Necesita mejora':effL==='fr'?'À améliorer':isEN?'Needs improvement':'Verbetering nodig',
+    behaviour:   effL==='de'?'Verhaltensanalyse':effL==='es'?'Análisis de comportamiento':effL==='fr'?'Analyse comportementale':isEN?'Behaviour analysis':'Gedragsanalyse',
+    competency:  effL==='de'?'Kompetenz':effL==='es'?'Competencia':effL==='fr'?'Compétence':isEN?'Competency':'Competentie',
+    feedback:    'Feedback',
+    timeline:    effL==='de'?'Zeitlinie':effL==='es'?'Línea de tiempo':effL==='fr'?'Chronologie':isEN?'Timeline':'Tijdlijn',
+    time:        effL==='de'?'Zeit':effL==='es'?'Tiempo':effL==='fr'?'Temps':isEN?'Time':'Tijd',
+    event:       effL==='de'?'Ereignis':effL==='es'?'Evento':effL==='fr'?'Événement':isEN?'Event':'Gebeurtenis',
+    desc:        effL==='de'?'Beschreibung':effL==='es'?'Descripción':effL==='fr'?'Description':isEN?'Description':'Omschrijving',
+    learning:    effL==='de'?'Lernpunkte':effL==='es'?'Puntos de aprendizaje':effL==='fr'?'Points d\'apprentissage':isEN?'Learning points':'Leerpunten',
+    convlog:     effL==='de'?'Gesprächsprotokoll':effL==='es'?'Registro de conversación':effL==='fr'?'Journal de conversation':isEN?'Conversation log':'Gesprekslog',
+    speaker:     effL==='de'?'Sprecher':effL==='es'?'Hablante':effL==='fr'?'Intervenant':isEN?'Speaker':'Spreker',
+    message:     effL==='de'?'Nachricht':effL==='es'?'Mensaje':effL==='fr'?'Message':isEN?'Message':'Bericht',
+  };
 
   const chatLog = conversationHistory
     .filter(m => !m.content.startsWith('START'))
@@ -4177,37 +4390,37 @@ function exportDebriefPDF() {
     @page { margin: 1.5cm 2cm; size: A4; }
   }
 </style></head><body>
-<h1>OIP Live Scenario — ${isEN?'Debrief Report':'Debriefing Rapport'}</h1>
+<h1>OIP Live Scenario — ${lbl.title}</h1>
 <h2>${sc?.scenarioTitle||''}</h2>
 <p class="meta">
-  ${isEN?'Participant':'Deelnemer'}: <strong>${par.name||'—'}</strong> &nbsp;|&nbsp;
-  ${isEN?'Function':'Functie'}: ${par.role||'—'} &nbsp;|&nbsp;
-  ${isEN?'Organisation':'Organisatie'}: ${par.org||par.organization||'—'} &nbsp;|&nbsp;
-  ${isEN?'Date':'Datum'}: ${date} &nbsp;|&nbsp;
-  ${isEN?'Duration':'Duur'}: ${d.durationStr||'—'}
+  ${lbl.participant}: <strong>${par.name||'—'}</strong> &nbsp;|&nbsp;
+  ${lbl.func}: ${par.role||'—'} &nbsp;|&nbsp;
+  ${lbl.org}: ${par.org||par.organization||'—'} &nbsp;|&nbsp;
+  ${lbl.date}: ${date} &nbsp;|&nbsp;
+  ${lbl.duration}: ${d.durationStr||'—'}
 </p>
-<h3>${isEN?'Overall score':'Totaalscore'}</h3>
+<h3>${lbl.score}</h3>
 <div><span class="score-box">${scoreNum}</span>
-  <span style="color:#888;font-size:13px">${isEN?'out of':'van'} 10 — ${scoreNum>=7?(isEN?'Good performance':'Goede prestatie'):scoreNum>=5?(isEN?'Average performance':'Gemiddelde prestatie'):(isEN?'Needs improvement':'Verbetering nodig')}</span>
+  <span style="color:#888;font-size:13px">${lbl.outof} 10 — ${scoreNum>=7?lbl.good:scoreNum>=5?lbl.avg:lbl.poor}</span>
 </div>
-<h3>${isEN?'Behaviour analysis':'Gedragsanalyse'}</h3>
+<h3>${lbl.behaviour}</h3>
 <table><thead><tr style="background:#0097a7;color:#fff">
-  <th style="padding:7px 10px;text-align:left">${isEN?'Competency':'Competentie'}</th>
+  <th style="padding:7px 10px;text-align:left">${lbl.competency}</th>
   <th style="padding:7px 10px;text-align:left">Score</th>
-  <th style="padding:7px 10px;text-align:left">Feedback</th>
+  <th style="padding:7px 10px;text-align:left">${lbl.feedback}</th>
 </tr></thead><tbody>${compRows}</tbody></table>
-<h3>${isEN?'Timeline':'Tijdlijn'}</h3>
+<h3>${lbl.timeline}</h3>
 <table><thead><tr style="background:#37474f;color:#fff">
-  <th style="padding:6px 10px;text-align:left">${isEN?'Time':'Tijd'}</th>
-  <th style="padding:6px 10px;text-align:left">${isEN?'Event':'Gebeurtenis'}</th>
-  <th style="padding:6px 10px;text-align:left">${isEN?'Description':'Omschrijving'}</th>
+  <th style="padding:6px 10px;text-align:left">${lbl.time}</th>
+  <th style="padding:6px 10px;text-align:left">${lbl.event}</th>
+  <th style="padding:6px 10px;text-align:left">${lbl.desc}</th>
 </tr></thead><tbody>${tlItems}</tbody></table>
-<h3>${isEN?'Learning points':'Leerpunten'}</h3>
+<h3>${lbl.learning}</h3>
 <ul>${lpItems}</ul>
-<h3>${isEN?'Conversation log':'Gesprekslog'}</h3>
+<h3>${lbl.convlog}</h3>
 <table><thead><tr style="background:#455a64;color:#fff">
-  <th style="padding:6px 10px;text-align:left">${isEN?'Speaker':'Spreker'}</th>
-  <th style="padding:6px 10px;text-align:left">${isEN?'Message':'Bericht'}</th>
+  <th style="padding:6px 10px;text-align:left">${lbl.speaker}</th>
+  <th style="padding:6px 10px;text-align:left">${lbl.message}</th>
 </tr></thead><tbody>${chatLog}</tbody></table>
 <p style="margin-top:32px;color:#aaa;font-size:11px;border-top:1px solid #eee;padding-top:8px">
   OIP Training &amp; Tooling — OIP Live Scenario — ${date}
@@ -4250,8 +4463,9 @@ function exportDebriefExcel() {
   const d   = lastDebriefData;
   const sc  = scenarioConfig?.aiScenario;
   const par = scenarioConfig?.participant || {};
-  const date = new Date().toLocaleDateString(lang==='en'?'en-GB':'nl-NL');
-  const isEN = lang === 'en';
+  const effL = getEffectiveLang();
+  const date = new Date().toLocaleDateString(effL==='en'?'en-GB':effL==='de'?'de-DE':effL==='es'?'es-ES':effL==='fr'?'fr-FR':'nl-NL');
+  const isEN = effL === 'en';
   const scoreNum = Math.max(1, Math.min(10, Math.round(d.score || 5)));
   const comps = d.competencies || [];
 
@@ -4261,21 +4475,24 @@ function exportDebriefExcel() {
     return c?.score || '';
   };
 
+  const h = (en, de, es, fr, nl) =>
+    effL==='de'?de : effL==='es'?es : effL==='fr'?fr : isEN?en : nl;
+
   const headers = [
-    isEN?'Date':'Datum',
-    isEN?'Participant':'Deelnemer',
-    isEN?'Function':'Functie',
-    isEN?'Organisation':'Organisatie',
-    isEN?'Scenario':'Scenario',
-    isEN?'Duration':'Duur',
-    isEN?'Overall score (1-10)':'Totaalscore (1-10)',
-    isEN?'Situational awareness (1-5)':'Situatiebewustzijn (1-5)',
-    isEN?'Communication (1-5)':'Communicatie (1-5)',
-    isEN?'Prioritisation (1-5)':'Prioriteitstelling (1-5)',
-    isEN?'Procedure compliance (1-5)':'Procedure-opvolging (1-5)',
-    isEN?'Strong points':'Sterke punten',
-    isEN?'Improvement points':'Verbeterpunten',
-    isEN?'Notes':'Notities',
+    h('Date',                    'Datum',                  'Fecha',                   'Date',                      'Datum'),
+    h('Participant',             'Teilnehmer',             'Participante',             'Participant',                'Deelnemer'),
+    h('Function',                'Funktion',               'Función',                 'Fonction',                  'Functie'),
+    h('Organisation',            'Organisation',           'Organización',            'Organisation',              'Organisatie'),
+    h('Scenario',                'Szenario',               'Escenario',               'Scénario',                  'Scenario'),
+    h('Duration',                'Dauer',                  'Duración',                'Durée',                     'Duur'),
+    h('Overall score (1-10)',    'Gesamtpunktzahl (1-10)', 'Puntuación total (1-10)', 'Score global (1-10)',        'Totaalscore (1-10)'),
+    h('Situational awareness (1-5)', 'Situationsbewusstsein (1-5)', 'Conciencia situacional (1-5)', 'Conscience situationnelle (1-5)', 'Situatiebewustzijn (1-5)'),
+    h('Communication (1-5)',     'Kommunikation (1-5)',    'Comunicación (1-5)',       'Communication (1-5)',        'Communicatie (1-5)'),
+    h('Prioritisation (1-5)',    'Priorisierung (1-5)',    'Priorización (1-5)',       'Priorisation (1-5)',         'Prioriteitstelling (1-5)'),
+    h('Procedure compliance (1-5)', 'Verfahrenskonformität (1-5)', 'Cumplimiento de procedimientos (1-5)', 'Respect des procédures (1-5)', 'Procedure-opvolging (1-5)'),
+    h('Strong points',           'Stärken',                'Puntos fuertes',          'Points forts',              'Sterke punten'),
+    h('Improvement points',      'Verbesserungspunkte',    'Puntos de mejora',        'Points d\'amélioration',    'Verbeterpunten'),
+    h('Notes',                   'Notizen',                'Notas',                   'Notes',                     'Notities'),
   ];
 
   const strongPts  = (d.learningPoints||[]).filter(lp=>lp.type==='strong').map(lp=>lp.text).join(' | ');
