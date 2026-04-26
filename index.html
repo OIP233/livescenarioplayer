@@ -705,6 +705,279 @@ html, body {
 #centre-send-btn:hover:not(:disabled) { background:var(--blue); color:#fff; }
 #centre-send-btn:disabled { opacity:.3; cursor:not-allowed; }
 
+/* ── RADIO CHECK / MIC TEST OVERLAY ─────────────── */
+#radiocheck-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(8, 12, 20, 0.85);
+  backdrop-filter: blur(4px);
+  z-index: 10000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+#radiocheck-overlay.active { display: flex; }
+
+#radiocheck-modal {
+  background: var(--bg2);
+  border: 1px solid var(--border-hi);
+  border-radius: 8px;
+  width: min(560px, 100%);
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(0, 188, 212, 0.15);
+  font-family: var(--mono);
+}
+
+#radiocheck-modal .rc-header {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg3);
+}
+#radiocheck-modal .rc-header .led {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--cyan);
+  box-shadow: 0 0 6px var(--cyan);
+  animation: pulse 1.4s ease-in-out infinite;
+}
+#radiocheck-modal .rc-header h2 {
+  margin: 0;
+  font-family: var(--cond);
+  font-size: 14px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--cyan);
+  font-weight: 700;
+}
+
+#radiocheck-modal .rc-body { padding: 20px 22px; }
+
+.rc-step {
+  display: none;
+  flex-direction: column;
+  gap: 14px;
+}
+.rc-step.active { display: flex; }
+
+.rc-intro {
+  font-size: 13px;
+  color: var(--text-bright);
+  line-height: 1.55;
+}
+.rc-intro strong { color: var(--cyan); }
+.rc-intro kbd {
+  padding: 2px 7px;
+  border: 1px solid var(--cyan);
+  border-radius: 3px;
+  font-family: var(--mono);
+  color: var(--cyan);
+  font-size: 11px;
+}
+
+.rc-prompt-box {
+  padding: 14px 16px;
+  background: var(--bg3);
+  border-left: 3px solid var(--amber);
+  border-radius: 4px;
+  font-size: 14px;
+  color: var(--text-bright);
+  line-height: 1.5;
+}
+.rc-prompt-box .rc-prompt-label {
+  font-family: var(--cond);
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--amber);
+  margin-bottom: 6px;
+  display: block;
+}
+
+.rc-mic-area {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+  padding: 18px 14px;
+  background: var(--bg);
+  border: 1px dashed var(--border-hi);
+  border-radius: 6px;
+}
+.rc-mic-button {
+  background: var(--bg3);
+  border: 1px solid var(--border-hi);
+  color: var(--text-bright);
+  padding: 12px 28px;
+  border-radius: 4px;
+  font-family: var(--cond);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  user-select: none;
+  touch-action: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: all .15s;
+}
+.rc-mic-button:hover:not(:disabled) { border-color: var(--cyan); color: var(--cyan); }
+.rc-mic-button:disabled { opacity: .4; cursor: not-allowed; }
+.rc-mic-button.is-recording {
+  background: var(--red-bg);
+  border-color: var(--red);
+  color: var(--red);
+  animation: pulse 1.2s ease-in-out infinite;
+}
+.rc-mic-button.is-processing {
+  background: var(--amber-bg);
+  border-color: var(--amber);
+  color: var(--amber);
+}
+.rc-mic-button .rc-icon {
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+.rc-mic-button.is-processing .rc-icon {
+  background: transparent;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+.rc-meter {
+  display: flex;
+  gap: 2px;
+  height: 14px;
+  width: 100%;
+  align-items: center;
+}
+.rc-meter .rc-bar {
+  flex: 1;
+  height: 100%;
+  background: var(--border);
+  border-radius: 1px;
+}
+.rc-meter .rc-bar.on      { background: var(--green); }
+.rc-meter .rc-bar.on-hi   { background: var(--amber); }
+.rc-meter .rc-bar.on-peak { background: var(--red); }
+
+.rc-status {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-dim);
+  text-align: center;
+  min-height: 18px;
+}
+
+.rc-result {
+  padding: 14px 16px;
+  border-radius: 6px;
+  border: 1px solid;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.rc-result.ok      { background: var(--green-bg); border-color: var(--green); }
+.rc-result.warn    { background: var(--amber-bg); border-color: var(--amber); }
+.rc-result-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--cond);
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-weight: 700;
+}
+.rc-result.ok   .rc-result-head { color: var(--green); }
+.rc-result.warn .rc-result-head { color: var(--amber); }
+.rc-result-icon {
+  width: 18px; height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  border-radius: 50%;
+  border: 1.5px solid currentColor;
+  flex-shrink: 0;
+}
+.rc-transcript {
+  padding: 8px 12px;
+  background: var(--bg2);
+  border-left: 3px solid var(--text-dim);
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--text-bright);
+  font-style: italic;
+  border-radius: 3px;
+}
+.rc-result-detail { font-size: 12px; color: var(--text-dim); line-height: 1.5; }
+
+#radiocheck-modal .rc-footer {
+  padding: 12px 22px 18px;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+}
+#radiocheck-modal .rc-footer .rc-skip {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-dim);
+  padding: 8px 14px;
+  border-radius: 4px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all .15s;
+}
+#radiocheck-modal .rc-footer .rc-skip:hover { color: var(--text); border-color: var(--border-hi); }
+#radiocheck-modal .rc-footer .rc-primary {
+  background: var(--cyan);
+  border: 1px solid var(--cyan);
+  color: var(--bg);
+  padding: 9px 22px;
+  border-radius: 4px;
+  font-family: var(--cond);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all .15s;
+}
+#radiocheck-modal .rc-footer .rc-primary:hover { background: transparent; color: var(--cyan); }
+#radiocheck-modal .rc-footer .rc-primary:disabled {
+  opacity: .4;
+  cursor: not-allowed;
+}
+#radiocheck-modal .rc-footer .rc-secondary {
+  background: var(--bg3);
+  border: 1px solid var(--border-hi);
+  color: var(--text);
+  padding: 9px 16px;
+  border-radius: 4px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+#radiocheck-modal .rc-footer .rc-secondary:hover { color: var(--cyan); border-color: var(--cyan); }
+#radiocheck-modal .rc-footer .rc-spacer { flex: 1; }
+
 /* Hint onder invoerveld */
 .input-hint {
   font-family: var(--mono);
@@ -712,6 +985,230 @@ html, body {
   color: var(--text-dim);
   text-align: right;
   opacity: .7;
+}
+
+/* ── VOICE / PUSH-TO-TALK ─────────────────────────── */
+#ptt-btn {
+  background: var(--bg3);
+  border: 1px solid var(--border-hi);
+  color: var(--text-bright);
+  padding: 12px 18px;
+  border-radius: 4px;
+  font-family: var(--cond);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+  transition: all .15s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  user-select: none;
+  touch-action: none;
+}
+#ptt-btn:hover:not(:disabled) { border-color: var(--cyan); color: var(--cyan); }
+#ptt-btn:disabled { opacity:.3; cursor:not-allowed; }
+#ptt-btn.is-recording {
+  background: var(--red-bg);
+  border-color: var(--red);
+  color: var(--red);
+  animation: pulse 1.2s ease-in-out infinite;
+}
+#ptt-btn.is-processing {
+  background: var(--amber-bg);
+  border-color: var(--amber);
+  color: var(--amber);
+}
+#ptt-btn .ptt-icon {
+  width: 14px; height: 14px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: .85;
+  flex-shrink: 0;
+}
+#ptt-btn.is-recording .ptt-icon {
+  background: var(--red);
+  box-shadow: 0 0 8px var(--red);
+}
+#ptt-btn.is-processing .ptt-icon {
+  background: transparent;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Voice tip — eenmalige melding boven textarea */
+#voice-tip {
+  display: none;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--cyan-dim, rgba(0,188,212,0.12));
+  border: 1px solid var(--cyan);
+  border-radius: 4px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--cyan);
+  line-height: 1.4;
+}
+#voice-tip.active { display: flex; }
+#voice-tip .vt-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 20px;
+  border: 1.5px solid var(--cyan);
+  border-radius: 3px;
+  font-family: var(--mono);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+  flex-shrink: 0;
+}
+#voice-tip #vt-text { flex: 1; color: var(--text-bright); }
+#voice-tip #vt-dismiss {
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  font-family: var(--mono);
+  font-size: 16px;
+  cursor: pointer;
+  padding: 0 4px;
+  line-height: 1;
+}
+#voice-tip #vt-dismiss:hover { color: var(--cyan); }
+
+/* Voice status balk (boven de textarea, onder de header) */
+#voice-status {
+  display: none;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-dim);
+}
+#voice-status.active { display: flex; }
+#voice-status .vs-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--red);
+  box-shadow: 0 0 6px var(--red);
+  animation: pulse 1s ease-in-out infinite;
+  flex-shrink: 0;
+}
+#voice-status.processing .vs-dot {
+  background: var(--amber);
+  box-shadow: 0 0 6px var(--amber);
+  animation: none;
+}
+#voice-status .vs-meter {
+  flex: 1;
+  display: flex;
+  gap: 2px;
+  height: 14px;
+  align-items: center;
+}
+#voice-status .vs-bar {
+  flex: 1;
+  height: 100%;
+  background: var(--border);
+  border-radius: 1px;
+  transition: background .08s;
+}
+#voice-status .vs-bar.on      { background: var(--green); }
+#voice-status .vs-bar.on-hi   { background: var(--amber); }
+#voice-status .vs-bar.on-peak { background: var(--red); }
+#voice-status .vs-time {
+  font-family: var(--mono);
+  color: var(--text-bright);
+  min-width: 40px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+/* Voice-error badge in header */
+#voice-err-badge {
+  display: none;
+  margin-left: auto;
+  padding: 2px 8px;
+  background: var(--red-bg);
+  border: 1px solid var(--red);
+  color: var(--red);
+  font-family: var(--mono);
+  font-size: 11px;
+  border-radius: 3px;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* ── PROCESSING TICKER (lichtkrant tijdens transcriptie) ─── */
+/* Verschijnt alleen tijdens 'processing'-state, geeft de operator een
+   alertheids-tip te lezen terwijl Whisper de audio verwerkt. Stijl: strak,
+   amber, monospace — past bij een echte controlekamer-LED-ticker. */
+#voice-ticker {
+  display: none;
+  height: 26px;
+  overflow: hidden;
+  position: relative;
+  background: var(--bg);
+  border: 1px solid var(--amber);
+  border-radius: 3px;
+  margin-top: 6px;
+}
+#voice-ticker.active { display: block; }
+#voice-ticker::before,
+#voice-ticker::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 24px;
+  z-index: 2;
+  pointer-events: none;
+}
+#voice-ticker::before {
+  left: 0;
+  background: linear-gradient(to right, var(--bg), transparent);
+}
+#voice-ticker::after {
+  right: 0;
+  background: linear-gradient(to left, var(--bg), transparent);
+}
+#voice-ticker .vt-track {
+  position: absolute;
+  top: 0; bottom: 0;
+  left: 100%;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 1px;
+  color: var(--amber);
+  text-shadow: 0 0 4px rgba(255, 165, 0, 0.4);
+  padding-left: 16px;
+  animation: vt-scroll 14s linear infinite;
+}
+#voice-ticker .vt-track .vt-msg::before {
+  content: '◉';
+  margin-right: 10px;
+  opacity: 0.6;
+}
+#voice-ticker .vt-track .vt-msg {
+  margin-right: 60px;
+}
+@keyframes vt-scroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-100%); }
 }
 
 /* ── RIGHT: RADIO PANEL — tabbladen ──────────────── */
@@ -949,6 +1446,125 @@ html, body {
 .learn-item.improve .learn-item-tag { color:var(--amber); }
 .learn-item.core    .learn-item-tag { color:var(--cyan);  }
 .learn-item-text { font-size:13px; color:var(--text-bright); }
+
+/* Communicatie-doelmatigheid sectie */
+#comms-container { display:flex; flex-direction:column; gap:14px; }
+
+.comms-summary {
+  padding: 12px 14px;
+  background: var(--blue-dim);
+  border-left: 3px solid var(--blue);
+  border-radius: 5px;
+  display: flex;
+  gap: 14px;
+  align-items: center;
+}
+.comms-summary-score {
+  font-family: var(--cond);
+  font-weight: 700;
+  font-size: 28px;
+  color: var(--blue);
+  min-width: 56px;
+  text-align: center;
+  line-height: 1;
+}
+.comms-summary-score small {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  display: block;
+  margin-top: 4px;
+}
+.comms-summary-text { flex: 1; font-size: 13px; color: var(--text-bright); line-height: 1.55; }
+
+.comms-aspects { display: flex; flex-direction: column; gap: 8px; }
+.comms-aspect-row {
+  display: grid;
+  grid-template-columns: 140px 70px 1fr;
+  gap: 10px;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+.comms-aspect-row:last-child { border-bottom: none; }
+.comms-aspect-name {
+  font-family: var(--cond);
+  font-weight: 600;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text);
+}
+.comms-aspect-score {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-dim);
+  text-align: center;
+}
+.comms-aspect-score-bar {
+  display: inline-block;
+  width: 52px;
+  height: 5px;
+  background: var(--bg3);
+  border-radius: 3px;
+  overflow: hidden;
+  vertical-align: middle;
+  margin-right: 6px;
+}
+.comms-aspect-score-bar > span {
+  display: block;
+  height: 100%;
+  transition: width 1s ease;
+}
+.comms-aspect-score-bar.high   > span { background: var(--green); }
+.comms-aspect-score-bar.medium > span { background: var(--amber); }
+.comms-aspect-score-bar.low    > span { background: var(--red); }
+.comms-aspect-feedback { font-size: 13px; color: var(--text-dim); line-height: 1.5; }
+
+.comms-quotes { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+.comms-quote {
+  padding: 10px 12px;
+  background: var(--bg2);
+  border-left: 3px solid var(--border-hi);
+  border-radius: 4px;
+}
+.comms-quote-text {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--text-bright);
+  font-style: italic;
+  margin-bottom: 4px;
+}
+.comms-quote-comment { font-size: 12px; color: var(--text-dim); line-height: 1.5; }
+
+.comms-lists {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.comms-list {
+  padding: 10px 12px;
+  border-radius: 5px;
+  border-left: 3px solid;
+}
+.comms-list.strengths  { background: var(--green-bg); border-color: var(--green); }
+.comms-list.improves   { background: var(--amber-bg); border-color: var(--amber); }
+.comms-list-title {
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+}
+.comms-list.strengths .comms-list-title { color: var(--green); }
+.comms-list.improves  .comms-list-title { color: var(--amber); }
+.comms-list ul { list-style: none; margin: 0; padding: 0; }
+.comms-list li { font-size: 12px; color: var(--text-bright); line-height: 1.5; margin-bottom: 4px; padding-left: 12px; position: relative; }
+.comms-list li::before { content: '›'; position: absolute; left: 0; opacity: .6; }
+@media (max-width: 720px) {
+  .comms-lists { grid-template-columns: 1fr; }
+  .comms-aspect-row { grid-template-columns: 100px 60px 1fr; gap: 6px; }
+}
 
 .msg { display:flex; flex-direction:column; }
 .msg.sys   { align-self:center;      max-width:92%; }
@@ -1403,6 +2019,36 @@ body.light .alarm-row.med { background: var(--amber-bg); color: var(--amber); }
 body.light .alarm-row.lo  { background: var(--blue-bg);  color: var(--blue); }
 body.light .msg.sys .msg-bub { color: var(--text-dim); }
 
+/* ── BEHAVIOUR LABEL (replaces numeric score) ─────── */
+#debrief-label-wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+#debrief-behaviour-label {
+  font-family: var(--cond);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--cyan);
+  line-height: 1;
+  transition: color .4s;
+}
+#debrief-behaviour-label.label-reactive   { color: var(--red);   }
+#debrief-behaviour-label.label-aware      { color: var(--amber); }
+#debrief-behaviour-label.label-proactive  { color: var(--blue);  }
+#debrief-behaviour-label.label-in-control { color: var(--green); }
+#debrief-behaviour-desc {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-dim);
+  letter-spacing: .5px;
+  line-height: 1.5;
+  max-width: 220px;
+}
+
 #pause-btn {
   display: none;
   font-family: var(--mono); font-size: 13px;
@@ -1419,18 +2065,64 @@ body.light .msg.sys .msg-bub { color: var(--text-dim); }
 <body>
 
 
+<!-- RADIO CHECK OVERLAY (toont vóór scenario-start bij eerste sessie) -->
+<div id="radiocheck-overlay">
+  <div id="radiocheck-modal">
+    <div class="rc-header">
+      <div class="led"></div>
+      <h2 id="rc-title">Radio check — microfoontest</h2>
+    </div>
+    <div class="rc-body">
+      <!-- Stap 1: instructie + opname -->
+      <div class="rc-step active" id="rc-step-record">
+        <div class="rc-intro" id="rc-intro"></div>
+        <div class="rc-prompt-box">
+          <span class="rc-prompt-label" id="rc-prompt-label">Lees voor</span>
+          <span id="rc-prompt-text"></span>
+        </div>
+        <div class="rc-mic-area">
+          <button type="button" class="rc-mic-button" id="rc-mic-btn">
+            <span class="rc-icon"></span>
+            <span id="rc-mic-label">Houd vast om te spreken</span>
+          </button>
+          <div class="rc-meter" id="rc-meter"></div>
+          <div class="rc-status" id="rc-status"></div>
+        </div>
+      </div>
+      <!-- Stap 2: resultaat -->
+      <div class="rc-step" id="rc-step-result">
+        <div class="rc-result" id="rc-result-box">
+          <div class="rc-result-head">
+            <span class="rc-result-icon" id="rc-result-icon">✓</span>
+            <span id="rc-result-title"></span>
+          </div>
+          <div class="rc-transcript" id="rc-transcript"></div>
+          <div class="rc-result-detail" id="rc-result-detail"></div>
+        </div>
+      </div>
+    </div>
+    <div class="rc-footer">
+      <button type="button" class="rc-skip" id="rc-skip">Skip · ga direct beginnen</button>
+      <div class="rc-spacer"></div>
+      <button type="button" class="rc-secondary" id="rc-retry" style="display:none">↺ Opnieuw</button>
+      <button type="button" class="rc-primary" id="rc-continue" disabled>Start scenario →</button>
+    </div>
+  </div>
+</div>
+
+
 <!-- VERLOPEN OVERLAY -->
 <div id="expired-overlay">
   <div id="expired-box">
     <div class="exp-icon">⊘</div>
-    <div class="exp-title" id="exp-title">Toegang verlopen</div>
+    <div class="exp-title" id="exp-title">Access expired</div>
     <div class="exp-date" id="exp-date"></div>
     <div class="exp-sub" id="exp-sub">
-      Dit configuratiebestand is niet meer geldig.<br>
-      Neem contact op met de trainer voor een bijgewerkt bestand.
+      This configuration file is no longer valid.<br>
+      Contact the trainer for an updated file.
     </div>
     <button class="exp-btn" onclick="document.getElementById('expired-overlay').classList.remove('visible')">
-      ← Terug
+      ← Back
     </button>
   </div>
 </div>
@@ -1465,30 +2157,19 @@ body.light .msg.sys .msg-bub { color: var(--text-dim); }
   <div id="boot-go-label" id="boot-go-label"></div>
 </div>
 
-<!-- TAALKEUZE OVERLAY -->
-<div id="lang-overlay" class="visible">
-  <div class="lang-logo">OIP <em>·</em> Live Scenario</div>
-  <div class="lang-sub">Select language · Kies taal</div>
-  <div class="lang-btns">
-    <button class="lang-btn" onclick="initLang('nl')">
-      <span class="lang-flag">🇳🇱</span>Nederlands
-    </button>
-    <button class="lang-btn" onclick="initLang('en')">
-      <span class="lang-flag">🇬🇧</span>English
-    </button>
-  </div>
-</div>
+<!-- TAALKEUZE OVERLAY verwijderd — UI is altijd Engels -->
+<div id="lang-overlay" style="display:none"></div>
 
 <!-- ── INTRO ─────────────────────────────────────── -->
 <div id="intro">
   <div class="intro-logo">OIP · Live Scenario</div>
   <div class="intro-box">
-    <h2>Scenario starten</h2>
-    <p>Laad het scenario-configuratiebestand dat je van de trainer hebt ontvangen.</p>
+    <h2>Start scenario</h2>
+    <p>Load the scenario configuration file you received from the trainer.</p>
     <div class="intro-field">
-      <label>Scenario JSON (van de controller) *</label>
+      <label>Scenario JSON (from controller) *</label>
       <div style="display:flex;gap:8px;align-items:center">
-        <input type="text" id="json-filename" placeholder="Nog geen bestand geladen..."
+        <input type="text" id="json-filename" placeholder="No file loaded yet..."
           readonly style="flex:1;cursor:default;opacity:.7"/>
         <button onclick="document.getElementById('json-file-input').click()"
           style="background:var(--bg3);border:1px solid var(--border-hi);color:var(--text);
@@ -1497,51 +2178,50 @@ body.light .msg.sys .msg-bub { color: var(--text-dim); }
                  transition:all .15s"
           onmouseover="this.style.borderColor='var(--cyan)'"
           onmouseout="this.style.borderColor='var(--border-hi)'">
-          Bladeren...
+          Browse...
         </button>
         <input type="file" id="json-file-input" accept=".json"
           style="display:none" onchange="loadConfigFile(this)"/>
       </div>
       <div id="json-status" style="font-family:var(--mono);font-size:11px;margin-top:5px;color:var(--text-dim)">
-        Selecteer een JSON-bestand van de OIP Live Scenario
+        Select a JSON file from the OIP Live Scenario Controller
       </div>
     </div>
 
-    <!-- API-sleutel: alleen zichtbaar als JSON geen sleutel bevat -->
+    <!-- API key: only shown if JSON contains no key -->
     <div class="intro-field" id="apikey-field" style="display:none">
-      <label>Anthropic API-sleutel *</label>
+      <label>Anthropic API key *</label>
       <input type="password" id="api-key-input" placeholder="sk-ant-api03-..." autocomplete="off"/>
       <div style="font-family:var(--mono);font-size:11px;margin-top:5px;color:var(--text-dim)">
-        Geen API-sleutel in het configuratiebestand. Voer de sleutel handmatig in.
+        No API key found in the configuration file. Enter the key manually.
       </div>
     </div>
     <div id="apikey-ok" style="display:none;font-family:var(--mono);font-size:11px;
          color:var(--green);margin:8px 0 4px;padding:6px 10px;
          background:var(--green-dim);border-radius:4px;border:1px solid var(--green)">
-      ✓ API-sleutel geladen uit configuratie
+      ✓ API key loaded from configuration
     </div>
 
-    <!-- Uitvoeringstaal — onafhankelijk van UI-taal -->
+    <!-- Scenario execution language — independent of UI language -->
     <div class="intro-field" id="execlang-field">
-      <label id="execlang-label">Uitvoeringstaal scenario (AI-communicatie)</label>
+      <label id="execlang-label">AI communication language</label>
       <select id="execlang-select" style="width:100%;background:var(--bg3);border:1px solid var(--border-hi);
               border-radius:4px;padding:10px 13px;color:var(--text-bright);font-family:var(--sans);
               font-size:15px;outline:none;transition:border-color .2s"
               onchange="onExecLangChange()">
-        <option value="">— Same as UI language —</option>
+        <option value="en">🇬🇧 English (default)</option>
         <option value="nl">🇳🇱 Nederlands</option>
-        <option value="en">🇬🇧 English</option>
         <option value="de">🇩🇪 Deutsch</option>
         <option value="es">🇪🇸 Español</option>
         <option value="fr">🇫🇷 Français</option>
         <option value="pl">🇵🇱 Polski</option>
       </select>
       <div id="execlang-hint" style="font-family:var(--mono);font-size:11px;margin-top:5px;color:var(--text-dim)">
-        The AI will conduct the scenario in this language. Useful for EVOS terminals in Germany or Spain.
+        The AI will conduct the scenario in this language.
       </div>
     </div>
 
-    <button id="start-btn" onclick="startScenario()">Scenario starten →</button>
+    <button id="start-btn" onclick="startScenario()">Start scenario →</button>
   </div>
 </div>
 
@@ -1550,7 +2230,7 @@ body.light .msg.sys .msg-bub { color: var(--text-dim); }
   <div class="logo">OIP <em>·</em> Live Scenario</div>
   <div class="topbar-sep"></div>
   <div id="scenario-title">Biodiesel inslag T-204 — Pompstation Noord</div>
-  <div id="status-badge" class="s-normal">NORMAAL</div>
+  <div id="status-badge" class="s-normal">NORMAL</div>
   <div class="topbar-sep"></div>
   <div id="participant-display">
     <span class="pd-label">In Control:</span>
@@ -1558,13 +2238,12 @@ body.light .msg.sys .msg-bub { color: var(--text-dim); }
   </div>
   <div class="topbar-sep" id="participant-sep" style="display:none"></div>
   <div id="sim-clock-wrap" style="display:flex;align-items:center;gap:6px;flex-shrink:0">
-    <span style="font-family:var(--mono);font-size:10px;color:var(--text-dim);letter-spacing:1px;text-transform:uppercase">Tijd</span>
+    <span style="font-family:var(--mono);font-size:10px;color:var(--text-dim);letter-spacing:1px;text-transform:uppercase">Time</span>
     <div id="sim-clock">--:--</div>
   </div>
-  <button id="pause-btn" onclick="togglePause()">⏸ Pauze</button>
+  <button id="pause-btn" onclick="togglePause()">⏸ Pause</button>
   <div class="topbar-sep"></div>
-  <button id="daymode-btn" onclick="toggleDayMode()" title="Dag/nacht modus" style="font-family:var(--mono);font-size:14px;background:transparent;border:1px solid var(--border-hi);color:var(--text-dim);padding:5px 9px;border-radius:3px;cursor:pointer;transition:all .15s;flex-shrink:0;line-height:1">☀</button>
-  <button id="lang-switch" onclick="showLangOverlay()">NL</button>
+  <button id="daymode-btn" onclick="toggleDayMode()" title="Day/night mode" style="font-family:var(--mono);font-size:14px;background:transparent;border:1px solid var(--border-hi);color:var(--text-dim);padding:5px 9px;border-radius:3px;cursor:pointer;transition:all .15s;flex-shrink:0;line-height:1">☀</button>
 </div>
 
 <!-- ── MAIN GRID ─────────────────────────────────── -->
@@ -1574,29 +2253,29 @@ body.light .msg.sys .msg-bub { color: var(--text-dim); }
   <div id="alarm-panel">
     <div class="panel-hdr">
       <div class="led" id="alarm-led"></div>
-      DCS Alarmen
+      DCS Alarms
       <span id="unack-count" style="display:none;margin-left:auto;font-family:var(--mono);font-size:10px;
             letter-spacing:1px;background:var(--red-dim);color:var(--red);border:1px solid var(--red);
             border-radius:3px;padding:1px 6px"></span>
-      <div id="alarm-vol-wrap" title="Alarmvolume" style="display:flex;align-items:center;gap:5px;margin-left:8px;flex-shrink:0">
+      <div id="alarm-vol-wrap" title="Alarm volume" style="display:flex;align-items:center;gap:5px;margin-left:8px;flex-shrink:0">
         <span id="alarm-vol-icon" style="font-size:12px;cursor:pointer;user-select:none;opacity:.7" onclick="toggleAlarmMute()">🔔</span>
         <input type="range" id="alarm-vol-slider" min="0" max="100" value="70"
           oninput="setAlarmVolume(this.value)"
           style="width:52px;height:3px;accent-color:var(--cyan);cursor:pointer;opacity:.7"
-          title="Alarmvolume"/>
+          title="Alarm volume"/>
       </div>
     </div>
     <div id="alarm-list"></div>
 
     <div id="situation">
-      <div class="lbl">Situatie</div>
-      <div id="situation-text">Laden...</div>
+      <div class="lbl">Situation</div>
+      <div id="situation-text">Loading...</div>
     </div>
 
     <div id="phase-timer">
       <div id="phase-timer-header">
         <div>
-          <div id="phase-timer-label">Fase</div>
+          <div id="phase-timer-label">Phase</div>
           <div id="phase-timer-name"></div>
         </div>
         <div id="phase-timer-countdown"></div>
@@ -1610,8 +2289,8 @@ body.light .msg.sys .msg-bub { color: var(--text-dim); }
   <!-- CENTRE: STORYLINE IFRAME + ZENDINVOER -->
   <div id="centre-panel">
     <div id="storyline-header">
-      <div class="lbl">Camerabewaking</div>
-      <div id="storyline-url-display">geen module geladen</div>
+      <div class="lbl">Camera monitoring</div>
+      <div id="storyline-url-display">no module loaded</div>
       <div id="phase-controls"></div>
       <button id="expand-btn" onclick="expandStoryline()" title="Vergroot weergave">⤢</button>
     </div>
@@ -1631,11 +2310,11 @@ body.light .msg.sys .msg-bub { color: var(--text-dim); }
 
     <div id="storyline-frame-wrap">
       <div id="iframe-blocker"></div>
-      <button id="expand-close-btn" onclick="collapseStoryline()">✕ &nbsp;Terug</button>
+      <button id="expand-close-btn" onclick="collapseStoryline()">✕ &nbsp;Back</button>
       <div id="storyline-placeholder">
         <div class="ph-icon"></div>
         <p>Geen Storyline module</p>
-        <small>Voer een module-URL in bij het opstarten, of gebruik de testmodus.</small>
+        <small>Enter a module URL at startup, or use test mode.</small>
       </div>
       <iframe id="storyline-frame" style="display:none"
         sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox"
@@ -1647,18 +2326,39 @@ body.light .msg.sys .msg-bub { color: var(--text-dim); }
     <div id="centre-input-area">
       <div id="centre-input-header">
         <div class="led g" id="send-led"></div>
-        Radiocommunicatie — Zend bericht
+        Radio communication — Send message
+        <span id="voice-err-badge" title="">⚠ voice offline</span>
       </div>
       <div id="centre-input-body">
+        <div id="voice-tip" style="display:none">
+          <span class="vt-icon">⎵</span>
+          <span id="vt-text"></span>
+          <button type="button" id="vt-dismiss" title="Verbergen">×</button>
+        </div>
+        <div id="voice-status">
+          <div class="vs-dot"></div>
+          <span id="vs-label">Recording…</span>
+          <div class="vs-meter" id="vs-meter"></div>
+          <span class="vs-time" id="vs-time">00:00</span>
+        </div>
+        <div id="voice-ticker">
+          <div class="vt-track" id="vt-track"></div>
+        </div>
         <textarea id="user-input-large"
-          placeholder="Typ je reactie als operator... (Enter om te zenden, Shift+Enter voor nieuwe regel)"
+          placeholder="Type your response as operator... (Enter to send, Shift+Enter for new line)"
           onkeydown="handleKeyCentre(event)"
           oninput="autoResizeCentre(this)"
           disabled></textarea>
         <div id="centre-send-row">
-          <span class="centre-radio-lbl">▶ ZEND:</span>
+          <button id="ptt-btn"
+            type="button"
+            title="Hold to speak (or press and hold Space)"
+            disabled>
+            <span class="ptt-icon"></span>
+            <span id="ptt-label">Hold to speak</span>
+          </button>
           <div style="flex:1"></div>
-          <span class="input-hint" id="input-hint">Enter om te zenden · Shift+Enter nieuwe regel</span>
+          <span class="input-hint" id="input-hint">Enter to send · Shift+Enter new line</span>
           <button id="centre-send-btn" onclick="sendMessage()" disabled>Zend →</button>
         </div>
       </div>
@@ -1675,7 +2375,7 @@ body.light .msg.sys .msg-bub { color: var(--text-dim); }
         Radio
       </button>
       <button class="ptab" id="tab-debrief" onclick="switchTab('debrief')" disabled>
-        Debriefing
+        Debrief
       </button>
     </div>
 
@@ -1693,7 +2393,7 @@ body.light .msg.sys .msg-bub { color: var(--text-dim); }
       <!-- Laadstatus -->
       <div id="debrief-loading">
         <div class="debrief-spinner"></div>
-        <div class="debrief-loading-txt">Debriefing wordt opgesteld...</div>
+        <div class="debrief-loading-txt">Preparing debrief...</div>
       </div>
 
       <!-- Inhoud (gevuld na API-aanroep) -->
@@ -1707,20 +2407,17 @@ body.light .msg.sys .msg-bub { color: var(--text-dim); }
               <div id="debrief-scenario-name"></div>
             </div>
             <div style="text-align:right">
-              <div class="debrief-lbl">Deelnemer</div>
+              <div class="debrief-lbl">Participant</div>
               <div id="debrief-participant-name"></div>
             </div>
           </div>
           <div id="debrief-score-row">
-            <div id="debrief-score-wrap">
-              <div id="debrief-score-num">—</div>
-              <div id="debrief-score-bar-wrap">
-                <div id="debrief-score-bar"></div>
-              </div>
-              <div id="debrief-score-label">van 10</div>
+            <div id="debrief-label-wrap">
+              <div id="debrief-behaviour-label">—</div>
+              <div id="debrief-behaviour-desc"></div>
             </div>
             <div id="debrief-duration-wrap">
-              <div class="debrief-lbl">Duur scenario</div>
+              <div class="debrief-lbl">Scenario duration</div>
               <div id="debrief-duration"></div>
             </div>
           </div>
@@ -1735,11 +2432,11 @@ body.light .msg.sys .msg-bub { color: var(--text-dim); }
           </div>
         </div>
 
-        <!-- Sectie 1: Tijdlijn -->
+        <!-- Section 1: Timeline -->
         <div class="debrief-section" id="ds-timeline">
           <div class="debrief-sec-hdr" onclick="toggleSection('timeline')">
             <span class="ds-icon">⏱</span>
-            <span class="ds-title">Tijdlijn</span>
+            <span class="ds-title">Timeline</span>
             <span class="ds-chev" id="chev-timeline">▶</span>
           </div>
           <div class="debrief-sec-body" id="body-timeline">
@@ -1747,11 +2444,11 @@ body.light .msg.sys .msg-bub { color: var(--text-dim); }
           </div>
         </div>
 
-        <!-- Sectie 2: Gedragsanalyse -->
+        <!-- Section 2: Behaviour analysis -->
         <div class="debrief-section" id="ds-analysis">
           <div class="debrief-sec-hdr" onclick="toggleSection('analysis')">
             <span class="ds-icon">◈</span>
-            <span class="ds-title">Gedragsanalyse</span>
+            <span class="ds-title">Behaviour analysis</span>
             <span class="ds-chev" id="chev-analysis">▶</span>
           </div>
           <div class="debrief-sec-body" id="body-analysis">
@@ -1759,11 +2456,23 @@ body.light .msg.sys .msg-bub { color: var(--text-dim); }
           </div>
         </div>
 
-        <!-- Sectie 3: Leerpunten -->
+        <!-- Section 2b: Communication effectiveness -->
+        <div class="debrief-section" id="ds-comms">
+          <div class="debrief-sec-hdr" onclick="toggleSection('comms')">
+            <span class="ds-icon">📡</span>
+            <span class="ds-title">Communication effectiveness</span>
+            <span class="ds-chev" id="chev-comms">▶</span>
+          </div>
+          <div class="debrief-sec-body" id="body-comms">
+            <div id="comms-container"></div>
+          </div>
+        </div>
+
+        <!-- Section 3: Learning points -->
         <div class="debrief-section" id="ds-learning">
           <div class="debrief-sec-hdr" onclick="toggleSection('learning')">
             <span class="ds-icon">→</span>
-            <span class="ds-title">Leerpunten</span>
+            <span class="ds-title">Learning points</span>
             <span class="ds-chev" id="chev-learning">▶</span>
           </div>
           <div class="debrief-sec-body" id="body-learning">
@@ -1771,24 +2480,24 @@ body.light .msg.sys .msg-bub { color: var(--text-dim); }
           </div>
         </div>
 
-        <!-- Export-balk: zie buiten debrief-body hieronder -->
+        <!-- Export bar: see outside debrief-body below -->
 
       </div><!-- #debrief-body -->
 
-      <!-- Export-balk: altijd zichtbaar onderaan, scrollt niet mee -->
+      <!-- Export bar: always visible at bottom, does not scroll -->
       <div id="debrief-export-bar" style="display:none">
         <button class="debrief-export-btn" id="btn-pdf" onclick="exportDebriefPDF()">
-          <span>⬇</span> PDF-rapport
+          <span>⬇</span> PDF report
         </button>
         <button class="debrief-export-btn" id="btn-excel" onclick="exportDebriefExcel()">
-          <span>⬇</span> Excel-rij
+          <span>⬇</span> Excel row
         </button>
       </div>
 
-      <!-- Sessie beëindigen -->
+      <!-- End session -->
       <div id="debrief-close-bar" style="display:none; padding: 0 16px 16px;">
         <button class="debrief-close-btn" id="btn-end-session" onclick="confirmEndSession()">
-          ✕ &nbsp;Sessie beëindigen
+          ✕ &nbsp;End session
         </button>
       </div>
 
@@ -1798,87 +2507,39 @@ body.light .msg.sys .msg-bub { color: var(--text-dim); }
 
 </div><!-- #main -->
 
-<!-- Sessie-afsluiting overlay -->
+<!-- Session end overlay -->
 <div id="session-end-overlay">
   <div id="session-end-box">
     <div class="end-icon">✓</div>
-    <div class="end-title" id="end-title">Training afgerond</div>
+    <div class="end-title" id="end-title">Training complete</div>
     <div class="end-sub" id="end-sub">
-      De debriefing is voltooid en de rapporten zijn beschikbaar.<br>
-      Sluit dit venster of start een nieuwe sessie.
+      The debrief is complete and reports are available.<br>
+      Close this window or start a new session.
     </div>
     <div class="end-btn-row">
-      <button class="end-btn-primary" id="btn-new-session" onclick="location.reload()">↺ Nieuwe sessie</button>
-      <button class="end-btn-secondary" id="btn-back-debrief" onclick="closeEndOverlay()">Terug naar debriefing</button>
+      <button class="end-btn-primary" id="btn-new-session" onclick="location.reload()">↺ New session</button>
+      <button class="end-btn-secondary" id="btn-back-debrief" onclick="closeEndOverlay()">Back to debrief</button>
     </div>
   </div>
 </div>
 
 <script>
-  (function() {
-
-  // ── Zelfde geheime sleutel als in de landing page ────────
-  // Zorg dat dit EXACT overeenkomt met TOKEN_SECRET in index.html
+(function() {
   const TOKEN_SECRET = 'oip-platform-2025-geheim';
 
-  // ── Blokkeerscherm HTML ───────────────────────────────────
   function toonBlokkeerscherm() {
     document.documentElement.style.overflow = 'hidden';
-    document.body.style.cssText = `
-      margin:0; padding:0;
-      background:#141820;
-      font-family:'Share Tech Mono',monospace;
-      display:flex; align-items:center; justify-content:center;
-      min-height:100vh;
-    `;
-    document.body.innerHTML = `
-      <div style="text-align:center; max-width:420px; padding:40px 24px;">
-        <div style="font-size:48px; margin-bottom:24px;">🔒</div>
-        <div style="
-          font-family:'Barlow Condensed',sans-serif;
-          font-size:28px; font-weight:800;
-          color:#f0f8ff; letter-spacing:3px;
-          text-transform:uppercase; margin-bottom:12px;
-        ">Geen Toegang</div>
-        <div style="
-          font-size:13px; color:#9db8cc; line-height:1.7;
-          margin-bottom:32px;
-        ">
-          Deze applicatie is alleen toegankelijk via het OIP Live Scenario platform.
-          Ga terug naar de portal om in te loggen.
-        </div>
-        <a href="https://livescenario-start.netlify.app" style="
-          display:inline-block;
-          padding:12px 28px;
-          background:rgba(32,216,255,0.08);
-          border:1px solid #20d8ff;
-          border-radius:4px;
-          color:#20d8ff;
-          font-family:'Barlow Condensed',sans-serif;
-          font-size:14px; font-weight:700;
-          letter-spacing:2px; text-transform:uppercase;
-          text-decoration:none;
-          transition:all 0.2s;
-        ">← Naar de Portal</a>
-        <div style="margin-top:24px; font-size:10px; color:#353f55; letter-spacing:2px;">
-          OIP LIVE SCENARIO PLATFORM
-        </div>
-      </div>
-    `;
+    document.body.style.cssText = "margin:0;padding:0;background:#141820;font-family:'Share Tech Mono',monospace;display:flex;align-items:center;justify-content:center;min-height:100vh;";
+    document.body.innerHTML = '<div style="text-align:center;max-width:420px;padding:40px 24px;"><div style="font-size:48px;margin-bottom:24px;">\uD83D\uDD12</div><div style="font-family:\'Barlow Condensed\',sans-serif;font-size:28px;font-weight:800;color:#f0f8ff;letter-spacing:3px;text-transform:uppercase;margin-bottom:12px;">Geen Toegang</div><div style="font-size:13px;color:#9db8cc;line-height:1.7;margin-bottom:32px;">Deze applicatie is alleen toegankelijk via het OIP Live Scenario platform. Ga terug naar de portal om in te loggen.</div><a href="https://livescenario-start.netlify.app" style="display:inline-block;padding:12px 28px;background:rgba(32,216,255,0.08);border:1px solid #20d8ff;border-radius:4px;color:#20d8ff;font-family:\'Barlow Condensed\',sans-serif;font-size:14px;font-weight:700;letter-spacing:2px;text-transform:uppercase;text-decoration:none;">← Naar de Portal</a><div style="margin-top:24px;font-size:10px;color:#353f55;letter-spacing:2px;">OIP LIVE SCENARIO PLATFORM</div></div>';
   }
 
-  // ── Token controleren ─────────────────────────────────────
   function controleerToken(token) {
     try {
       const decoded = atob(token);
       const delen   = decoded.split('|');
       if (delen.length !== 3) return false;
       const [klantcode, vervalt, hashStr] = delen;
-
-      // Verlopen?
       if (Date.now() > parseInt(vervalt)) return false;
-
-      // Handtekening controleren
       const payload = klantcode + '|' + vervalt;
       let hash = 0;
       const str = payload + TOKEN_SECRET;
@@ -1887,25 +2548,48 @@ body.light .msg.sys .msg-bub { color: var(--text-dim); }
         hash |= 0;
       }
       return Math.abs(hash).toString(36) === hashStr;
-    } catch {
-      return false;
-    }
+    } catch { return false; }
   }
 
-  // ── Token ophalen uit URL ─────────────────────────────────
   const params = new URLSearchParams(window.location.search);
   const token  = params.get('oiptoken');
-
   if (!token || !controleerToken(token)) {
-    // Wacht tot DOM geladen is voordat we het scherm vervangen
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', toonBlokkeerscherm);
     } else {
       toonBlokkeerscherm();
     }
   }
-
 })();
+
+// ═══════════════════════════════════════════════════════════════
+// VOICE INPUT CONFIGURATION
+// ═══════════════════════════════════════════════════════════════
+// Pas dit aan naar je eigen Netlify voice-input deployment.
+// Het endpoint wordt gebruikt door de VoiceInput-module voor Whisper-transcriptie.
+const VOICE_CONFIG = {
+  // Base-URL van de oip-voice-input Netlify site.
+  // LET OP: pas aan als je deployment op een andere URL draait.
+  baseUrl: 'https://oip-voicecontrol.netlify.app',
+
+  // Enable voice control (false = helemaal uit, alleen typen)
+  enabled: true,
+
+  // Of de module eerst terugvalt op Web Speech API bij Whisper-storing
+  useFallback: true,
+
+  // Aanvullende jargon-hints (scenario-specifieke termen worden automatisch toegevoegd)
+  basePrompt: 'OIP, VRU, vapour recovery, absorber, adsorber, LMRA, P&ID, MOC, ' +
+              'tankterminal, EVOS, Shell, Liquin, ATEX, emergency response, ERS, ' +
+              'operator, controlekamer, incident, alarm, drukontlasting, inertisering.',
+};
+
+// Voice module state
+let voiceInput = null;            // VoiceInput instance (geladen op scenario start)
+let voiceReady = false;           // true wanneer module succesvol is geladen
+let voicePttTimer = null;         // Display-timer voor opname
+let voicePttStart = 0;
+let voiceSpaceDown = false;       // Spatiebalk push-to-talk state
 
 // ═══════════════════════════════════════════════════════════════
 // STATE
@@ -1920,12 +2604,12 @@ let simStartMs     = 0;   // Tijdstip van scenario-start (Date.now())
 let scenarioConfig = null;  // Gevuld vanuit de geladen JSON
 let pendingDebrief  = false; // Wacht op laatste antwoord deelnemer voor debriefing
 let lastDebriefData = null;  // Bewaard voor export
-let lang = 'nl';               // UI-taalinstelling (nl/en)
+let lang = 'en';               // UI-taal is altijd Engels
 let scenarioLang = '';         // Uitvoeringstaal AI ('' = gelijk aan lang)
 
-// Geeft de effectieve uitvoeringstaal terug (scenarioLang heeft voorrang boven lang)
+// Returns the effective execution language (always explicitly set)
 function getEffectiveLang() {
-  return scenarioLang || lang;
+  return scenarioLang || 'en';
 }
 
 // Geeft de volledige taalinstructie voor het AI system prompt
@@ -1949,7 +2633,17 @@ Role names from the config may appear in the original language; use natural ${la
 // Callback bij handmatige wijziging van de uitvoeringstaal-dropdown
 function onExecLangChange() {
   const sel = document.getElementById('execlang-select');
-  scenarioLang = sel?.value || '';
+  scenarioLang = sel?.value || 'en';
+  // Reset hint to neutral when user changes manually
+  const hint = document.getElementById('execlang-hint');
+  if (hint) {
+    hint.textContent = 'The AI will conduct the scenario in this language.';
+    hint.style.color = 'var(--text-dim)';
+  }
+  // Update voice-module met de nieuwe taal (als die al initialised is)
+  if (voiceInput && typeof voiceInput.setLanguage === 'function') {
+    try { voiceInput.setLanguage(scenarioLang); } catch(e) { console.warn('[OIP voice] setLanguage failed:', e); }
+  }
 }
 
 let firstResponseReceived = false; // Openingsbericht verwerkt — fase-tokens daarna toegestaan
@@ -2090,7 +2784,7 @@ function startBriefingTimer(durationSec) {
   if (hasBriefingSlideNow) {
     const inp = document.getElementById('user-input-large');
     const btn = document.getElementById('centre-send-btn');
-    if (inp) { inp.disabled = true; inp.placeholder = isEN ? 'Complete the briefing module first...' : 'Doorloop eerst de briefing-module...'; }
+    if (inp) { inp.disabled = true; inp.placeholder = 'Complete the briefing module first...'; }
     if (btn) btn.disabled = true;
   }
 
@@ -2103,26 +2797,21 @@ function startBriefingTimer(durationSec) {
 
   timerEl.classList.add('visible', 'briefing-mode');
   labelEl.textContent = 'Briefing';
-  nameEl.textContent  = isEN ? 'Pre-scenario' : 'Voorbereidend';
+  nameEl.textContent  = 'Pre-scenario';
   countEl.className   = '';
   barEl.style.transition      = 'none';
   barEl.style.width           = '100%';
   barEl.style.backgroundColor = 'var(--purple, #a78bfa)';
 
-  // DCS-melding "Briefing gestart" bij aanvang
-  addAlarm('lo', 'DCS', isEN ? 'Briefing started' : 'Briefing gestart', '');
-  addMsg('alarm', null, isEN ? 'DCS: Briefing started' : 'DCS: Briefing gestart');
+  addAlarm('lo', 'DCS', 'Briefing started', '');
+  addMsg('alarm', null, 'DCS: Briefing started');
 
   // Automatische overgang naar fase 1 als de timer afloopt
   const autoTransitionTimeout = setTimeout(() => {
     if (briefingTimerActive) {
       stopBriefingTimer();
-      const isEN = lang === 'en';
-      // Claude aanroepen om de briefing af te sluiten en deelnemer naar fase 1 te begeleiden
-      const transitionPrompt = isEN
-        ? `BRIEFING END: The preparatory briefing module has now ended. As the Instructor, briefly close the briefing phase (one sentence), then guide the participant toward the start of the scenario. Tell them the scenario is about to begin and what their first focus should be. Then send the first operational radio signal and one DCS system message to open phase 1. Do NOT send [FASE:1] yet — wait for the participant's first response.`
-        : `BRIEFING EINDE: De voorbereidende briefing-module is nu afgelopen. Sluit als Instructeur de briefingfase kort af (één zin), begeleid de deelnemer naar de start van het scenario. Vertel dat het scenario begint en wat hun eerste aandachtspunt is. Stuur daarna het eerste operationele radiosignaal en één DCS-systeembericht om fase 1 te openen. Stuur GEEN [FASE:1] — wacht op de eerste reactie van de deelnemer.`;
-      firstResponseReceived = true; // guards overslaan
+      const transitionPrompt = `BRIEFING END: The preparatory briefing module has now ended. As the Instructor, briefly close the briefing phase (one sentence), then guide the participant toward the start of the scenario. Tell them the scenario is about to begin and what their first focus should be. Then send the first operational radio signal and one DCS system message to open phase 1. Do NOT send [FASE:1] yet — wait for the participant's first response.`;
+      firstResponseReceived = true;
       callClaude(transitionPrompt, false);
     }
   }, dur * 1000);
@@ -2159,9 +2848,7 @@ function stopBriefingTimer() {
   const inp = document.getElementById('user-input-large');
   if (inp && inp.disabled) {
     const isEN = lang === 'en';
-    inp.placeholder = isEN
-      ? 'Type your response as operator... (Enter to send, Shift+Enter for new line)'
-      : 'Typ je reactie als operator... (Enter om te zenden, Shift+Enter voor nieuwe regel)';
+    inp.placeholder = 'Type your response as operator... (Enter to send, Shift+Enter for new line)';
     // setInput(true) wordt aangeroepen zodra Claude's antwoord binnenkomt
   }
 }
@@ -2217,10 +2904,8 @@ function startPhaseTimerDisplay(phaseIdx) {
   const barEl    = document.getElementById('phase-timer-bar');
   if (!timerEl) return;
 
-  labelEl.textContent = isEN
-    ? `Phase ${phaseIdx + 1} of ${phases.length}`
-    : `Fase ${phaseIdx + 1} van ${phases.length}`;
-  nameEl.textContent = phase.label || (isEN ? `Phase ${phaseIdx + 1}` : `Fase ${phaseIdx + 1}`);
+  labelEl.textContent = `Phase ${phaseIdx + 1} of ${phases.length}`;
+  nameEl.textContent = phase.label || (`Phase ${phaseIdx + 1}`);
   timerEl.classList.add('visible');
   barEl.style.transition = 'none';
   barEl.style.width = '100%';
@@ -2278,9 +2963,7 @@ function forceScenarioEnd() {
   document.getElementById('pause-btn')?.classList.remove('visible');
 
   // Vraag Claude om een reflectievraag te stellen — zelfde pad als bij [SCENARIO-EINDE]
-  const reflectionPrompt = isEN
-    ? `The scenario time has elapsed. The scenario is now ending. As Instructor, ask the participant one open reflection question about how they experienced the situation or which decision they would make differently in hindsight. Wait for their answer. Do NOT send [SCENARIO-EINDE] in this message.`
-    : `De scenariotijd is verstreken. Het scenario wordt nu afgesloten. Stel als Instructeur de deelnemer één open reflectievraag over hoe hij de situatie heeft ervaren of welke beslissing hij achteraf anders zou nemen. Wacht op het antwoord. Stuur GEEN [SCENARIO-EINDE] in dit bericht.`;
+  const reflectionPrompt = `The scenario time has elapsed. As Instructor, ask the participant one open reflection question about how they experienced the situation or which decision they would make differently in hindsight. Wait for their answer. Do NOT send [SCENARIO-EINDE] in this message.`;
 
   // Na Claude's reflectievraag staat invoer open via pendingDebrief
   waitForQueue(() => {
@@ -2343,11 +3026,11 @@ function pauseScenario() {
   const btn = document.getElementById('pause-btn');
   const isEN = lang === 'en';
   if (btn) {
-    btn.textContent = isEN ? '▶ Resume' : '▶ Hervatten';
+    btn.textContent = '▶ Resume';
     btn.classList.add('paused');
   }
   setInput(false);
-  addMsg('sys', null, lang === 'en' ? '── Scenario paused ──' : '── Scenario gepauzeerd ──');
+  addMsg('sys', null, '── Scenario paused ──');
 }
 
 function resumeScenario() {
@@ -2383,11 +3066,11 @@ function resumeScenario() {
   const btn = document.getElementById('pause-btn');
   const isEN = lang === 'en';
   if (btn) {
-    btn.textContent = isEN ? '⏸ Pause' : '⏸ Pauze';
+    btn.textContent = '⏸ Pause';
     btn.classList.remove('paused');
   }
   setInput(true);
-  addMsg('sys', null, lang === 'en' ? '── Scenario resumed ──' : '── Scenario hervat ──');
+  addMsg('sys', null, '── Scenario resumed ──');
 }
 
 // Geeft verstreken tijd als MM:SS
@@ -2472,7 +3155,7 @@ const UI = {
     'cam.no_sl_hint':   'Voer een module-URL in bij het opstarten, of gebruik de testmodus.',
     'send.header':      'Radiocommunicatie — Zend bericht',
     'send.placeholder': 'Typ je reactie als operator... (Enter om te zenden, Shift+Enter voor nieuwe regel)',
-    'send.hint':        'Enter om te zenden · Shift+Enter nieuwe regel',
+    'send.hint':        'Enter to send · Shift+Enter new line',
     'send.btn':         'Zend →',
     'radio.header':     'Radio — Communicatielogboek',
     'tab.radio':        'Radio',
@@ -2549,34 +3232,25 @@ const UI = {
 function ui(key) { return UI[lang]?.[key] || UI['nl'][key] || key; }
 
 function initLang(l) {
-  lang = l;
-  localStorage.setItem('oip_lang', l);
-  document.getElementById('lang-overlay').classList.remove('visible');
+  // UI language is always English; this function is kept for compatibility
+  lang = 'en';
+  localStorage.setItem('oip_lang', 'en');
+  document.getElementById('lang-overlay').style.display = 'none';
   document.getElementById('intro').classList.add('visible');
-  const sw = document.getElementById('lang-switch');
-  if (sw) sw.textContent = l.toUpperCase();
   applyUILang();
 }
 
 function showLangOverlay() {
-  // Markeer de actieve taal visueel
-  document.querySelectorAll('.lang-btn').forEach(btn => {
-    const isActive = (lang === 'nl' && btn.textContent.includes('Nederlands'))
-                  || (lang === 'en' && btn.textContent.includes('English'));
-    btn.style.borderColor = isActive ? 'var(--cyan)' : '';
-    btn.style.color       = isActive ? 'var(--cyan)' : '';
-    btn.style.background  = isActive ? 'var(--cyan-dim)' : '';
-  });
-  document.getElementById('lang-overlay').classList.add('visible');
+  // No-op: UI language is always English
 }
 
 function toggleDayMode() {
   const btn = document.getElementById('daymode-btn');
   if (document.body.classList.toggle('light')) {
-    if (btn) { btn.textContent = '🌙'; btn.title = 'Schakel naar nachtmodus'; }
+    if (btn) { btn.textContent = '🌙'; btn.title = 'Switch to night mode'; }
     localStorage.setItem('oip_player_theme', 'light');
   } else {
-    if (btn) { btn.textContent = '☀'; btn.title = 'Schakel naar dagmodus'; }
+    if (btn) { btn.textContent = '☀'; btn.title = 'Switch to day mode'; }
     localStorage.setItem('oip_player_theme', 'dark');
   }
 }
@@ -2604,18 +3278,9 @@ function applyUILang() {
 
   // Uitvoeringstaal veld
   const execLangLbl = document.getElementById('execlang-label');
-  if (execLangLbl) execLangLbl.textContent = lang === 'en'
-    ? 'Scenario execution language (AI communication)'
-    : 'Uitvoeringstaal scenario (AI-communicatie)';
-  const execLangHint = document.getElementById('execlang-hint');
-  if (execLangHint) execLangHint.textContent = lang === 'en'
-    ? 'The AI will conduct the scenario in this language. Useful for EVOS terminals in Germany or Spain.'
-    : 'De AI voert het scenario uit in deze taal. Handig voor EVOS-terminals in Duitsland of Spanje.';
+  if (execLangLbl) execLangLbl.textContent = 'AI communication language';
   const execSel = document.getElementById('execlang-select');
-  if (execSel) {
-    const firstOpt = execSel.options[0];
-    if (firstOpt) firstOpt.text = lang === 'en' ? '— Same as UI language —' : '— Gelijk aan UI-taal —';
-  }
+  if (execSel && !execSel.value) execSel.value = 'en';
 
   const timerLbl = document.querySelector('#sim-clock-wrap span');
   if (timerLbl) timerLbl.textContent = ui('timer.label');
@@ -2623,7 +3288,7 @@ function applyUILang() {
   const camLbl = document.querySelector('#storyline-header .lbl');
   if (camLbl) camLbl.textContent = ui('cam.header');
   const slDisp = document.getElementById('storyline-url-display');
-  if (slDisp && (slDisp.textContent === 'geen module geladen' || slDisp.textContent === 'no module loaded')) {
+  if (slDisp && (slDisp.textContent === 'no module loaded' || slDisp.textContent === 'no module loaded')) {
     slDisp.textContent = ui('cam.no_module');
   }
 
@@ -2701,35 +3366,26 @@ function loadConfigFile(input) {
     try {
       const parsed = JSON.parse(e.target.result);
 
-      // Valideer minimale structuur
+      // Validate minimal structure
       if (!parsed.aiScenario) {
-        setJsonStatus('err', '✕ Ongeldig bestand — geen aiScenario blok gevonden. Gebruik een bestand van de OIP Controller.');
+        setJsonStatus('err', '✕ Invalid file — no aiScenario block found. Use a file from the OIP Controller.');
         return;
       }
 
-      // Vervaldatum controleren
+      // Check expiry date
       if (parsed._meta?.expiresAt) {
         const expiry = new Date(parsed._meta.expiresAt);
         if (expiry < new Date()) {
-          const isEN = lang === 'en';
-          const dateStr = expiry.toLocaleDateString(isEN ? 'en-GB' : 'nl-NL', {
+          const dateStr = expiry.toLocaleDateString('en-GB', {
             day: 'numeric', month: 'long', year: 'numeric'
           });
-          // Overlay vullen en tonen
-          document.getElementById('exp-title').textContent =
-            isEN ? 'Access expired' : 'Toegang verlopen';
-          document.getElementById('exp-date').textContent =
-            (isEN ? 'Expired on: ' : 'Verlopen op: ') + dateStr;
-          document.getElementById('exp-sub').innerHTML = isEN
-            ? 'This configuration file is no longer valid.<br>Contact the trainer for an updated file.'
-            : 'Dit configuratiebestand is niet meer geldig.<br>Neem contact op met de trainer voor een bijgewerkt bestand.';
-          document.querySelector('#expired-box .exp-btn').textContent =
-            isEN ? '← Back' : '← Terug';
+          document.getElementById('exp-title').textContent = 'Access expired';
+          document.getElementById('exp-date').textContent  = 'Expired on: ' + dateStr;
+          document.getElementById('exp-sub').innerHTML =
+            'This configuration file is no longer valid.<br>Contact the trainer for an updated file.';
+          document.querySelector('#expired-box .exp-btn').textContent = '← Back';
           document.getElementById('expired-overlay').classList.add('visible');
-          // Statusregel ook bijwerken
-          setJsonStatus('err', isEN
-            ? `✕ Expired on ${dateStr} — contact your trainer for an updated file.`
-            : `✕ Verlopen op ${dateStr} — vraag de trainer om een bijgewerkt bestand.`);
+          setJsonStatus('err', `✕ Expired on ${dateStr} — contact your trainer for an updated file.`);
           return;
         }
       }
@@ -2737,26 +3393,27 @@ function loadConfigFile(input) {
       scenarioConfig = parsed;
       const sc = parsed.aiScenario;
 
-      // Taalinstelling overnemen uit JSON (ingesteld via controller)
-      if (parsed.language && ['nl','en'].includes(parsed.language)) {
-        lang = parsed.language;
-        localStorage.setItem('oip_lang', lang);
-        document.getElementById('lang-overlay').classList.remove('visible');
-        document.getElementById('intro').classList.add('visible');
-        const sw = document.getElementById('lang-switch');
-        if (sw) sw.textContent = lang.toUpperCase();
-        applyUILang();
-      }
+      // UI language is always English — do NOT apply parsed.language to lang
+      // Execution language from JSON is still honoured separately below
 
       // Uitvoeringstaal overnemen uit JSON (ingesteld via controller export)
-      const execSel = document.getElementById('execlang-select');
+      const execSel  = document.getElementById('execlang-select');
+      const execHint = document.getElementById('execlang-hint');
       if (execSel) {
         if (parsed.executionLanguage && ['nl','en','de','es','fr','pl'].includes(parsed.executionLanguage)) {
           execSel.value = parsed.executionLanguage;
           scenarioLang  = parsed.executionLanguage;
+          if (execHint) {
+            execHint.textContent = 'Language set from configuration — you can change it here if needed.';
+            execHint.style.color = 'var(--cyan)';
+          }
         } else {
-          execSel.value = '';
-          scenarioLang  = '';
+          execSel.value = 'en';
+          scenarioLang  = 'en';
+          if (execHint) {
+            execHint.textContent = 'The AI will conduct the scenario in this language.';
+            execHint.style.color = 'var(--text-dim)';
+          }
         }
       }
 
@@ -2777,21 +3434,19 @@ function loadConfigFile(input) {
       const hasSit     = !!(sc.initialSituation?.trim());
       const hasPrompt  = !!(sc.systemPromptExtra?.trim());
       const roleNames  = (sc.roles||[]).map(r=>r.name).filter(Boolean).join(', ') || '—';
-      const isEN = lang === 'en';
+      const isEN = true; // UI is always English
 
-      // Vervaldatum in statusregel vermelden als aanwezig
+      // Note expiry date in status line if present
       let expiryNote = '';
       if (parsed._meta?.expiresAt) {
         const expiry = new Date(parsed._meta.expiresAt);
-        const dateStr = expiry.toLocaleDateString(isEN ? 'en-GB' : 'nl-NL', { day: 'numeric', month: 'long', year: 'numeric' });
+        const dateStr = expiry.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
         const daysLeft = Math.ceil((expiry - new Date()) / (1000 * 60 * 60 * 24));
-        expiryNote = isEN
-          ? ` · Valid until ${dateStr} (${daysLeft}d)`
-          : ` · Geldig t/m ${dateStr} (${daysLeft}d)`;
+        expiryNote = ` · Valid until ${dateStr} (${daysLeft}d)`;
       }
 
       setJsonStatus('ok',
-        `✓ ${sc.scenarioTitle || 'Scenario'} ${isEN?'loaded':'geladen'}${participantName} · ${camCount} camera${camCount!==1?'s':''} · ${phaseCount} ${isEN?'phase':'fase'}${phaseCount!==1?(isEN?'s':'n'):''} · ${isEN?'roles':'rollen'}: ${roleNames}${expiryNote}`
+        `✓ ${sc.scenarioTitle || 'Scenario'} loaded${participantName} · ${camCount} camera${camCount!==1?'s':''} · ${phaseCount} phase${phaseCount!==1?'s':''} · roles: ${roleNames}${expiryNote}`
       );
 
       // Extra console-log voor diagnose
@@ -2807,7 +3462,7 @@ function loadConfigFile(input) {
       document.getElementById('json-filename').value = file.name;
 
     } catch(err) {
-      setJsonStatus('err', '✕ Bestand kon niet worden gelezen. Controleer of het een geldig JSON-bestand is.');
+      setJsonStatus('err', '✕ File could not be read. Please check that it is a valid JSON file.');
     }
   };
   reader.readAsText(file);
@@ -2824,7 +3479,7 @@ function setJsonStatus(type, msg) {
 // ═══════════════════════════════════════════════════════════════
 // START
 // ═══════════════════════════════════════════════════════════════
-function startScenario() {
+async function startScenario() {
   if (!apiKey) {
     const manualKey = document.getElementById('api-key-input')?.value.trim() || '';
     if (!manualKey || !manualKey.startsWith('sk-ant')) {
@@ -2837,9 +3492,20 @@ function startScenario() {
 
   // Uitvoeringstaal inlezen uit dropdown (overschrijft eventuele JSON-waarde)
   const execSel = document.getElementById('execlang-select');
-  scenarioLang = execSel?.value || '';
+  scenarioLang = execSel?.value || 'en';
 
   getAudioCtx();
+
+  // Verberg het intro-paneel meteen — de operator weet dat het scenario gaat starten
+  document.getElementById('intro').classList.remove('visible');
+
+  // ── RADIOCHECK VOLGORDE ─────────────────────────────────────────────
+  // Eerst voice-module laden (mic-permissie, endpoint-check). Dan de radiocheck
+  // afwerken indien nodig. Pas DAARNA Storyline laden + boot-sequence + scenario.
+  // Dit voorkomt dat de Storyline-presentatie en de briefing-timer al beginnen
+  // terwijl de deelnemer nog zijn microfoon test.
+  await initVoiceInput();
+  await maybeRunRadioCheck();
 
   // Storyline iframe laden — briefing URL heeft voorrang op fase 1 URL
   const briefingUrl = scenarioConfig?.aiScenario?.briefing?.slideUrl?.trim() || '';
@@ -2856,7 +3522,6 @@ function startScenario() {
     ph.style.display = 'none';
   }
 
-  document.getElementById('intro').classList.remove('visible');
   runBootSequence();
 }
 
@@ -2874,9 +3539,9 @@ function runBootSequence() {
     { label: hasBriefing ? 'BRIEFING' : 'SCENARIO', status: hasBriefing ? 'ACTIVE' : 'ACTIVE' },
   ] : [
     { label: 'AI SYSTEEM',       status: 'ONLINE' },
-    { label: 'SCENARIO CONFIG',  status: 'GELADEN' },
-    { label: 'COMMUNICATIE',     status: 'ACTIEF' },
-    { label: hasBriefing ? 'BRIEFING' : 'SCENARIO', status: hasBriefing ? 'ACTIEF' : 'ACTIEF' },
+    { label: 'SCENARIO CONFIG',  status: 'LOADED' },
+    { label: 'COMMUNICATION',    status: 'ACTIVE' },
+    { label: hasBriefing ? 'BRIEFING' : 'SCENARIO', status: hasBriefing ? 'ACTIVE' : 'ACTIVE' },
   ];
 
   const overlay = document.getElementById('boot-overlay');
@@ -2888,7 +3553,7 @@ function runBootSequence() {
   }, 80);
   setTimeout(() => {
     const titleEl = document.getElementById('boot-scenario-title');
-    titleEl.textContent = sc?.scenarioTitle || (isEN ? 'Live Scenario Player' : 'Live Scenario Player');
+    titleEl.textContent = sc?.scenarioTitle || 'Live Scenario Player';
     titleEl.classList.add('visible');
   }, 400);
 
@@ -2934,8 +3599,8 @@ function runBootSequence() {
   setTimeout(() => {
     const goEl = document.getElementById('boot-go-label');
     goEl.textContent = hasBriefing
-      ? (isEN ? '— BRIEFING ACTIVE —' : '— BRIEFING ACTIEF —')
-      : (isEN ? '— SCENARIO ACTIVE —' : '— SCENARIO ACTIEF —');
+      ? '— BRIEFING ACTIVE —'
+      : '— SCENARIO ACTIVE —';
     goEl.classList.add('visible');
   }, barStart + 900);
 
@@ -2954,7 +3619,7 @@ function runBootSequence() {
   }, totalDuration);
 }
 
-function initScenario() {
+async function initScenario() {
   const sc = scenarioConfig?.aiScenario;
 
   // Situatietekst — uit JSON, of demo-default als geen JSON geladen
@@ -3000,7 +3665,7 @@ function initScenario() {
   const hasBriefing = !!(briefingCfg?.slideUrl?.trim() || briefingCfg?.dir?.trim());
   if (hasBriefing) {
     addAlarm('inf', 'BRIEFING',
-      lang === 'en' ? 'Pre-scenario briefing active' : 'Voorbereidende briefing actief', '');
+      'Pre-scenario briefing active', '');
   }
 
   const welcomeMsg = participantName
@@ -3025,7 +3690,1193 @@ function initScenario() {
   } else {
     startPhaseTimers();
   }
+
+  // Voice-module en radiocheck zijn al afgehandeld in startScenario(),
+  // vóór de boot-sequence en het laden van de Storyline.
   callClaude('START', true);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// VOICE INPUT — push-to-talk via Whisper (met Web Speech fallback)
+// ═══════════════════════════════════════════════════════════════
+async function initVoiceInput() {
+  if (!VOICE_CONFIG.enabled) {
+    console.log('[OIP voice] Voice input disabled in config');
+    setVoicePttLabel('Voice disabled');
+    return;
+  }
+
+  const pttBtn = document.getElementById('ptt-btn');
+  const errBadge = document.getElementById('voice-err-badge');
+  if (!pttBtn) return;
+
+  // Geen MediaRecorder of mic-permissies in deze browser?
+  if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
+    console.warn('[OIP voice] Browser ondersteunt geen MediaRecorder of getUserMedia');
+    if (errBadge) {
+      errBadge.style.display = 'inline-block';
+      errBadge.title = 'Browser ondersteunt geen audio-opname';
+    }
+    setVoicePttLabel('Voice unsupported');
+    pttBtn.disabled = true;
+    return;
+  }
+
+  // Secure-context check: getUserMedia werkt niet op file:// of http:// (behalve localhost)
+  const isFile = location.protocol === 'file:';
+  const isInsecureHttp = location.protocol === 'http:' &&
+    !['localhost', '127.0.0.1', '::1'].includes(location.hostname);
+  if (isFile || isInsecureHttp || (window.isSecureContext === false)) {
+    const reason = isFile
+      ? 'Pagina draait via file:// — browsers staan microfoon-toegang niet toe op lokale bestanden. ' +
+        'Open via een lokale webserver (bv. http://localhost:8000) of via https://'
+      : 'Pagina draait via onveilige http:// — microfoon-toegang vereist https:// of localhost.';
+    console.warn('[OIP voice] ' + reason);
+    if (errBadge) {
+      errBadge.style.display = 'inline-block';
+      errBadge.textContent = isFile ? '⚠ run via http(s)://' : '⚠ insecure origin';
+      errBadge.title = reason;
+    }
+    setVoicePttLabel(isFile ? 'Run via localhost' : 'Needs HTTPS');
+    pttBtn.disabled = true;
+    voiceReady = false;
+    return;
+  }
+
+  try {
+    // Inline VoiceInput-instance (geen externe module-import — voorkomt CORS-problemen)
+    voiceInput = new InlineVoiceInput({
+      endpoint: `${VOICE_CONFIG.baseUrl.replace(/\/$/, '')}/api/transcribe`,
+      language: getEffectiveLang(),
+      prompt: buildVoicePrompt(),
+      audioLevelCallback: updateVoiceMeter,
+      onStateChange: handleVoiceStateChange,
+      onTranscript: handleVoiceTranscript,
+      onError: handleVoiceError,
+    });
+
+    voiceReady = true;
+    console.log('[OIP voice] Voice input ready (inline) · lang=' + getEffectiveLang() +
+                ' · endpoint=' + voiceInput.endpoint);
+    if (errBadge) errBadge.style.display = 'none';
+    setVoicePttLabel('Hold to speak');
+
+    buildVoiceMeter();
+    showVoiceTip();  // eenmalige uitleg-banner voor spatiebalk-PTT
+
+    // Push-to-talk events (muis / touch / pen)
+    pttBtn.addEventListener('pointerdown', onPttDown);
+    pttBtn.addEventListener('pointerup',   onPttUp);
+    pttBtn.addEventListener('pointerleave', onPttCancel);
+    pttBtn.addEventListener('pointercancel', onPttCancel);
+
+    // Push-to-talk via spatiebalk — capture-phase zodat we vóór de textarea
+    // default-input het spatie-karakter kunnen onderdrukken.
+    document.addEventListener('keydown',  onPttKeyDown,  true);
+    document.addEventListener('keyup',    onPttKeyUp,    true);
+    document.addEventListener('keypress', onPttKeyPress, true);
+
+  } catch (err) {
+    console.warn('[OIP voice] Voice init failed:', err);
+    voiceReady = false;
+    if (errBadge) {
+      errBadge.style.display = 'inline-block';
+      errBadge.title = `Voice init failed — ${err.message || err}`;
+    }
+    setVoicePttLabel('Voice offline');
+    if (pttBtn) pttBtn.disabled = true;
+  }
+}
+
+// ─── Inline VoiceInput-implementatie ────────────────────────────
+// Self-contained: gebruikt MediaRecorder + getUserMedia + AudioContext.
+// Stuurt POST naar de transcribe-endpoint met FormData (audio blob).
+class InlineVoiceInput {
+  constructor(opts) {
+    this.endpoint = opts.endpoint;
+    this.language = opts.language || 'nl';
+    this.prompt = opts.prompt || '';
+    this.onLevel = opts.audioLevelCallback;
+    this.onState = opts.onStateChange;
+    this.onTranscript = opts.onTranscript;
+    this.onError = opts.onError;
+    this.state = 'idle';   // idle | recording | processing
+    this.stream = null;
+    this.mediaRecorder = null;
+    this.chunks = [];
+    this.audioCtx = null;
+    this.analyser = null;
+    this.levelTimer = null;
+    this.recordStartTs = 0;
+  }
+
+  setLanguage(l) { if (l) this.language = l; }
+  setPrompt(p) { if (typeof p === 'string') this.prompt = p; }
+
+  async start() {
+    if (this.state !== 'idle') return;
+    try {
+      this.stream = await navigator.mediaDevices.getUserMedia({
+        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+      });
+
+      // Kies een ondersteund mime-type (browser-afhankelijk).
+      // Volgorde belangrijk: kale 'audio/webm' zonder codec-clausule eerst,
+      // omdat sommige Whisper-wrappers struikelen over de codec-suffix.
+      // Voor Edge/Chrome werkt mp4 vaak beter dan webm.
+      const candidates = [
+        'audio/mp4',                  // Edge/Safari/iOS
+        'audio/webm',                 // Chrome/Firefox (zonder codec-suffix)
+        'audio/webm;codecs=opus',     // Chrome/Firefox (expliciet)
+        'audio/ogg;codecs=opus',      // Firefox legacy
+        'audio/mpeg',                 // zelden, maar volledig ondersteund
+        '',                           // browser-default (laatste redmiddel)
+      ];
+      let mimeType = '';
+      for (const t of candidates) {
+        if (!t) { mimeType = ''; break; }
+        if (window.MediaRecorder && MediaRecorder.isTypeSupported(t)) {
+          mimeType = t;
+          break;
+        }
+      }
+      console.log('[OIP voice] Using mimeType:', mimeType || '(browser default)');
+
+      this.mediaRecorder = mimeType
+        ? new MediaRecorder(this.stream, { mimeType, audioBitsPerSecond: 96000 })
+        : new MediaRecorder(this.stream);
+      this.chunks = [];
+      this.mediaRecorder.addEventListener('dataavailable', e => {
+        if (e.data && e.data.size > 0) this.chunks.push(e.data);
+      });
+      this.mediaRecorder.addEventListener('stop', () => this._onStop());
+      this.mediaRecorder.addEventListener('error', e => {
+        console.warn('[OIP voice] MediaRecorder error:', e);
+        this._error('record', e.error?.message || 'recording error');
+      });
+      this.mediaRecorder.start(250);
+
+      // Audio level metering setup
+      try {
+        const Ctx = window.AudioContext || window.webkitAudioContext;
+        this.audioCtx = new Ctx();
+        const src = this.audioCtx.createMediaStreamSource(this.stream);
+        this.analyser = this.audioCtx.createAnalyser();
+        this.analyser.fftSize = 512;
+        this.analyser.smoothingTimeConstant = 0.5;
+        src.connect(this.analyser);
+        this._startLevelMonitor();
+      } catch (e) {
+        console.warn('[OIP voice] Audio metering setup failed (non-fatal):', e);
+      }
+
+      this.recordStartTs = Date.now();
+      this._setState('recording');
+    } catch (err) {
+      console.warn('[OIP voice] getUserMedia failed:', err);
+      this._cleanup();
+      // Vriendelijke error-classificatie
+      const name = err.name || '';
+      let msg = err.message || String(err);
+      if (name === 'NotAllowedError' || name === 'PermissionDeniedError') msg = 'Microphone permission denied';
+      else if (name === 'NotFoundError') msg = 'No microphone found';
+      else if (name === 'NotReadableError') msg = 'Microphone is in use by another app';
+      this._error('mic', msg);
+      this._setState('idle');
+    }
+  }
+
+  stop() {
+    if (this.state !== 'recording') return;
+    if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
+      try { this.mediaRecorder.stop(); } catch (e) { console.warn('[OIP voice] stop() failed:', e); }
+    }
+  }
+
+  cancel() {
+    this.chunks = [];
+    if (this.mediaRecorder && this.mediaRecorder.state === 'recording') {
+      try { this.mediaRecorder.stop(); } catch (e) {}
+    }
+    this._cleanup();
+    this._setState('idle');
+  }
+
+  async _onStop() {
+    this._stopLevelMonitor();
+    const duration = Date.now() - this.recordStartTs;
+    const blobType = this.chunks[0]?.type || this.mediaRecorder?.mimeType || 'audio/webm';
+    const blob = new Blob(this.chunks, { type: blobType });
+    this.chunks = [];
+    this._cleanup();
+
+    // Erg korte opname (<500 ms) of erg klein blob? Waarschijnlijk per ongeluk — niet versturen
+    if (duration < 500 || blob.size < 1500) {
+      console.log('[OIP voice] Recording too short, ignoring (dur=' + duration + 'ms, size=' + blob.size + ')');
+      this._setState('idle');
+      return;
+    }
+
+    this._setState('processing');
+    try {
+      const text = await this._transcribe(blob);
+      const trimmed = (text || '').trim();
+      // Whisper-hallucinaties bij stilte filteren — typische uitkomsten bij geen of zeer zachte audio:
+      // "nl", "en", "Bedankt voor het kijken.", "Thanks for watching.", "Ondertiteld door...", etc.
+      if (trimmed && !InlineVoiceInput._isHallucination(trimmed)) {
+        this.onTranscript?.(trimmed);
+      } else if (trimmed) {
+        console.log('[OIP voice] Hallucination/silence-artefact verworpen:', trimmed);
+      } else {
+        console.log('[OIP voice] Empty transcript');
+      }
+    } catch (err) {
+      console.warn('[OIP voice] Transcription failed:', err);
+      this._error('transcribe', err.message || String(err));
+    } finally {
+      this._setState('idle');
+    }
+  }
+
+  // Whisper produceert bij stilte (of erg zachte audio) typische artefact-strings.
+  // We filteren die uit zodat het invoerveld niet vervuilt raakt.
+  static _isHallucination(text) {
+    if (!text) return true;
+    const t = text.trim().toLowerCase();
+    // Heel kort (1-2 letters): vrijwel zeker een taalcode-hallucination zoals "nl", "en", "de"
+    if (t.length <= 3) return true;
+    // Bekende stilte-artefacten in meerdere talen
+    const patterns = [
+      /^bedankt voor (het )?kijken\.?$/,
+      /^thanks for watching\.?$/,
+      /^thank you( for watching)?\.?$/,
+      /^untertitelung des zdf für funk.*$/,
+      /^untertitel.*$/,
+      /^ondertiteld door.*$/,
+      /^sous-titres.*$/,
+      /^subtítulos.*$/,
+      /^napisy.*$/,
+      /^\.+$/,
+      /^you\.?$/,
+      /^hi\.?$/,
+      /^bye\.?$/,
+    ];
+    return patterns.some(rx => rx.test(t));
+  }
+
+  async _transcribe(blob) {
+    const t = blob.type || 'audio/webm';
+
+    // Bestandsextensie afleiden uit mime-type — Whisper gebruikt deze om het formaat te herkennen
+    let ext = 'webm';
+    if (t.includes('mp4'))      ext = 'mp4';
+    else if (t.includes('mpeg')) ext = 'mp3';
+    else if (t.includes('mpga')) ext = 'mp3';
+    else if (t.includes('ogg'))  ext = 'ogg';
+    else if (t.includes('wav'))  ext = 'wav';
+    else if (t.includes('webm')) ext = 'webm';
+    else if (t.includes('flac')) ext = 'flac';
+
+    const filename = `recording.${ext}`;
+
+    console.log('[OIP voice] POST → ' + this.endpoint +
+                ' · audio: ' + Math.round(blob.size/1024) + ' KB · ' + t +
+                ' · file: ' + filename + ' · lang: ' + this.language);
+
+    // Audio naar base64 converteren
+    const base64 = await InlineVoiceInput._blobToBase64(blob);
+
+    // Stuur expliciete filename + format mee zodat de server het correct doorgeeft aan Whisper.
+    // Verschillende veldnamen tegelijk voor maximale compatibiliteit met de Netlify-functie.
+    const payload = {
+      audio:       base64,
+      file:        base64,
+      data:        base64,
+      audioBase64: base64,
+      mimeType:    t,
+      mime_type:   t,
+      contentType: t,
+      content_type: t,
+      format:      ext,
+      extension:   ext,
+      filename:    filename,
+      file_name:   filename,
+      name:        filename,
+      language:    this.language,
+      prompt:      this.prompt,
+      model:       'whisper-1',
+    };
+
+    let res;
+    try {
+      res = await fetch(this.endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+    } catch (e) {
+      throw new Error('Network error: ' + (e.message || e));
+    }
+
+    if (!res.ok) {
+      let detail = '';
+      try { detail = (await res.text()).slice(0, 250); } catch (_) {}
+      throw new Error(`HTTP ${res.status} ${res.statusText}${detail ? ' — ' + detail : ''}`);
+    }
+
+    const ct = (res.headers.get('content-type') || '').toLowerCase();
+    let text = '';
+    let raw = null;
+
+    if (ct.includes('application/json')) {
+      raw = await res.json();
+      console.log('[OIP voice] API response (JSON):', raw);
+      text = InlineVoiceInput._extractText(raw);
+    } else {
+      raw = (await res.text()).trim();
+      console.log('[OIP voice] API response (text):', raw.slice(0, 300));
+      if (raw.startsWith('{') || raw.startsWith('[')) {
+        try {
+          text = InlineVoiceInput._extractText(JSON.parse(raw));
+        } catch (_) {
+          text = raw;
+        }
+      } else {
+        text = raw;
+      }
+    }
+
+    if (!text) {
+      console.warn('[OIP voice] Geen tekst gevonden in respons. Volledige respons:', raw);
+    } else {
+      console.log('[OIP voice] Transcript:', text);
+    }
+    return text;
+  }
+
+  // Blob → base64 string (zonder "data:audio/...;base64," prefix)
+  static _blobToBase64(blob) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const result = reader.result || '';
+        // Verwijder de "data:...;base64," prefix
+        const idx = result.indexOf(',');
+        resolve(idx >= 0 ? result.slice(idx + 1) : result);
+      };
+      reader.onerror = () => reject(reader.error || new Error('FileReader failed'));
+      reader.readAsDataURL(blob);
+    });
+  }
+
+  // Recursief zoeken naar een transcript-string in willekeurige JSON-structuur.
+  // Probeert eerst bekende veldnamen op het top-level, daarna recursief.
+  static _extractText(obj) {
+    if (obj == null) return '';
+    if (typeof obj === 'string') return obj;
+    if (typeof obj !== 'object') return '';
+
+    // Top-level bekende veldnamen, in volgorde van waarschijnlijkheid
+    const keys = ['text', 'transcript', 'transcription', 'result', 'message', 'content', 'output'];
+    for (const k of keys) {
+      const v = obj[k];
+      if (typeof v === 'string' && v.trim()) return v;
+      if (v && typeof v === 'object') {
+        const nested = InlineVoiceInput._extractText(v);
+        if (nested) return nested;
+      }
+    }
+    // Laatste poging: data, body, response, payload
+    for (const k of ['data', 'body', 'response', 'payload']) {
+      if (obj[k]) {
+        const nested = InlineVoiceInput._extractText(obj[k]);
+        if (nested) return nested;
+      }
+    }
+    // Echt allerlaatste poging: scan ALLE waarden
+    for (const k of Object.keys(obj)) {
+      const v = obj[k];
+      if (typeof v === 'string' && v.trim() && v.length > 1) return v;
+    }
+    return '';
+  }
+
+  _startLevelMonitor() {
+    if (!this.analyser) return;
+    const buf = new Uint8Array(this.analyser.fftSize);
+    const tick = () => {
+      if (!this.analyser) return;
+      this.analyser.getByteTimeDomainData(buf);
+      let peak = 0;
+      for (let i = 0; i < buf.length; i++) {
+        const v = Math.abs(buf[i] - 128) / 128;
+        if (v > peak) peak = v;
+      }
+      this.onLevel?.(peak);
+      this.levelTimer = requestAnimationFrame(tick);
+    };
+    tick();
+  }
+
+  _stopLevelMonitor() {
+    if (this.levelTimer) { cancelAnimationFrame(this.levelTimer); this.levelTimer = null; }
+    this.onLevel?.(0);
+  }
+
+  _cleanup() {
+    if (this.stream) {
+      this.stream.getTracks().forEach(t => { try { t.stop(); } catch (e) {} });
+      this.stream = null;
+    }
+    if (this.audioCtx) {
+      try { this.audioCtx.close(); } catch (e) {}
+      this.audioCtx = null;
+    }
+    this.analyser = null;
+    this.mediaRecorder = null;
+  }
+
+  _setState(s) {
+    this.state = s;
+    this.onState?.(s);
+  }
+
+  _error(type, message) {
+    this.onError?.({ type, message });
+  }
+}
+
+function buildVoicePrompt() {
+  // Combineer base-vocabulaire met scenario-specifieke termen
+  const parts = [VOICE_CONFIG.basePrompt];
+  const sc = scenarioConfig?.aiScenario;
+
+  // Namen van AI-rollen toevoegen (die worden vaak uitgesproken)
+  const roleNames = (sc?.roles || []).map(r => r?.name).filter(Boolean);
+  if (roleNames.length) {
+    parts.push('Roles: ' + roleNames.join(', ') + '.');
+  }
+  // Deelnemer-naam als relevante context
+  const pName = scenarioConfig?.participant?.name;
+  if (pName) parts.push('Operator: ' + pName + '.');
+
+  // Scenario-titel als extra context (bevat vaak unieke termen)
+  if (sc?.scenarioTitle) parts.push('Scenario: ' + sc.scenarioTitle + '.');
+
+  return parts.join(' ');
+}
+
+function buildVoiceMeter() {
+  const meter = document.getElementById('vs-meter');
+  if (!meter || meter.children.length) return;
+  for (let i = 0; i < 20; i++) {
+    const bar = document.createElement('div');
+    bar.className = 'vs-bar';
+    meter.appendChild(bar);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RADIO CHECK — microfoontest vóór scenario-start
+// ═══════════════════════════════════════════════════════════════
+// Wordt eenmalig getoond bij de eerste sessie (status in localStorage).
+// Doel: deelnemer hoort terug hoe Whisper hem verstaat, voordat het scenario
+// echt begint. Zo geen onnodige stress als de mic-instellingen niet kloppen.
+
+async function maybeRunRadioCheck() {
+  if (!VOICE_CONFIG.enabled) {
+    console.log('[OIP radiocheck] Skipped: voice disabled in config');
+    return;
+  }
+  if (!voiceReady) {
+    console.log('[OIP radiocheck] Skipped: voice module not ready (voiceReady=false). ' +
+                'Check that microphone permission is granted and the deployment is reachable.');
+    return;
+  }
+
+  let alreadyDone = false;
+  try { alreadyDone = localStorage.getItem('oip-radiocheck-done') === '1'; } catch (_) {}
+  if (alreadyDone) {
+    console.log('[OIP radiocheck] Skipped: already completed in a previous session. ' +
+                'Run `localStorage.removeItem("oip-radiocheck-done")` and reload to see it again.');
+    return;
+  }
+
+  console.log('[OIP radiocheck] Showing radio-check modal.');
+  return runRadioCheck();
+}
+
+function pickRadioCheckTexts(effL) {
+  const texts = {
+    en: {
+      title:    'Radio check — microphone test',
+      intro:    'Before we begin, a quick microphone test. <strong>Read the line below out loud</strong> at your normal radio voice. Hold <kbd>Space</kbd> or the button — release when done.',
+      label:    'Read aloud',
+      sentence: 'This is the control room, no active alarms. Start your control round, field operator. And contractor, remember the LMRA.',
+      btnIdle:    'Hold to speak',
+      btnRec:     'Release when done',
+      btnProc:    'Processing…',
+      ready:      'Ready when you are.',
+      recording:  'Recording…',
+      processing: 'Sending to Whisper…',
+      ok:         'Microphone working',
+      okDetail:   'Whisper transcribed your speech successfully. You will hear the AI roles respond when you press send.',
+      partial:    'Partial match',
+      partialDetail: 'Whisper picked up your voice but the transcription differs from the expected sentence. This can happen with background noise, accents, or jargon. Try again or proceed if this is acceptable.',
+      errorTitle: 'Voice test failed',
+      errorDetail: 'There was a problem with the microphone or the transcription service. You can still type your responses during the scenario.',
+      skip:       'Skip · start now',
+      retry:      '↺ Try again',
+      cont:       'Start scenario →',
+    },
+    nl: {
+      title:    'Radio check — microfoontest',
+      intro:    'Voordat we beginnen, een korte microfoontest. <strong>Lees de zin hieronder hardop voor</strong> met je normale radiostem. Houd <kbd>Spatie</kbd> of de knop ingedrukt — laat los als je klaar bent.',
+      label:    'Lees hardop voor',
+      sentence: 'Hier de controlekamer, geen alarmen actief. Start je controleronde veldoperator. En contractor, denk aan de LMRA.',
+      btnIdle:    'Houd vast om te spreken',
+      btnRec:     'Loslaten als je klaar bent',
+      btnProc:    'Verwerken…',
+      ready:      'Klaar wanneer jij dat bent.',
+      recording:  'Opname loopt…',
+      processing: 'Versturen naar Whisper…',
+      ok:         'Microfoon werkt',
+      okDetail:   'Whisper heeft je spraak succesvol getranscribeerd. De AI-rollen reageren zodra je een bericht verstuurt.',
+      partial:    'Gedeeltelijke match',
+      partialDetail: 'Whisper heeft je spraak opgepakt maar de transcriptie wijkt af van de verwachte zin. Dit kan komen door achtergrondgeluid, accent of vakjargon. Probeer opnieuw of ga door als dit acceptabel is.',
+      errorTitle: 'Spraaktest mislukt',
+      errorDetail: 'Er was een probleem met de microfoon of de transcriptie-service. Je kunt nog steeds typen tijdens het scenario.',
+      skip:       'Overslaan · direct beginnen',
+      retry:      '↺ Opnieuw',
+      cont:       'Start scenario →',
+    },
+    de: {
+      title:    'Funkprobe — Mikrofontest',
+      intro:    'Bevor wir beginnen, eine kurze Mikrofonprüfung. <strong>Lesen Sie den Satz unten laut vor</strong> mit Ihrer normalen Funkstimme. Halten Sie <kbd>Leertaste</kbd> oder die Taste gedrückt — loslassen, wenn Sie fertig sind.',
+      label:    'Vorlesen',
+      sentence: 'Hier ist die Leitwarte, keine aktiven Alarme. Beginne deinen Kontrollgang, Feldoperator. Und Kontraktor, denk an die LMRA.',
+      btnIdle:    'Zum Sprechen halten',
+      btnRec:     'Loslassen wenn fertig',
+      btnProc:    'Verarbeite…',
+      ready:      'Bereit, wenn Sie es sind.',
+      recording:  'Aufnahme läuft…',
+      processing: 'Sende an Whisper…',
+      ok:         'Mikrofon funktioniert',
+      okDetail:   'Whisper hat Ihre Sprache erfolgreich transkribiert. Die KI-Rollen antworten, sobald Sie eine Nachricht senden.',
+      partial:    'Teilweise Übereinstimmung',
+      partialDetail: 'Whisper hat Ihre Stimme erkannt, aber die Transkription weicht vom erwarteten Satz ab. Dies kann an Hintergrundgeräuschen, Akzent oder Fachjargon liegen. Versuchen Sie es erneut oder fahren Sie fort, wenn dies akzeptabel ist.',
+      errorTitle: 'Sprachtest fehlgeschlagen',
+      errorDetail: 'Es gab ein Problem mit dem Mikrofon oder dem Transkriptionsdienst. Sie können Ihre Antworten weiterhin eingeben.',
+      skip:       'Überspringen · jetzt starten',
+      retry:      '↺ Erneut versuchen',
+      cont:       'Szenario starten →',
+    },
+    es: {
+      title:    'Prueba de radio — test de micrófono',
+      intro:    'Antes de empezar, una breve prueba de micrófono. <strong>Lee la frase de abajo en voz alta</strong> con tu voz de radio normal. Mantén pulsada la tecla <kbd>Espacio</kbd> o el botón — suelta cuando termines.',
+      label:    'Lee en voz alta',
+      sentence: 'Aquí sala de control, sin alarmas activas. Inicia tu ronda de control, operador de campo. Y contratista, recuerda el LMRA.',
+      btnIdle:    'Mantén pulsado para hablar',
+      btnRec:     'Suelta cuando termines',
+      btnProc:    'Procesando…',
+      ready:      'Listo cuando lo estés.',
+      recording:  'Grabando…',
+      processing: 'Enviando a Whisper…',
+      ok:         'Micrófono funciona',
+      okDetail:   'Whisper ha transcrito tu voz con éxito. Las funciones de IA responderán cuando envíes un mensaje.',
+      partial:    'Coincidencia parcial',
+      partialDetail: 'Whisper ha captado tu voz, pero la transcripción difiere de la frase esperada. Esto puede ocurrir con ruido de fondo, acentos o jerga técnica. Vuelve a intentarlo o continúa si te parece aceptable.',
+      errorTitle: 'Prueba de voz fallida',
+      errorDetail: 'Hubo un problema con el micrófono o el servicio de transcripción. Aún puedes escribir tus respuestas durante el escenario.',
+      skip:       'Omitir · empezar ya',
+      retry:      '↺ Reintentar',
+      cont:       'Iniciar escenario →',
+    },
+    fr: {
+      title:    'Contrôle radio — test du micro',
+      intro:    'Avant de commencer, un rapide test de micro. <strong>Lisez la phrase ci-dessous à voix haute</strong> avec votre voix radio normale. Maintenez la touche <kbd>Espace</kbd> ou le bouton enfoncé — relâchez quand vous avez terminé.',
+      label:    'Lire à voix haute',
+      sentence: 'Ici la salle de contrôle, aucune alarme active. Commence ta ronde de contrôle, opérateur de terrain. Et entrepreneur, n\'oublie pas la LMRA.',
+      btnIdle:    'Maintenir pour parler',
+      btnRec:     'Relâcher une fois fini',
+      btnProc:    'Traitement…',
+      ready:      'Prêt quand vous l\'êtes.',
+      recording:  'Enregistrement…',
+      processing: 'Envoi à Whisper…',
+      ok:         'Microphone opérationnel',
+      okDetail:   'Whisper a transcrit votre parole avec succès. Les rôles IA répondront lorsque vous enverrez un message.',
+      partial:    'Correspondance partielle',
+      partialDetail: 'Whisper a capté votre voix, mais la transcription diffère de la phrase attendue. Cela peut être dû au bruit de fond, à l\'accent ou au jargon technique. Réessayez ou continuez si cela vous convient.',
+      errorTitle: 'Test vocal échoué',
+      errorDetail: 'Il y a eu un problème avec le microphone ou le service de transcription. Vous pouvez toujours saisir vos réponses pendant le scénario.',
+      skip:       'Passer · commencer',
+      retry:      '↺ Réessayer',
+      cont:       'Démarrer le scénario →',
+    },
+    pl: {
+      title:    'Test radia — sprawdzenie mikrofonu',
+      intro:    'Zanim zaczniemy, krótki test mikrofonu. <strong>Przeczytaj zdanie poniżej na głos</strong> normalnym tonem do radia. Przytrzymaj <kbd>Spację</kbd> lub przycisk — puść, gdy skończysz.',
+      label:    'Przeczytaj na głos',
+      sentence: 'Tu sterownia, brak aktywnych alarmów. Rozpocznij swój obchód kontrolny, operatorze terenowy. A kontraktor, pamiętaj o LMRA.',
+      btnIdle:    'Przytrzymaj, aby mówić',
+      btnRec:     'Zwolnij, gdy skończysz',
+      btnProc:    'Przetwarzanie…',
+      ready:      'Gotowe, kiedy ty będziesz.',
+      recording:  'Nagrywanie…',
+      processing: 'Wysyłanie do Whisper…',
+      ok:         'Mikrofon działa',
+      okDetail:   'Whisper pomyślnie przetranskrybował twoją wypowiedź. Role AI odpowiedzą, gdy wyślesz wiadomość.',
+      partial:    'Częściowe dopasowanie',
+      partialDetail: 'Whisper wychwycił twój głos, ale transkrypcja różni się od oczekiwanego zdania. Może się to zdarzyć przy hałasie tła, akcencie lub branżowym żargonie. Spróbuj ponownie lub kontynuuj, jeśli to akceptowalne.',
+      errorTitle: 'Test głosowy nie powiódł się',
+      errorDetail: 'Wystąpił problem z mikrofonem lub usługą transkrypcji. Wciąż możesz wpisywać swoje odpowiedzi podczas scenariusza.',
+      skip:       'Pomiń · zacznij teraz',
+      retry:      '↺ Spróbuj ponownie',
+      cont:       'Rozpocznij scenariusz →',
+    },
+  };
+  return texts[effL] || texts.en;
+}
+
+function runRadioCheck() {
+  return new Promise(resolve => {
+    const overlay = document.getElementById('radiocheck-overlay');
+    const stepRecord = document.getElementById('rc-step-record');
+    const stepResult = document.getElementById('rc-step-result');
+    const micBtn = document.getElementById('rc-mic-btn');
+    const micLabel = document.getElementById('rc-mic-label');
+    const meter = document.getElementById('rc-meter');
+    const statusEl = document.getElementById('rc-status');
+    const skipBtn = document.getElementById('rc-skip');
+    const retryBtn = document.getElementById('rc-retry');
+    const continueBtn = document.getElementById('rc-continue');
+
+    if (!overlay || !micBtn) { resolve(); return; }
+
+    // Lokalisatie — alle zes talen die de player ondersteunt
+    const effL = getEffectiveLang();
+    const T = pickRadioCheckTexts(effL);
+
+    document.getElementById('rc-title').textContent = T.title;
+    document.getElementById('rc-intro').innerHTML = T.intro;
+    document.getElementById('rc-prompt-label').textContent = T.label;
+    document.getElementById('rc-prompt-text').textContent = T.sentence;
+    micLabel.textContent = T.btnIdle;
+    statusEl.textContent = T.ready;
+    skipBtn.textContent = T.skip;
+    retryBtn.textContent = T.retry;
+    continueBtn.textContent = T.cont;
+
+    // Bouw meter-balken
+    if (meter && !meter.children.length) {
+      for (let i = 0; i < 24; i++) {
+        const b = document.createElement('div');
+        b.className = 'rc-bar';
+        meter.appendChild(b);
+      }
+    }
+
+    // Maak een aparte VoiceInput-instance voor de check, met de testzin als prompt-hint
+    const checkVoice = new InlineVoiceInput({
+      endpoint: voiceInput.endpoint,
+      language: effL,
+      // Geef Whisper de testzin mee als hint — vergelijkbaar met scenariocontext
+      prompt: T.sentence + ' ' + (VOICE_CONFIG.basePrompt || ''),
+      audioLevelCallback: lvl => {
+        if (!meter) return;
+        const bars = meter.children;
+        const active = Math.min(bars.length, Math.round(lvl * bars.length * 2.5));
+        for (let i = 0; i < bars.length; i++) {
+          bars[i].className = 'rc-bar';
+          if (i < active) {
+            if (i >= bars.length - 3) bars[i].classList.add('on-peak');
+            else if (i >= bars.length - 6) bars[i].classList.add('on-hi');
+            else bars[i].classList.add('on');
+          }
+        }
+      },
+      onStateChange: state => {
+        micBtn.classList.remove('is-recording', 'is-processing');
+        if (state === 'recording') {
+          micBtn.classList.add('is-recording');
+          micLabel.textContent = T.btnRec;
+          statusEl.textContent = T.recording;
+        } else if (state === 'processing') {
+          micBtn.classList.add('is-processing');
+          micLabel.textContent = T.btnProc;
+          statusEl.textContent = T.processing;
+        } else {
+          micLabel.textContent = T.btnIdle;
+          // Reset meter
+          if (meter) Array.from(meter.children).forEach(b => b.className = 'rc-bar');
+        }
+      },
+      onTranscript: text => {
+        showRadioCheckResult(text, T);
+      },
+      onError: err => {
+        showRadioCheckError(err, T);
+      },
+    });
+
+    // Push-to-talk events op de mic-button
+    let downActive = false;
+    const onDown = e => {
+      e.preventDefault();
+      if (micBtn.disabled || checkVoice.state !== 'idle') return;
+      downActive = true;
+      checkVoice.start();
+    };
+    const onUp = e => {
+      if (!downActive) return;
+      downActive = false;
+      if (checkVoice.state === 'recording') checkVoice.stop();
+    };
+    micBtn.addEventListener('pointerdown', onDown);
+    micBtn.addEventListener('pointerup', onUp);
+    micBtn.addEventListener('pointerleave', onUp);
+    micBtn.addEventListener('pointercancel', onUp);
+
+    // Ook spatiebalk binnen de modal ondersteunen
+    let spaceDown = false;
+    const onKeyDown = e => {
+      if (e.code !== 'Space' || e.repeat) return;
+      if (!overlay.classList.contains('active')) return;
+      if (e.ctrlKey || e.altKey || e.metaKey) return;
+      if (checkVoice.state !== 'idle') return;
+      e.preventDefault();
+      e.stopPropagation();
+      if (!spaceDown) {
+        spaceDown = true;
+        checkVoice.start();
+      }
+    };
+    const onKeyUp = e => {
+      if (e.code !== 'Space') return;
+      if (!overlay.classList.contains('active')) return;
+      if (spaceDown) { e.preventDefault(); e.stopPropagation(); }
+      if (!spaceDown) return;
+      spaceDown = false;
+      if (checkVoice.state === 'recording') checkVoice.stop();
+    };
+    document.addEventListener('keydown', onKeyDown, true);
+    document.addEventListener('keyup', onKeyUp, true);
+
+    // Resultaat-rendering
+    function showRadioCheckResult(transcript, T) {
+      stepRecord.classList.remove('active');
+      stepResult.classList.add('active');
+
+      const expected = T.sentence;
+      const matchScore = computeWordOverlap(transcript, expected);
+      const isOk = matchScore >= 0.4 && transcript.trim().split(/\s+/).length >= 4;
+
+      const box = document.getElementById('rc-result-box');
+      const icon = document.getElementById('rc-result-icon');
+      const title = document.getElementById('rc-result-title');
+      const tr = document.getElementById('rc-transcript');
+      const detail = document.getElementById('rc-result-detail');
+
+      box.classList.remove('ok', 'warn');
+      if (isOk) {
+        box.classList.add('ok');
+        icon.textContent = '✓';
+        title.textContent = T.ok;
+        detail.textContent = T.okDetail;
+      } else {
+        box.classList.add('warn');
+        icon.textContent = '!';
+        title.textContent = T.partial;
+        detail.textContent = T.partialDetail;
+      }
+      tr.textContent = '"' + (transcript || '—') + '"';
+
+      retryBtn.style.display = 'inline-block';
+      continueBtn.disabled = false;
+    }
+
+    function showRadioCheckError(err, T) {
+      stepRecord.classList.remove('active');
+      stepResult.classList.add('active');
+
+      const box = document.getElementById('rc-result-box');
+      const icon = document.getElementById('rc-result-icon');
+      const title = document.getElementById('rc-result-title');
+      const tr = document.getElementById('rc-transcript');
+      const detail = document.getElementById('rc-result-detail');
+
+      box.classList.remove('ok');
+      box.classList.add('warn');
+      icon.textContent = '⚠';
+      title.textContent = T.errorTitle;
+      tr.textContent = err?.message || err?.type || '—';
+      detail.textContent = T.errorDetail;
+
+      retryBtn.style.display = 'inline-block';
+      continueBtn.disabled = false;
+    }
+
+    function reset() {
+      stepResult.classList.remove('active');
+      stepRecord.classList.add('active');
+      retryBtn.style.display = 'none';
+      continueBtn.disabled = true;
+      statusEl.textContent = T.ready;
+      if (meter) Array.from(meter.children).forEach(b => b.className = 'rc-bar');
+    }
+
+    function close(markDone) {
+      overlay.classList.remove('active');
+      micBtn.removeEventListener('pointerdown', onDown);
+      micBtn.removeEventListener('pointerup', onUp);
+      micBtn.removeEventListener('pointerleave', onUp);
+      micBtn.removeEventListener('pointercancel', onUp);
+      document.removeEventListener('keydown', onKeyDown, true);
+      document.removeEventListener('keyup', onKeyUp, true);
+      // Cleanup: stop eventueel nog lopende opname
+      if (checkVoice.state === 'recording') {
+        try { checkVoice.cancel(); } catch (_) {}
+      }
+      if (markDone) {
+        try { localStorage.setItem('oip-radiocheck-done', '1'); } catch (_) {}
+      }
+      resolve();
+    }
+
+    retryBtn.addEventListener('click', reset);
+    skipBtn.addEventListener('click', () => close(true));
+    continueBtn.addEventListener('click', () => close(true));
+
+    // Tonen!
+    overlay.classList.add('active');
+  });
+}
+
+// Eenvoudige overlap-score: welk percentage van de woorden in 'expected' staat ook in 'actual'?
+// Genoeg voor een ja/nee-oordeel — perfect-match is niet nodig (Whisper hoort soms iets anders bij jargon).
+function computeWordOverlap(actual, expected) {
+  if (!actual || !expected) return 0;
+  const norm = s => s.toLowerCase().replace(/[^\p{L}\p{N}\s]/gu, '').split(/\s+/).filter(w => w.length > 2);
+  const a = new Set(norm(actual));
+  const e = norm(expected);
+  if (!e.length) return 0;
+  let hits = 0;
+  for (const w of e) if (a.has(w)) hits++;
+  return hits / e.length;
+}
+
+// Globale helpers — op window zodat je ze vanuit de browser-console kunt aanroepen.
+// Handig voor demo's, nieuwe deelnemers op dezelfde computer, of testen.
+window.resetRadioCheck = function() {
+  try { localStorage.removeItem('oip-radiocheck-done'); } catch (_) {}
+  console.log('[OIP radiocheck] Reset — modal verschijnt weer bij volgende scenario-start.');
+};
+window.runRadioCheckNow = function() {
+  if (!voiceReady) {
+    console.warn('[OIP radiocheck] Cannot run: voice module not ready. Start a scenario first so the mic is initialised.');
+    return;
+  }
+  return runRadioCheck();
+};
+
+// Eenmalige uitleg-banner voor spatiebalk-PTT (plus muis-optie)
+function showVoiceTip() {
+  const tip = document.getElementById('voice-tip');
+  const txt = document.getElementById('vt-text');
+  const dismissBtn = document.getElementById('vt-dismiss');
+  if (!tip || !txt) return;
+
+  // Al eerder gesloten? Dan niet opnieuw tonen (bewaard in localStorage indien beschikbaar)
+  let dismissed = false;
+  try { dismissed = localStorage.getItem('oip-voice-tip-dismissed') === '1'; } catch (_) {}
+  if (dismissed) return;
+
+  const isEN = lang === 'en';
+  txt.innerHTML = isEN
+    ? '<strong>Voice input active.</strong> Hold <kbd style="padding:1px 6px;border:1px solid var(--cyan);border-radius:3px;font-family:var(--mono)">Space</kbd> to speak (only when the input is empty), or press and hold the <strong>Hold to speak</strong> button. Release to send to Whisper.'
+    : '<strong>Spraakinvoer actief.</strong> Houd <kbd style="padding:1px 6px;border:1px solid var(--cyan);border-radius:3px;font-family:var(--mono)">Spatie</kbd> ingedrukt om te spreken (alleen wanneer het veld leeg is), of houd de knop <strong>Hold to speak</strong> ingedrukt. Loslaten stuurt de opname naar Whisper.';
+
+  tip.classList.add('active');
+
+  if (dismissBtn && !dismissBtn._wired) {
+    dismissBtn._wired = true;
+    dismissBtn.addEventListener('click', () => {
+      tip.classList.remove('active');
+      try { localStorage.setItem('oip-voice-tip-dismissed', '1'); } catch (_) {}
+    });
+  }
+
+  // Ook automatisch verbergen zodra de deelnemer voor het eerst spraak heeft gebruikt
+  // (handled in handleVoiceTranscript)
+}
+
+function updateVoiceMeter(level) {
+  // level: 0..1
+  const meter = document.getElementById('vs-meter');
+  if (!meter) return;
+  const bars = meter.children;
+  const active = Math.min(bars.length, Math.round(level * bars.length * 2.5));
+  for (let i = 0; i < bars.length; i++) {
+    bars[i].className = 'vs-bar';
+    if (i < active) {
+      if (i >= bars.length - 3) bars[i].classList.add('on-peak');
+      else if (i >= bars.length - 6) bars[i].classList.add('on-hi');
+      else bars[i].classList.add('on');
+    }
+  }
+}
+
+function onPttDown(e) {
+  e.preventDefault();
+  if (!voiceInput || !voiceReady) return;
+  const btn = document.getElementById('ptt-btn');
+  if (btn.disabled) return;
+  voiceInput.start();
+}
+function onPttUp(e) {
+  e.preventDefault();
+  if (!voiceInput || !voiceReady) return;
+  if (voiceInput.state === 'recording') voiceInput.stop();
+}
+function onPttCancel(e) {
+  // Wanneer pointer buiten de knop komt tijdens opname: gewoon stoppen en toch versturen
+  // (cancel() zou de opname weggooien — niet wat de operator verwacht)
+  if (voiceInput?.state === 'recording') voiceInput.stop();
+}
+
+function onPttKeyDown(e) {
+  // Alleen spatiebalk, niet bij key-repeat
+  if (e.code !== 'Space' || e.repeat) return;
+  if (!voiceInput || !voiceReady) return;
+  const btn = document.getElementById('ptt-btn');
+  if (btn?.disabled) return;
+
+  // Niet activeren als de gebruiker een modifier-toets gebruikt (zoals Ctrl+Space, Alt+Space)
+  if (e.ctrlKey || e.altKey || e.metaKey) return;
+
+  const tag = (e.target?.tagName || '').toUpperCase();
+  if (tag === 'TEXTAREA' || tag === 'INPUT') {
+    // In een tekstveld: spatiebalk-PTT alléén als het veld leeg is.
+    // Zodra de operator iets heeft getypt, gedraagt spatiebalk zich weer normaal (= spatie typen).
+    const val = (e.target.value || '');
+    if (val.length > 0) return;
+  }
+
+  // Voorkom dat de spatie als karakter in het invoerveld belandt.
+  // Belangrijk: dit MOET vóór elke andere keydown-handler gebeuren, daarom is de listener
+  // met { capture: true } geregistreerd (zie initVoiceInput).
+  e.preventDefault();
+  e.stopPropagation();
+
+  if (!voiceSpaceDown) {
+    voiceSpaceDown = true;
+    voiceInput.start();
+  }
+}
+function onPttKeyUp(e) {
+  if (e.code !== 'Space') return;
+  // Ook bij keyup de default-actie voorkomen tijdens PTT, zodat eventuele late spatie niet alsnog wordt ingevoegd
+  if (voiceSpaceDown) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+  if (!voiceSpaceDown) return;
+  voiceSpaceDown = false;
+  if (voiceInput?.state === 'recording') voiceInput.stop();
+}
+
+// Extra vangnet: tijdens PTT-opname via spatiebalk ook keypress-events blokkeren.
+// Sommige browsers (met name Firefox op Linux) genereren nog een extra keypress
+// waarbij het teken wordt ingevoegd, zelfs als keydown preventDefault gebruikt.
+function onPttKeyPress(e) {
+  if (voiceSpaceDown && (e.code === 'Space' || e.key === ' ')) {
+    e.preventDefault();
+    e.stopPropagation();
+  }
+}
+
+function handleVoiceStateChange(state) {
+  const btn = document.getElementById('ptt-btn');
+  const bar = document.getElementById('voice-status');
+  const lbl = document.getElementById('vs-label');
+  if (!btn || !bar) return;
+
+  btn.classList.remove('is-recording', 'is-processing');
+  bar.classList.remove('active', 'processing');
+
+  if (state === 'recording') {
+    btn.classList.add('is-recording');
+    bar.classList.add('active');
+    if (lbl) lbl.textContent = lang === 'en' ? 'Recording…' : 'Opname actief…';
+    setVoicePttLabel(lang === 'en' ? 'Release to send' : 'Laat los om te versturen');
+    startVoicePttTimer();
+    hideVoiceTicker();
+  } else if (state === 'processing') {
+    btn.classList.add('is-processing');
+    bar.classList.add('active', 'processing');
+    if (lbl) lbl.textContent = lang === 'en' ? 'Transcribing…' : 'Transcriberen…';
+    setVoicePttLabel(lang === 'en' ? 'Processing…' : 'Verwerken…');
+    stopVoicePttTimer();
+    updateVoiceMeter(0);
+    showVoiceTicker();
+  } else {
+    setVoicePttLabel(lang === 'en' ? 'Hold to speak' : 'Houd vast om te spreken');
+    stopVoicePttTimer();
+    updateVoiceMeter(0);
+    hideVoiceTicker();
+  }
+}
+
+// ─── Lichtkrant tijdens transcriptie-verwerking ─────────────────────────
+// Vijf alertheids-meldingen die scrollen tijdens het wachten op Whisper.
+// Hergebruikt scenariotaal via getEffectiveLang().
+const VOICE_TICKER_MESSAGES = {
+  en: [
+    'Keep checking your alarms — stay alert.',
+    'Don\'t fixate on one screen — scan all monitors.',
+    'Field operator status — when did you last hear from them?',
+    'Logbook — note what you observe.',
+    'Anticipate, don\'t only react.',
+  ],
+  nl: [
+    'Blijf je alarmen controleren — blijf alert.',
+    'Fixeer niet op één scherm — scan alle monitoren.',
+    'Veldoperator-status — wanneer hoorde je voor het laatst iets?',
+    'Logboek — noteer wat je waarneemt.',
+    'Anticipeer, reageer niet alleen.',
+  ],
+  de: [
+    'Prüfe weiterhin deine Alarme — bleib aufmerksam.',
+    'Fixiere dich nicht auf einen Bildschirm — scanne alle Monitore.',
+    'Feldoperator-Status — wann hast du zuletzt von ihm gehört?',
+    'Logbuch — notiere was du beobachtest.',
+    'Antizipiere, reagiere nicht nur.',
+  ],
+  es: [
+    'Sigue revisando tus alarmas — mantente alerta.',
+    'No te fijes en una sola pantalla — escanea todos los monitores.',
+    'Estado del operador de campo — ¿cuándo lo oíste por última vez?',
+    'Libro de registro — anota lo que observas.',
+    'Anticipa, no solo reacciones.',
+  ],
+  fr: [
+    'Continue de vérifier tes alarmes — reste vigilant.',
+    'Ne te fixe pas sur un écran — scanne tous les moniteurs.',
+    'Statut de l\'opérateur de terrain — quand l\'as-tu entendu pour la dernière fois ?',
+    'Journal de bord — note ce que tu observes.',
+    'Anticipe, ne fais pas que réagir.',
+  ],
+  pl: [
+    'Sprawdzaj dalej swoje alarmy — zachowaj czujność.',
+    'Nie skupiaj się na jednym ekranie — skanuj wszystkie monitory.',
+    'Status operatora terenowego — kiedy ostatnio coś od niego słyszałeś?',
+    'Dziennik — zapisuj co obserwujesz.',
+    'Przewiduj, nie tylko reaguj.',
+  ],
+};
+
+function showVoiceTicker() {
+  const ticker = document.getElementById('voice-ticker');
+  const track  = document.getElementById('vt-track');
+  if (!ticker || !track) return;
+
+  const effL = getEffectiveLang();
+  const msgs = VOICE_TICKER_MESSAGES[effL] || VOICE_TICKER_MESSAGES.en;
+
+  // Bouw de track: alle berichten één keer achter elkaar.
+  // De CSS-animatie scrollt de hele track door — als de processing kort duurt
+  // ziet de operator één bericht; bij langere verwerking rouleren ze.
+  track.innerHTML = msgs.map(m => `<span class="vt-msg">${escapeTickerHtml(m)}</span>`).join('');
+
+  // Reset de animatie zodat hij elke keer vanaf rechts opnieuw begint
+  track.style.animation = 'none';
+  // Force reflow zodat de browser de animation-reset oppikt
+  void track.offsetWidth;
+  track.style.animation = '';
+
+  ticker.classList.add('active');
+}
+
+function hideVoiceTicker() {
+  const ticker = document.getElementById('voice-ticker');
+  if (ticker) ticker.classList.remove('active');
+}
+
+function escapeTickerHtml(s) {
+  return String(s ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+function handleVoiceTranscript(text) {
+  if (!text || !text.trim()) return;
+  const inp = document.getElementById('user-input-large');
+  if (!inp) return;
+
+  // Als de textarea is uitgeschakeld (tijdens briefing bv.): negeren
+  if (inp.disabled) return;
+
+  // Bestaande tekst behouden; transcriptie toevoegen (voor wie eerst iets getypt heeft)
+  const prev = inp.value.trim();
+  inp.value = prev ? `${prev} ${text.trim()}` : text.trim();
+  autoResizeCentre(inp);
+  inp.focus();
+  // Cursor aan het einde
+  const end = inp.value.length;
+  inp.setSelectionRange(end, end);
+
+  // Tip automatisch verbergen na eerste succesvolle transcriptie — de operator snapt het nu
+  const tip = document.getElementById('voice-tip');
+  if (tip?.classList.contains('active')) {
+    tip.classList.remove('active');
+    try { localStorage.setItem('oip-voice-tip-dismissed', '1'); } catch (_) {}
+  }
+}
+
+function handleVoiceError(err) {
+  console.warn('[OIP voice] error:', err?.type || 'unknown', '—', err?.message || err);
+  const bar = document.getElementById('voice-status');
+  const lbl = document.getElementById('vs-label');
+  const badge = document.getElementById('voice-err-badge');
+
+  // Korte foutfeedback in status-balk
+  if (bar && lbl) {
+    bar.classList.add('active');
+    lbl.textContent = lang === 'en'
+      ? ('Voice error: ' + (err?.message || err?.type || 'unknown'))
+      : ('Spraakfout: ' + (err?.message || err?.type || 'onbekend'));
+    setTimeout(() => { bar.classList.remove('active'); }, 3500);
+  }
+  // Badge blijft staan zolang er echt een probleem is
+  if (badge && (err?.type === 'network' || err?.type === 'transcribe')) {
+    badge.style.display = 'inline-block';
+    badge.title = err?.message || 'Voice service onbereikbaar';
+  }
+}
+
+function setVoicePttLabel(text) {
+  const el = document.getElementById('ptt-label');
+  if (el) el.textContent = text;
+}
+
+function startVoicePttTimer() {
+  stopVoicePttTimer();
+  voicePttStart = Date.now();
+  const timeEl = document.getElementById('vs-time');
+  const tick = () => {
+    const elapsed = Math.floor((Date.now() - voicePttStart) / 1000);
+    const m = String(Math.floor(elapsed / 60)).padStart(2, '0');
+    const s = String(elapsed % 60).padStart(2, '0');
+    if (timeEl) timeEl.textContent = `${m}:${s}`;
+  };
+  tick();
+  voicePttTimer = setInterval(tick, 200);
+}
+function stopVoicePttTimer() {
+  if (voicePttTimer) { clearInterval(voicePttTimer); voicePttTimer = null; }
+  const timeEl = document.getElementById('vs-time');
+  if (timeEl) timeEl.textContent = '00:00';
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -3462,9 +5313,20 @@ function showTyping(v) {
 function setInput(v) {
   const inp = document.getElementById('user-input-large');
   const btn = document.getElementById('centre-send-btn');
+  const ptt = document.getElementById('ptt-btn');
   if (inp) inp.disabled = !v;
   if (btn) btn.disabled = !v;
-  if (v && inp) inp.focus();
+  // PTT-knop alleen aan als voice-module klaar is EN input actief is
+  if (ptt) {
+    ptt.disabled = !(v && voiceReady);
+    ptt.title = (lang==='en'
+      ? 'Hold to speak (or hold Space when textarea is empty)'
+      : 'Houd vast om te spreken (of houd Spatie ingedrukt als veld leeg is)');
+  }
+  if (v && inp) {
+    inp.focus();
+    autoResizeCentre(inp);  // triggert ook de hint-update
+  }
 }
 
 function handleKeyCentre(e) {
@@ -3477,6 +5339,19 @@ function handleKey(e) { handleKeyCentre(e); }
 function autoResizeCentre(el) {
   el.style.height = 'auto';
   el.style.height = Math.min(el.scrollHeight, 160) + 'px';
+  // Update hint: leeg veld + voice klaar → spatiebalk-tip; anders normale Enter-tip
+  const hint = document.getElementById('input-hint');
+  if (hint) {
+    if (voiceReady && (el.value || '').length === 0) {
+      hint.innerHTML = (lang==='en'
+        ? 'Space = push-to-talk · Enter to send'
+        : 'Spatie = spreken · Enter om te zenden');
+    } else {
+      hint.textContent = (lang==='en'
+        ? 'Enter to send · Shift+Enter new line'
+        : 'Enter om te zenden · Shift+Enter nieuwe regel');
+    }
+  }
 }
 
 function autoResize(el) { autoResizeCentre(el); }
@@ -3829,7 +5704,7 @@ async function triggerDebriefing() {
   addMsg('instructor', ui('instructor.label'),
     lang === 'en'
       ? 'The scenario has ended. The debrief is being prepared — one moment.'
-      : 'Het scenario is afgerond. De debriefing wordt nu opgesteld — een moment.');
+      : 'The scenario has ended. The debrief is being prepared — please wait.');
   setInput(false);
 
   // Debriefing-tab vrijgeven en activeren
@@ -3938,6 +5813,7 @@ INSTRUCTIES VOOR DE EVALUATIE:
 - Wees eerlijk en direct. Een gemiddelde prestatie scoort 5-6, niet 7 of hoger.
 - Score 7-8 alleen bij aantoonbaar goed situatiebewustzijn, correcte prioriteitstelling én proactieve communicatie.
 - Score 9-10 is uitzonderlijk en alleen gerechtvaardigd bij vrijwel foutloze uitvoering.
+- Het score-getal is intern en wordt gebruikt voor een gedragslabel (1-3=Reactive, 4-5=Aware, 6-7=Proactive, 8-10=In Control). Wees dus eerlijk — een te hoge score levert een onverdiend positief label op.
 - Benoem concrete fouten bij naam: "Op t=XX:XX reageerde de deelnemer niet op..."
 - Als de deelnemer weinig of niets heeft gecommuniceerd, benoem dat expliciet als serieus probleem.
 - Schrijf feedback die de deelnemer iets leert, niet feedback die hem een goed gevoel geeft.
@@ -3946,6 +5822,17 @@ INSTRUCTIES VOOR DE EVALUATIE:
 ${lang==='en' ? '- ALARM ACKNOWLEDGEMENT: the alarm data shows whether and how quickly the participant acknowledged each alarm (ACK time in seconds). Evaluate this as part of Prioritisation: <15s = fast/good, 15-45s = acceptable, >45s = slow/problematic. Unacknowledged alarms are a serious concern. Explicitly mention outliers in the feedback.' : ''}
 - ACK-VOLGORDE BIJ MEERDERE ALARMEN: als de ACK-volgorde beschikbaar is, beoordeel of de deelnemer hoog-prioriteit alarmen vóór laag-prioriteit alarmen bevestigde. Verkeerde volgorde (bijv. een LO-alarm vóór een HI-alarm) duidt op gebrekkige prioriteitstelling en moet expliciet benoemd worden.
 ${lang==='en' ? '- ACK ORDER WITH MULTIPLE ALARMS: if the ACK order is available, evaluate whether the participant acknowledged high-priority alarms before low-priority ones. Wrong order (e.g. a LO alarm before a HI alarm) indicates poor prioritisation and must be explicitly mentioned.' : ''}
+
+- COMMUNICATIE-DOELMATIGHEID: beoordeel de effectiviteit van de communicatie van de deelnemer aan de hand van de daadwerkelijke berichten. Let op:
+  (a) Duidelijkheid — zijn de berichten ondubbelzinnig en direct, of vaag/meerduidig?
+  (b) Structuur — wordt er ERS-conforme structuur gebruikt (identificatie, situatie, actie, verzoek), of is het ad-hoc/chaotisch?
+  (c) Volledigheid — bevatten berichten de benodigde informatie (locatie, status, eventueel slachtoffers, risico's), of zijn ze onderinformatief?
+  (d) Beknoptheid — geen onnodige herhaling of ruis, maar wel volledig genoeg?
+  (e) Correct jargon — juist gebruik van vaktermen (VRU, LMRA, P&ID, etc.), geen verwarring?
+  (f) Pro-actief vs reactief — komt de deelnemer zelf met updates of wacht hij op vragen?
+  (g) Readback/bevestiging — bevestigt de deelnemer ontvangen instructies of kritieke informatie?
+  Citeer letterlijke tekst uit daadwerkelijke berichten om observaties te onderbouwen (korte citaten, max 15 woorden per citaat).
+${lang==='en' ? '- COMMUNICATION EFFECTIVENESS: evaluate the effectiveness of the participant\'s communication based on the actual messages. Consider: (a) Clarity — unambiguous and direct, or vague/ambiguous? (b) Structure — ERS-compliant (identify, situation, action, request) or ad-hoc? (c) Completeness — contains necessary info (location, status, casualties, risks)? (d) Conciseness — no unnecessary repetition but complete? (e) Correct terminology — right use of jargon? (f) Proactive vs reactive — offers updates or waits for questions? (g) Readback — confirms received instructions or critical info? Quote actual messages (short quotes, max 15 words each) to support observations.' : ''}
 
 Geef je debriefing UITSLUITEND als geldig JSON-object — geen tekst erbuiten, geen markdown-fences:
 {
@@ -3956,19 +5843,47 @@ Geef je debriefing UITSLUITEND als geldig JSON-object — geen tekst erbuiten, g
   "competencies": [
     { "name": "<naam>", "score": <1-5>, "feedback": "<concrete observatie met verwijzing naar specifiek moment — geen algemeenheden>" }
   ],
+  "communicationAssessment": {
+    "score": <getal 1-10>,
+    "summary": "<één zin — kernoordeel over de communicatie-doelmatigheid>",
+    "aspects": [
+      { "name": "<Duidelijkheid|Structuur|Volledigheid|Beknoptheid|Jargon|Pro-activiteit|Readback>",
+        "score": <1-5>,
+        "feedback": "<observatie, bij voorkeur met een kort citaat uit de berichten>" }
+    ],
+    "strengths": ["<kort, concreet sterk punt>", "..."],
+    "improvements": ["<kort, concreet verbeterpunt>", "..."],
+    "exampleQuotes": [
+      { "quote": "<letterlijk citaat zonder aanhalingstekens eromheen, max 15 woorden>", "comment": "<waarom dit illustratief is — positief of negatief>" }
+    ]
+  },
   "learningPoints": [
     { "type": "<strong|improve|core>", "tag": "<label>", "text": "<specifieke observatie met tijdstempel of concreet moment uit het scenario>" }
   ]
 }
 
-Competenties — gebruik precies deze vier, in deze volgorde:
-1. Situatiebewustzijn
-2. Communicatie
-3. Prioriteitstelling
-4. Procedure-opvolging
+Competenties — gebruik precies deze vier, in deze volgorde, in de taal van het scenario:
+1. Situatiebewustzijn / Situational awareness / Situationsbewusstsein / Conciencia situacional / Conscience situationnelle
+2. Communicatie / Communication / Kommunikation / Comunicación / Communication
+3. Prioriteitstelling / Prioritisation / Priorisierung / Priorización / Priorisation
+4. Procedure-opvolging / Procedure compliance / Verfahrenskonformität / Cumplimiento de procedimientos / Respect des procédures
 
+Gebruik de naam die overeenkomt met de taalinstelling van het scenario (zie LANGUAGE INSTRUCTION bovenaan).
+
+communicationAssessment: kies 4-6 aspecten die hier relevant zijn (niet alle zeven hoeven gebruikt). De scores moeten consistent zijn met de "Communicatie"-competentie-score. Schrijf de aspectnamen in de taal van het scenario.
 Tijdlijn: max 8 momenten, alleen wat werkelijk significant was.
 Leerpunten: 2-3 items. Minimaal één "improve" of "core" — een debriefing zonder verbeterpunt is geen debriefing.
+
+KRITISCHE JSON-REGELS — de output MOET geldige JSON zijn:
+- Gebruik GEEN dubbele aanhalingstekens (") binnen string-waarden. Als je een citaat moet inbedden, gebruik dan enkele aanhalingstekens (') of geen aanhalingstekens.
+  FOUT:  "quote": "hij zei "alles veilig""
+  GOED:  "quote": "hij zei: alles veilig"
+  GOED:  "quote": "hij zei: 'alles veilig'"
+- Gebruik GEEN trailing commas (geen komma na het laatste item in een array of object).
+- Gebruik GEEN regelovergangen (newlines) midden in een string-waarde; houd iedere waarde op één logische regel.
+- Gebruik GEEN markdown-fences zoals \`\`\`json om je antwoord heen — alleen pure JSON.
+- Escape backslashes correct wanneer die in een waarde voorkomen.
+
 ${(()=>{const el=getEffectiveLang();return el==='de'?'Language: German.':el==='es'?'Language: Spanish.':el==='fr'?'Language: French.':el==='pl'?'Language: Polish.':el==='en'?'Language: English.':'Taal: Nederlands.';})()} Tone: professional and direct, not patronising.`;
 
   try {
@@ -3985,7 +5900,7 @@ ${(()=>{const el=getEffectiveLang();return el==='de'?'Language: German.':el==='e
       },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 1200,
+        max_tokens: 4096,
         messages: [{ role: 'user', content: debriefPrompt }]
       }),
       signal: controller.signal
@@ -4005,9 +5920,48 @@ ${(()=>{const el=getEffectiveLang();return el==='de'?'Language: German.':el==='e
     const raw = data.content?.[0]?.text || '';
     if (!raw) throw new Error('Leeg antwoord van API');
 
-    // Strip eventuele markdown-fences en parse JSON
+    // Detecteer truncatie: bij max_tokens-stop kreeg de AI niet de kans om JSON af te ronden
+    const stopReason = data.stop_reason;
+    const wasTruncated = stopReason === 'max_tokens';
+    if (wasTruncated) {
+      console.warn('[OIP debrief] Response afgekapt op max_tokens — probeer gedeeltelijk te parsen.');
+    }
+    console.log('[OIP debrief] stop_reason:', stopReason, '· length:', raw.length, 'chars');
+
+    // Strip eventuele markdown-fences
     const clean = raw.replace(/^```json\s*/,'').replace(/\s*```$/,'').trim();
-    const debrief = JSON.parse(clean);
+
+    // Robuuste JSON-parse: directe poging → reparatie → reparatie-met-truncatie-recovery
+    let debrief;
+    try {
+      debrief = JSON.parse(clean);
+    } catch (firstErr) {
+      console.warn('[OIP debrief] JSON parse faalde, probeer reparatie:', firstErr.message);
+      const repaired = repairDebriefJson(clean);
+      try {
+        debrief = JSON.parse(repaired);
+        console.log('[OIP debrief] Gerepareerde JSON succesvol geparsed.');
+      } catch (secondErr) {
+        // Tweede kans: probeer truncatie te herstellen door open structuren te sluiten
+        console.warn('[OIP debrief] Reparatie faalde, probeer truncatie te herstellen:', secondErr.message);
+        const recovered = recoverTruncatedJson(repaired);
+        try {
+          debrief = JSON.parse(recovered);
+          debrief._truncated = true;
+          console.log('[OIP debrief] Truncatie-recovery succesvol — debrief is mogelijk incompleet.');
+        } catch (thirdErr) {
+          console.warn('[OIP debrief] Alle parse-pogingen mislukt:', thirdErr.message);
+          console.log('[OIP debrief] Raw AI output:', clean);
+          throw new Error((lang==='en'
+            ? (wasTruncated
+                ? 'Debrief output was cut off (token limit). See console for details, then try again.'
+                : 'Debrief output was not valid JSON. See browser console for raw output, then try again.')
+            : (wasTruncated
+                ? 'Debrief-antwoord werd afgekapt (token-limiet). Zie console voor details en probeer opnieuw.'
+                : 'Debrief-antwoord was geen geldige JSON. Zie browser-console voor ruwe output en probeer opnieuw.')));
+        }
+      }
+    }
     renderDebrief(debrief, durationStr);
 
   } catch(e) {
@@ -4018,7 +5972,7 @@ ${(()=>{const el=getEffectiveLang();return el==='de'?'Language: German.':el==='e
       : (e.message || (lang==='en' ? 'Unknown error' : 'Onbekende fout'));
     if (errEl) errEl.innerHTML =
       `<div style="color:var(--red);font-family:var(--mono);font-size:12px;text-align:center;padding:24px">
-        ⚠ ${lang==='en'?'Debrief could not be prepared':'Debriefing kon niet worden opgesteld'}.<br>
+        ⚠ ${'Debrief could not be prepared'}.<br>
         <small>${msg}</small><br><br>
         <button onclick="triggerDebriefing()" style="background:var(--bg3);border:1px solid var(--border-hi);color:var(--text);padding:6px 16px;border-radius:4px;cursor:pointer;font-family:var(--mono);font-size:11px">
           ${lang==='en'?'↺ Try again':'↺ Opnieuw proberen'}
@@ -4027,20 +5981,167 @@ ${(()=>{const el=getEffectiveLang();return el==='de'?'Language: German.':el==='e
   }
 }
 
+// ─── Robuuste reparatie voor kapotte JSON van de AI ────────────────────
+// De AI kan soms JSON retourneren met niet-geëscapete dubbele aanhalingstekens in
+// string-waarden (vooral in exampleQuotes.quote). Deze functie probeert de meest
+// voorkomende problemen te herstellen zonder de content weg te gooien.
+function repairDebriefJson(text) {
+  let t = text;
+
+  // 1. Smart quotes → gewone aanhalingstekens (komt voor bij sommige modellen)
+  t = t.replace(/[\u201C\u201D\u201E\u201F]/g, '"')
+       .replace(/[\u2018\u2019\u201A\u201B]/g, "'");
+
+  // 2. Trailing commas voor } of ] weghalen: {"a":1,} of [1,2,]
+  t = t.replace(/,(\s*[}\]])/g, '$1');
+
+  // 3. Character-voor-character escapen van interne dubbele aanhalingstekens.
+  //    We lopen door de JSON en vinden string-waarden (na een : of in een array).
+  //    Dubbele aanhalingstekens BINNEN een string-waarde worden geëscapet.
+  t = escapeInnerQuotes(t);
+
+  return t;
+}
+
+// Escape dubbele aanhalingstekens die binnen een string-waarde staan
+// (dus tussen openings- en sluit-quote van een JSON-string).
+// Gebruikt een eenvoudige state-machine.
+function escapeInnerQuotes(src) {
+  let out = '';
+  let inString = false;
+  let i = 0;
+  const n = src.length;
+
+  while (i < n) {
+    const ch = src[i];
+
+    if (!inString) {
+      out += ch;
+      if (ch === '"') inString = true;
+      i++;
+      continue;
+    }
+
+    // We zitten in een string. Opties: escape-sequence, sluit-quote, of content.
+    if (ch === '\\') {
+      // Escape sequence: neem dit karakter én het volgende over
+      out += ch;
+      if (i + 1 < n) out += src[i + 1];
+      i += 2;
+      continue;
+    }
+
+    if (ch === '"') {
+      // Is dit echt het einde van de string, of een niet-geëscapete " binnenin?
+      // Kijk naar het eerste niet-whitespace karakter dat volgt:
+      //   , : } ] einde-van-input → dit is het einde van de string
+      //   iets anders (letter, haakje open, etc.) → dit is een lek en moet geëscapet
+      let j = i + 1;
+      while (j < n && /\s/.test(src[j])) j++;
+      const next = j < n ? src[j] : '';
+      if (next === '' || next === ',' || next === ':' || next === '}' || next === ']') {
+        // Legitiem einde van de string
+        out += ch;
+        inString = false;
+        i++;
+      } else {
+        // Niet-geëscapete " binnen een string → escapen
+        out += '\\"';
+        i++;
+      }
+      continue;
+    }
+
+    // Gewoon content binnen string
+    out += ch;
+    i++;
+  }
+
+  return out;
+}
+
+// Probeert een afgekapte JSON-string af te ronden door:
+// 1. Te zoeken naar het laatste compleet-uitziende item (eindigt op } of ]+,)
+// 2. Open haakjes/quotes te tellen en bij te sluiten
+// Retourneert een best-effort herstelde versie. Niet perfect, maar genoeg om een
+// gedeeltelijke debrief te tonen i.p.v. een lege fout.
+function recoverTruncatedJson(text) {
+  if (!text || typeof text !== 'string') return text;
+  let t = text;
+
+  // 1. Verwijder een eventuele incomplete laatste tekst-fragment.
+  //    Een afgekapte string-waarde herken je aan: een open " gevolgd door tekst zonder sluit-".
+  //    We gaan terug tot het laatste karakter dat veilig is om af te kappen:
+  //    een sluit-haakje } of ] of een komma die ná een sluit-haakje komt.
+
+  // Eerst: tel open quotes om te kijken of we midden in een string zitten
+  // (gebruikt dezelfde state-machine als escapeInnerQuotes om escapes correct af te handelen)
+  let inString = false;
+  let lastSafePos = -1;  // laatste positie waar we veilig de string konden afsluiten
+  for (let i = 0; i < t.length; i++) {
+    const ch = t[i];
+    if (!inString) {
+      if (ch === '"') inString = true;
+      else if (ch === '}' || ch === ']') lastSafePos = i;
+    } else {
+      if (ch === '\\') { i++; continue; }  // skip volgende karakter
+      if (ch === '"') inString = false;
+    }
+  }
+
+  // Als we eindigen midden in een string, kap alles na de laatste veilige positie weg.
+  if (inString && lastSafePos >= 0) {
+    t = t.slice(0, lastSafePos + 1);
+  }
+
+  // 2. Verwijder een trailing komma die ontstaat na het wegkappen
+  t = t.replace(/,\s*$/, '');
+
+  // 3. Tel open haakjes en sluit ze in juiste volgorde
+  const stack = [];
+  let inStr = false;
+  for (let i = 0; i < t.length; i++) {
+    const ch = t[i];
+    if (inStr) {
+      if (ch === '\\') { i++; continue; }
+      if (ch === '"') inStr = false;
+      continue;
+    }
+    if (ch === '"') inStr = true;
+    else if (ch === '{') stack.push('}');
+    else if (ch === '[') stack.push(']');
+    else if (ch === '}' || ch === ']') {
+      if (stack.length && stack[stack.length - 1] === ch) stack.pop();
+    }
+  }
+  // Nog een open string? Sluit 'm
+  if (inStr) t += '"';
+  // Sluit alle nog-open haakjes
+  while (stack.length) t += stack.pop();
+
+  return t;
+}
+
 function renderDebrief(d, durationStr) {
   try {
   lastDebriefData = { ...d, durationStr }; // bewaar voor export
 
-  // Score
+  // Behaviour label (replaces numeric score display)
   const score = Math.max(1, Math.min(10, Math.round(d.score || 5)));
-  const scoreNum = document.getElementById('debrief-score-num');
-  if (scoreNum) scoreNum.textContent = score;
-  const pct = (score / 10) * 100;
-  const bar = document.getElementById('debrief-score-bar');
-  if (bar) {
-    bar.style.background = score >= 7 ? 'var(--green)' : score >= 5 ? 'var(--amber)' : 'var(--red)';
-    setTimeout(() => { if (bar) bar.style.width = pct + '%'; }, 100);
+  const LABELS = [
+    { min: 1, max: 3, key: 'reactive',   label: 'Reactive',   desc: 'Primarily responding to events as they arrive. Situation awareness and prioritisation need development.' },
+    { min: 4, max: 5, key: 'aware',      label: 'Aware',      desc: 'Recognising signals and taking action, but not yet anticipating. Communication and structure can be strengthened.' },
+    { min: 6, max: 7, key: 'proactive',  label: 'Proactive',  desc: 'Anticipating developments and acting ahead of events. A solid foundation — targeted refinement will sharpen performance further.' },
+    { min: 8, max: 10, key: 'in-control', label: 'In Control', desc: 'Clear situational overview, correct prioritisation and structured communication throughout. Strong performance.' },
+  ];
+  const lbl = LABELS.find(l => score >= l.min && score <= l.max) || LABELS[1];
+  const labelEl = document.getElementById('debrief-behaviour-label');
+  const descEl  = document.getElementById('debrief-behaviour-desc');
+  if (labelEl) {
+    labelEl.textContent = lbl.label;
+    labelEl.className = `label-${lbl.key}`;
   }
+  if (descEl) descEl.textContent = lbl.desc;
 
   // Verberg laadindicator, toon inhoud
   const loadEl = document.getElementById('debrief-loading');
@@ -4052,8 +6153,23 @@ function renderDebrief(d, durationStr) {
   if (expBar) expBar.style.display = 'flex';
   if (clsBar) clsBar.style.display = 'block';
 
+  // Truncatie-waarschuwing: als de AI's response is afgekapt, toon een banner
+  // bovenaan de debrief zodat de operator weet dat sommige onderdelen incompleet kunnen zijn
+  if (d._truncated && bodyEl) {
+    const existing = bodyEl.querySelector('.debrief-truncation-warning');
+    if (!existing) {
+      const warn = document.createElement('div');
+      warn.className = 'debrief-truncation-warning';
+      warn.style.cssText = 'padding:10px 14px;margin-bottom:14px;background:var(--amber-bg);border:1px solid var(--amber);border-left:3px solid var(--amber);border-radius:4px;font-family:var(--mono);font-size:12px;color:var(--amber);line-height:1.5';
+      warn.innerHTML = (lang === 'en'
+        ? '⚠ <strong>Note:</strong> the debrief response was cut off due to length. Some details (typically the last learning point) may be incomplete. Click <strong>Try again</strong> below to regenerate.'
+        : '⚠ <strong>Let op:</strong> de debrief is afgekapt vanwege lengte. Sommige details (meestal het laatste leerpunt) kunnen incompleet zijn. Klik <strong>Try again</strong> hieronder om opnieuw te genereren.');
+      bodyEl.insertBefore(warn, bodyEl.firstChild);
+    }
+  }
+
   // Open alle secties standaard
-  ['timeline','analysis','learning'].forEach(s => {
+  ['timeline','analysis','comms','learning'].forEach(s => {
     document.getElementById('body-'+s)?.classList.add('open');
     document.getElementById('chev-'+s)?.classList.add('open');
   });
@@ -4208,6 +6324,9 @@ function renderDebrief(d, durationStr) {
     });
   }, 200);
 
+  // ── Communicatie-doelmatigheid ──
+  renderCommunicationAssessment(d.communicationAssessment);
+
   // ── Leerpunten ──
   const lp = document.getElementById('learning-points');
   if (lp) lp.innerHTML = '';
@@ -4240,17 +6359,131 @@ function closeDebrief() {
   // Niet meer gebruikt maar behoud voor compatibiliteit
 }
 
+// ═══════════════════════════════════════════════════════════════
+// COMMUNICATION ASSESSMENT — renderer voor nieuwe sectie
+// ═══════════════════════════════════════════════════════════════
+function renderCommunicationAssessment(ca) {
+  const host = document.getElementById('comms-container');
+  const section = document.getElementById('ds-comms');
+  if (!host) return;
+
+  // Geen assessment terug van AI? Sectie verbergen, geen lege kaders tonen
+  if (!ca || typeof ca !== 'object') {
+    host.innerHTML = '';
+    if (section) section.style.display = 'none';
+    return;
+  }
+  if (section) section.style.display = 'block';
+
+  const effL = getEffectiveLang();
+  const isEN = effL === 'en';
+  const L = {
+    score: isEN ? '/ 10' : '/ 10',
+    aspects: isEN ? 'Aspects' : 'Aspecten',
+    strengths: isEN ? 'Strengths' : 'Sterke punten',
+    improves: isEN ? 'Points to improve' : 'Verbeterpunten',
+    quotes: isEN ? 'Illustrative quotes from the session' : 'Illustratieve citaten uit de sessie',
+    noData: isEN ? 'No assessment data.' : 'Geen beoordelingsgegevens.',
+  };
+
+  const score = Math.max(1, Math.min(10, Math.round(ca.score ?? 5)));
+  const summary = (ca.summary || '').trim();
+
+  let html = '';
+
+  // Summary card
+  if (summary || ca.score) {
+    html += `
+      <div class="comms-summary">
+        <div class="comms-summary-score">
+          ${score}<small>${L.score}</small>
+        </div>
+        <div class="comms-summary-text">${escapeHtml(summary)}</div>
+      </div>`;
+  }
+
+  // Aspects
+  const aspects = Array.isArray(ca.aspects) ? ca.aspects : [];
+  if (aspects.length) {
+    html += `<div class="comms-aspects">`;
+    aspects.forEach(a => {
+      const s = Math.max(1, Math.min(5, Math.round(a.score ?? 3)));
+      const pct = (s / 5) * 100;
+      const cls = s >= 4 ? 'high' : s >= 3 ? 'medium' : 'low';
+      html += `
+        <div class="comms-aspect-row">
+          <div class="comms-aspect-name">${escapeHtml(a.name || '—')}</div>
+          <div class="comms-aspect-score">
+            <span class="comms-aspect-score-bar ${cls}"><span data-pct="${pct}" style="width:0%"></span></span>
+            ${s}/5
+          </div>
+          <div class="comms-aspect-feedback">${escapeHtml(a.feedback || '')}</div>
+        </div>`;
+    });
+    html += `</div>`;
+  }
+
+  // Strengths + Improvements side-by-side
+  const strengths = Array.isArray(ca.strengths) ? ca.strengths.filter(Boolean) : [];
+  const improves  = Array.isArray(ca.improvements) ? ca.improvements.filter(Boolean) : [];
+  if (strengths.length || improves.length) {
+    html += `<div class="comms-lists">`;
+    if (strengths.length) {
+      html += `
+        <div class="comms-list strengths">
+          <div class="comms-list-title">✓ ${L.strengths}</div>
+          <ul>${strengths.map(s => `<li>${escapeHtml(s)}</li>`).join('')}</ul>
+        </div>`;
+    }
+    if (improves.length) {
+      html += `
+        <div class="comms-list improves">
+          <div class="comms-list-title">△ ${L.improves}</div>
+          <ul>${improves.map(s => `<li>${escapeHtml(s)}</li>`).join('')}</ul>
+        </div>`;
+    }
+    html += `</div>`;
+  }
+
+  // Example quotes
+  const quotes = Array.isArray(ca.exampleQuotes) ? ca.exampleQuotes.filter(q => q && q.quote) : [];
+  if (quotes.length) {
+    html += `<div style="font-family:var(--mono);font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--text-dim);margin-top:4px">${L.quotes}</div>`;
+    html += `<div class="comms-quotes">`;
+    quotes.forEach(q => {
+      html += `
+        <div class="comms-quote">
+          <div class="comms-quote-text">"${escapeHtml(q.quote)}"</div>
+          ${q.comment ? `<div class="comms-quote-comment">${escapeHtml(q.comment)}</div>` : ''}
+        </div>`;
+    });
+    html += `</div>`;
+  }
+
+  host.innerHTML = html || `<div style="color:var(--text-dim);font-size:13px">${L.noData}</div>`;
+
+  // Animeer aspect-bars
+  setTimeout(() => {
+    host.querySelectorAll('.comms-aspect-score-bar > span').forEach(b => {
+      b.style.width = b.dataset.pct + '%';
+    });
+  }, 200);
+}
+
+function escapeHtml(s) {
+  return String(s ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function confirmEndSession() {
-  const isEN = lang === 'en';
-  document.getElementById('end-title').textContent =
-    isEN ? 'Training complete' : 'Training afgerond';
-  document.getElementById('end-sub').innerHTML = isEN
-    ? 'The debrief is complete and reports are available.<br>Close this window or start a new session.'
-    : 'De debriefing is voltooid en de rapporten zijn beschikbaar.<br>Sluit dit venster of start een nieuwe sessie.';
-  document.querySelector('#session-end-box .end-btn-primary').textContent =
-    isEN ? '↺ New session' : '↺ Nieuwe sessie';
-  document.querySelector('#session-end-box .end-btn-secondary').textContent =
-    isEN ? 'Back to debrief' : 'Terug naar debriefing';
+  document.getElementById('end-title').textContent = 'Training complete';
+  document.getElementById('end-sub').innerHTML = 'The debrief is complete and reports are available.<br>Close this window or start a new session.';
+  document.querySelector('#session-end-box .end-btn-primary').textContent = '↺ New session';
+  document.querySelector('#session-end-box .end-btn-secondary').textContent = 'Back to debrief';
   document.getElementById('session-end-overlay').classList.add('visible');
 }
 
@@ -4297,14 +6530,42 @@ function exportDebriefPDF() {
   const date = new Date().toLocaleDateString(effL==='en'?'en-GB':effL==='de'?'de-DE':effL==='es'?'es-ES':effL==='fr'?'fr-FR':'nl-NL');
   const scoreNum = Math.max(1, Math.min(10, Math.round(d.score || 5)));
   const isEN = effL === 'en';
-  const scoreColor = scoreNum >= 7 ? '#2e7d32' : scoreNum >= 5 ? '#e65100' : '#c62828';
+
+  // Behaviour label — mapped from score
+  const BLABELS = {
+    reactive:   { en:'Reactive',   de:'Reaktiv',     es:'Reactivo',    fr:'Réactif',    nl:'Reactief'    },
+    aware:      { en:'Aware',      de:'Bewusst',      es:'Consciente',  fr:'Conscient',  nl:'Bewust'      },
+    proactive:  { en:'Proactive',  de:'Proaktiv',     es:'Proactivo',   fr:'Proactif',   nl:'Proactief'   },
+    'in-control':{ en:'In Control', de:'In Control',  es:'En Control',  fr:'Maîtrise',   nl:'In Control'  },
+  };
+  const bKey = scoreNum <= 3 ? 'reactive' : scoreNum <= 5 ? 'aware' : scoreNum <= 7 ? 'proactive' : 'in-control';
+  const bColor = scoreNum <= 3 ? '#c62828' : scoreNum <= 5 ? '#e65100' : scoreNum <= 7 ? '#1565c0' : '#2e7d32';
+  const bLabel = BLABELS[bKey][effL] || BLABELS[bKey]['en'];
+
+  // Competency name translation table (AI may return names in any language)
+  const COMP_NAMES = {
+    situational: { en:'Situational awareness', de:'Situationsbewusstsein', es:'Conciencia situacional', fr:'Conscience situationnelle', nl:'Situatiebewustzijn' },
+    communication: { en:'Communication', de:'Kommunikation', es:'Comunicación', fr:'Communication', nl:'Communicatie' },
+    prioritisation: { en:'Prioritisation', de:'Priorisierung', es:'Priorización', fr:'Priorisation', nl:'Prioriteitstelling' },
+    procedure: { en:'Procedure compliance', de:'Verfahrenskonformität', es:'Cumplimiento de procedimientos', fr:'Respect des procédures', nl:'Procedure-opvolging' },
+  };
+  const translateCompName = (name) => {
+    const n = (name || '').toLowerCase();
+    const key = n.includes('situ') || n.includes('aware') || n.includes('bewust') ? 'situational'
+              : n.includes('comm') ? 'communication'
+              : n.includes('prior') ? 'prioritisation'
+              : n.includes('proc') ? 'procedure'
+              : null;
+    if (!key) return name;
+    return COMP_NAMES[key][effL] || COMP_NAMES[key]['en'];
+  };
 
   const compRows = (d.competencies || []).map(c => {
     const bars = Array.from({length:5}, (_,i) =>
       `<span style="display:inline-block;width:12px;height:12px;border-radius:2px;margin-right:2px;background:${i < (c.score||0) ? '#0097a7' : '#e0e0e0'}"></span>`
     ).join('');
     return `<tr>
-      <td style="padding:6px 10px;font-weight:600;border:1px solid #ddd">${c.name||''}</td>
+      <td style="padding:6px 10px;font-weight:600;border:1px solid #ddd">${translateCompName(c.name)}</td>
       <td style="padding:6px 10px;border:1px solid #ddd">${bars} ${c.score||0}/5</td>
       <td style="padding:6px 10px;border:1px solid #ddd;color:#444">${c.feedback||''}</td>
     </tr>`;
@@ -4341,13 +6602,13 @@ function exportDebriefPDF() {
 
   // Meertalige PDF-labels
   const lbl = {
-    title:       effL==='de'?'Auswertungsbericht':effL==='es'?'Informe de evaluación':effL==='fr'?'Rapport de débriefing':isEN?'Debrief Report':'Debriefing Rapport',
+    title:       effL==='de'?'Auswertungsbericht':effL==='es'?'Informe de evaluación':effL==='fr'?'Rapport de débriefing':'Debrief Report',
     participant: effL==='de'?'Teilnehmer':effL==='es'?'Participante':effL==='fr'?'Participant':isEN?'Participant':'Deelnemer',
     func:        effL==='de'?'Funktion':effL==='es'?'Función':effL==='fr'?'Fonction':isEN?'Function':'Functie',
     org:         effL==='de'?'Organisation':effL==='es'?'Organización':effL==='fr'?'Organisation':isEN?'Organisation':'Organisatie',
     date:        effL==='de'?'Datum':effL==='es'?'Fecha':effL==='fr'?'Date':isEN?'Date':'Datum',
     duration:    effL==='de'?'Dauer':effL==='es'?'Duración':effL==='fr'?'Durée':isEN?'Duration':'Duur',
-    score:       effL==='de'?'Gesamtpunktzahl':effL==='es'?'Puntuación total':effL==='fr'?'Score global':isEN?'Overall score':'Totaalscore',
+    score:       effL==='de'?'Gesamtbewertung':effL==='es'?'Valoración general':effL==='fr'?'Évaluation globale':'Overall assessment',
     outof:       effL==='de'?'von':effL==='es'?'de':effL==='fr'?'sur':isEN?'out of':'van',
     good:        effL==='de'?'Gute Leistung':effL==='es'?'Buen rendimiento':effL==='fr'?'Bonne performance':isEN?'Good performance':'Goede prestatie',
     avg:         effL==='de'?'Durchschnittliche Leistung':effL==='es'?'Rendimiento promedio':effL==='fr'?'Performance moyenne':isEN?'Average performance':'Gemiddelde prestatie',
@@ -4363,7 +6624,65 @@ function exportDebriefPDF() {
     convlog:     effL==='de'?'Gesprächsprotokoll':effL==='es'?'Registro de conversación':effL==='fr'?'Journal de conversation':isEN?'Conversation log':'Gesprekslog',
     speaker:     effL==='de'?'Sprecher':effL==='es'?'Hablante':effL==='fr'?'Intervenant':isEN?'Speaker':'Spreker',
     message:     effL==='de'?'Nachricht':effL==='es'?'Mensaje':effL==='fr'?'Message':isEN?'Message':'Bericht',
+    comms:       effL==='de'?'Kommunikations-Effektivität':effL==='es'?'Efectividad de la comunicación':effL==='fr'?'Efficacité de la communication':isEN?'Communication effectiveness':'Communicatie-doelmatigheid',
+    aspect:      effL==='de'?'Aspekt':effL==='es'?'Aspecto':effL==='fr'?'Aspect':isEN?'Aspect':'Aspect',
+    strengths:   effL==='de'?'Stärken':effL==='es'?'Puntos fuertes':effL==='fr'?'Points forts':isEN?'Strengths':'Sterke punten',
+    improvements:effL==='de'?'Verbesserungspunkte':effL==='es'?'Puntos a mejorar':effL==='fr'?'Points à améliorer':isEN?'Improvements':'Verbeterpunten',
+    quotes:      effL==='de'?'Illustrative Zitate':effL==='es'?'Citas ilustrativas':effL==='fr'?'Citations illustratives':isEN?'Illustrative quotes':'Illustratieve citaten',
   };
+
+  // Communication assessment blok voor PDF (alleen als aanwezig)
+  let commsBlock = '';
+  const ca = d.communicationAssessment;
+  if (ca && typeof ca === 'object') {
+    const caScore = Math.max(1, Math.min(10, Math.round(ca.score ?? 5)));
+    const caColor = caScore <= 3 ? '#c62828' : caScore <= 5 ? '#e65100' : caScore <= 7 ? '#1565c0' : '#2e7d32';
+
+    const aspectRows = (Array.isArray(ca.aspects) ? ca.aspects : []).map(a => {
+      const s = Math.max(1, Math.min(5, Math.round(a.score ?? 3)));
+      const bars = Array.from({length:5}, (_,i) =>
+        `<span style="display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:2px;background:${i < s ? caColor : '#e0e0e0'}"></span>`
+      ).join('');
+      return `<tr>
+        <td style="padding:5px 10px;font-weight:600;border:1px solid #ddd;white-space:nowrap">${a.name || '—'}</td>
+        <td style="padding:5px 10px;border:1px solid #ddd;white-space:nowrap">${bars} ${s}/5</td>
+        <td style="padding:5px 10px;border:1px solid #ddd;color:#444;font-size:12px">${a.feedback || ''}</td>
+      </tr>`;
+    }).join('');
+
+    const strengthsList = (Array.isArray(ca.strengths) ? ca.strengths.filter(Boolean) : []);
+    const improvesList  = (Array.isArray(ca.improvements) ? ca.improvements.filter(Boolean) : []);
+    const quotesList    = (Array.isArray(ca.exampleQuotes) ? ca.exampleQuotes.filter(q => q && q.quote) : []);
+
+    commsBlock = `
+<h3>${lbl.comms}</h3>
+<div style="padding:10px 14px;background:#e3f2fd;border-left:4px solid ${caColor};margin-bottom:12px;border-radius:3px">
+  <div style="font-size:22px;font-weight:700;color:${caColor};display:inline-block;margin-right:14px;vertical-align:middle">${caScore}/10</div>
+  <span style="font-size:13px;color:#333">${ca.summary || ''}</span>
+</div>
+${aspectRows ? `<table style="margin-bottom:10px"><thead><tr style="background:#1565c0;color:#fff">
+  <th style="padding:6px 10px;text-align:left">${lbl.aspect}</th>
+  <th style="padding:6px 10px;text-align:left">Score</th>
+  <th style="padding:6px 10px;text-align:left">${lbl.feedback}</th>
+</tr></thead><tbody>${aspectRows}</tbody></table>` : ''}
+${(strengthsList.length || improvesList.length) ? `
+<table style="margin-bottom:10px"><tr>
+  ${strengthsList.length ? `<td style="width:50%;padding:10px;border:1px solid #c8e6c9;background:#e8f5e9;vertical-align:top">
+    <div style="font-size:11px;color:#2e7d32;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">✓ ${lbl.strengths}</div>
+    <ul style="margin:0;padding-left:16px;font-size:12px;color:#333">${strengthsList.map(s => `<li style="margin-bottom:3px">${s}</li>`).join('')}</ul>
+  </td>` : '<td style="width:50%"></td>'}
+  ${improvesList.length ? `<td style="width:50%;padding:10px;border:1px solid #ffe0b2;background:#fff3e0;vertical-align:top">
+    <div style="font-size:11px;color:#e65100;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px">△ ${lbl.improvements}</div>
+    <ul style="margin:0;padding-left:16px;font-size:12px;color:#333">${improvesList.map(s => `<li style="margin-bottom:3px">${s}</li>`).join('')}</ul>
+  </td>` : '<td style="width:50%"></td>'}
+</tr></table>` : ''}
+${quotesList.length ? `<div style="font-size:11px;color:#555;font-weight:700;letter-spacing:1px;text-transform:uppercase;margin:12px 0 6px">${lbl.quotes}</div>
+${quotesList.map(q => `
+  <div style="padding:8px 12px;border-left:3px solid #90a4ae;background:#fafafa;margin-bottom:6px;font-size:12px">
+    <div style="font-style:italic;color:#333;margin-bottom:3px">"${q.quote}"</div>
+    ${q.comment ? `<div style="color:#666;font-size:11px">${q.comment}</div>` : ''}
+  </div>`).join('')}` : ''}`;
+  }
 
   const chatLog = conversationHistory
     .filter(m => !m.content.startsWith('START'))
@@ -4380,7 +6699,7 @@ function exportDebriefPDF() {
   h2{font-size:14px;color:#555;font-weight:normal;margin-top:0}
   h3{font-size:13px;letter-spacing:1px;text-transform:uppercase;color:#0097a7;border-bottom:2px solid #0097a7;padding-bottom:4px;margin-top:24px}
   table{border-collapse:collapse;width:100%;margin-bottom:12px}
-  .score-box{display:inline-block;font-size:40px;font-weight:700;color:${scoreColor};border:3px solid ${scoreColor};padding:8px 18px;border-radius:6px;margin-right:16px}
+  .label-box{display:inline-block;font-size:26px;font-weight:700;font-family:Arial,sans-serif;letter-spacing:2px;text-transform:uppercase;color:${bColor};border:3px solid ${bColor};padding:8px 20px;border-radius:6px;margin-right:16px}
   .meta{color:#666;font-size:12px;margin-bottom:24px}
   ul{padding-left:16px}
   @media print {
@@ -4400,15 +6719,14 @@ function exportDebriefPDF() {
   ${lbl.duration}: ${d.durationStr||'—'}
 </p>
 <h3>${lbl.score}</h3>
-<div><span class="score-box">${scoreNum}</span>
-  <span style="color:#888;font-size:13px">${lbl.outof} 10 — ${scoreNum>=7?lbl.good:scoreNum>=5?lbl.avg:lbl.poor}</span>
-</div>
+<div><span class="label-box">${bLabel}</span></div>
 <h3>${lbl.behaviour}</h3>
 <table><thead><tr style="background:#0097a7;color:#fff">
   <th style="padding:7px 10px;text-align:left">${lbl.competency}</th>
   <th style="padding:7px 10px;text-align:left">Score</th>
   <th style="padding:7px 10px;text-align:left">${lbl.feedback}</th>
 </tr></thead><tbody>${compRows}</tbody></table>
+${commsBlock}
 <h3>${lbl.timeline}</h3>
 <table><thead><tr style="background:#37474f;color:#fff">
   <th style="padding:6px 10px;text-align:left">${lbl.time}</th>
@@ -4469,6 +6787,17 @@ function exportDebriefExcel() {
   const scoreNum = Math.max(1, Math.min(10, Math.round(d.score || 5)));
   const comps = d.competencies || [];
 
+  // Behaviour label for Excel column
+  const BKEYS = ['reactive','aware','proactive','in-control'];
+  const BLABELS_XL = {
+    reactive:    { en:'Reactive',   de:'Reaktiv',    es:'Reactivo',   fr:'Réactif',   nl:'Reactief'   },
+    aware:       { en:'Aware',      de:'Bewusst',     es:'Consciente', fr:'Conscient', nl:'Bewust'     },
+    proactive:   { en:'Proactive',  de:'Proaktiv',    es:'Proactivo',  fr:'Proactif',  nl:'Proactief'  },
+    'in-control':{ en:'In Control', de:'In Control',  es:'En Control', fr:'Maîtrise',  nl:'In Control' },
+  };
+  const bKey = scoreNum <= 3 ? 'reactive' : scoreNum <= 5 ? 'aware' : scoreNum <= 7 ? 'proactive' : 'in-control';
+  const bLabel = BLABELS_XL[bKey][effL] || BLABELS_XL[bKey]['en'];
+
   // Zoek competentiescore op naam (gedeeltelijke match)
   const cScore = (...terms) => {
     const c = comps.find(c => terms.some(t => c.name?.toLowerCase().includes(t)));
@@ -4485,11 +6814,15 @@ function exportDebriefExcel() {
     h('Organisation',            'Organisation',           'Organización',            'Organisation',              'Organisatie'),
     h('Scenario',                'Szenario',               'Escenario',               'Scénario',                  'Scenario'),
     h('Duration',                'Dauer',                  'Duración',                'Durée',                     'Duur'),
-    h('Overall score (1-10)',    'Gesamtpunktzahl (1-10)', 'Puntuación total (1-10)', 'Score global (1-10)',        'Totaalscore (1-10)'),
+    h('Overall assessment',      'Gesamtbewertung',        'Valoración general',       'Évaluation globale',        'Totaalwaardering'),
     h('Situational awareness (1-5)', 'Situationsbewusstsein (1-5)', 'Conciencia situacional (1-5)', 'Conscience situationnelle (1-5)', 'Situatiebewustzijn (1-5)'),
     h('Communication (1-5)',     'Kommunikation (1-5)',    'Comunicación (1-5)',       'Communication (1-5)',        'Communicatie (1-5)'),
     h('Prioritisation (1-5)',    'Priorisierung (1-5)',    'Priorización (1-5)',       'Priorisation (1-5)',         'Prioriteitstelling (1-5)'),
     h('Procedure compliance (1-5)', 'Verfahrenskonformität (1-5)', 'Cumplimiento de procedimientos (1-5)', 'Respect des procédures (1-5)', 'Procedure-opvolging (1-5)'),
+    h('Comm. effectiveness (1-10)','Komm.-Effektivität (1-10)','Efectividad com. (1-10)','Efficacité comm. (1-10)','Communicatie-doelmatigheid (1-10)'),
+    h('Comm. summary',           'Komm. Zusammenfassung',  'Resumen comunicación',    'Résumé communication',      'Comm. samenvatting'),
+    h('Comm. strengths',         'Komm. Stärken',           'Puntos fuertes com.',     'Points forts comm.',        'Comm. sterke punten'),
+    h('Comm. improvements',      'Komm. Verbesserungen',    'Mejoras comunicación',    'Améliorations comm.',       'Comm. verbeterpunten'),
     h('Strong points',           'Stärken',                'Puntos fuertes',          'Points forts',              'Sterke punten'),
     h('Improvement points',      'Verbesserungspunkte',    'Puntos de mejora',        'Points d\'amélioration',    'Verbeterpunten'),
     h('Notes',                   'Notizen',                'Notas',                   'Notes',                     'Notities'),
@@ -4498,6 +6831,13 @@ function exportDebriefExcel() {
   const strongPts  = (d.learningPoints||[]).filter(lp=>lp.type==='strong').map(lp=>lp.text).join(' | ');
   const improvePts = (d.learningPoints||[]).filter(lp=>lp.type!=='strong').map(lp=>lp.text).join(' | ');
 
+  // Communicatie-doelmatigheid kolommen
+  const ca = d.communicationAssessment || {};
+  const caScore = (ca && typeof ca.score === 'number') ? Math.max(1, Math.min(10, Math.round(ca.score))) : '';
+  const caSummary = ca.summary || '';
+  const caStrengths = (Array.isArray(ca.strengths) ? ca.strengths : []).filter(Boolean).join(' | ');
+  const caImproves  = (Array.isArray(ca.improvements) ? ca.improvements : []).filter(Boolean).join(' | ');
+
   const dataRow = [
     date,
     par.name||'',
@@ -4505,11 +6845,15 @@ function exportDebriefExcel() {
     par.org||par.organization||'',
     sc?.scenarioTitle||'',
     d.durationStr||'',
-    scoreNum,
+    bLabel,
     cScore('situati','aware'),
     cScore('commun'),
     cScore('prior'),
     cScore('proced'),
+    caScore,
+    caSummary,
+    caStrengths,
+    caImproves,
     strongPts,
     improvePts,
     '',
@@ -4519,7 +6863,9 @@ function exportDebriefExcel() {
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.aoa_to_sheet([headers, dataRow]);
     ws['!cols'] = [{wch:12},{wch:22},{wch:22},{wch:24},{wch:30},{wch:8},
-      {wch:10},{wch:10},{wch:10},{wch:10},{wch:10},{wch:45},{wch:45},{wch:22}];
+      {wch:10},{wch:10},{wch:10},{wch:10},{wch:10},
+      {wch:14},{wch:50},{wch:45},{wch:45},
+      {wch:45},{wch:45},{wch:22}];
     // Stijl headers vet
     headers.forEach((_,i) => {
       const cell = ws[XLSX.utils.encode_cell({r:0,c:i})];
@@ -4547,28 +6893,18 @@ function exportDebriefExcel() {
 // INIT
 // ═══════════════════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
-  // Thema herstellen
+  // Restore theme
   const savedTheme = localStorage.getItem('oip_player_theme');
   if (savedTheme === 'light') {
     document.body.classList.add('light');
     const btn = document.getElementById('daymode-btn');
-    if (btn) { btn.textContent = '🌙'; btn.title = 'Schakel naar nachtmodus'; }
+    if (btn) { btn.textContent = '🌙'; btn.title = 'Switch to night mode'; }
   }
 
-  const savedLang = localStorage.getItem('oip_lang');
-  if (savedLang && ['nl','en'].includes(savedLang)) {
-    lang = savedLang;
-    // Markeer de vorige keuze visueel in de overlay maar verberg haar NIET
-    document.querySelectorAll('.lang-btn').forEach(btn => {
-      const isActive = (savedLang === 'nl' && btn.textContent.includes('Nederlands'))
-                    || (savedLang === 'en' && btn.textContent.includes('English'));
-      btn.style.borderColor = isActive ? 'var(--cyan)' : '';
-      btn.style.color       = isActive ? 'var(--cyan)' : '';
-      btn.style.background  = isActive ? 'var(--cyan-dim)' : '';
-    });
-    const sw = document.getElementById('lang-switch');
-    if (sw) sw.textContent = savedLang.toUpperCase();
-  }
+  // UI language is always English — show intro directly
+  lang = 'en';
+  document.getElementById('intro').classList.add('visible');
+  applyUILang();
 });
 </script>
 </body>
