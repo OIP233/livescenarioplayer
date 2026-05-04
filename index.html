@@ -2524,22 +2524,70 @@ body.light .msg.sys .msg-bub { color: var(--text-dim); }
 </div>
 
 <script>
-(function() {
+  (function() {
+
+  // ── Zelfde geheime sleutel als in de landing page ────────
+  // Zorg dat dit EXACT overeenkomt met TOKEN_SECRET in index.html
   const TOKEN_SECRET = 'oip-platform-2025-geheim';
 
+  // ── Blokkeerscherm HTML ───────────────────────────────────
   function toonBlokkeerscherm() {
     document.documentElement.style.overflow = 'hidden';
-    document.body.style.cssText = "margin:0;padding:0;background:#141820;font-family:'Share Tech Mono',monospace;display:flex;align-items:center;justify-content:center;min-height:100vh;";
-    document.body.innerHTML = '<div style="text-align:center;max-width:420px;padding:40px 24px;"><div style="font-size:48px;margin-bottom:24px;">\uD83D\uDD12</div><div style="font-family:\'Barlow Condensed\',sans-serif;font-size:28px;font-weight:800;color:#f0f8ff;letter-spacing:3px;text-transform:uppercase;margin-bottom:12px;">Geen Toegang</div><div style="font-size:13px;color:#9db8cc;line-height:1.7;margin-bottom:32px;">Deze applicatie is alleen toegankelijk via het OIP Live Scenario platform. Ga terug naar de portal om in te loggen.</div><a href="https://livescenario-start.netlify.app" style="display:inline-block;padding:12px 28px;background:rgba(32,216,255,0.08);border:1px solid #20d8ff;border-radius:4px;color:#20d8ff;font-family:\'Barlow Condensed\',sans-serif;font-size:14px;font-weight:700;letter-spacing:2px;text-transform:uppercase;text-decoration:none;">← Naar de Portal</a><div style="margin-top:24px;font-size:10px;color:#353f55;letter-spacing:2px;">OIP LIVE SCENARIO PLATFORM</div></div>';
+    document.body.style.cssText = `
+      margin:0; padding:0;
+      background:#141820;
+      font-family:'Share Tech Mono',monospace;
+      display:flex; align-items:center; justify-content:center;
+      min-height:100vh;
+    `;
+    document.body.innerHTML = `
+      <div style="text-align:center; max-width:420px; padding:40px 24px;">
+        <div style="font-size:48px; margin-bottom:24px;">🔒</div>
+        <div style="
+          font-family:'Barlow Condensed',sans-serif;
+          font-size:28px; font-weight:800;
+          color:#f0f8ff; letter-spacing:3px;
+          text-transform:uppercase; margin-bottom:12px;
+        ">Geen Toegang</div>
+        <div style="
+          font-size:13px; color:#9db8cc; line-height:1.7;
+          margin-bottom:32px;
+        ">
+          Deze applicatie is alleen toegankelijk via het OIP Live Scenario platform.
+          Ga terug naar de portal om in te loggen.
+        </div>
+        <a href="https://livescenario-start.netlify.app" style="
+          display:inline-block;
+          padding:12px 28px;
+          background:rgba(32,216,255,0.08);
+          border:1px solid #20d8ff;
+          border-radius:4px;
+          color:#20d8ff;
+          font-family:'Barlow Condensed',sans-serif;
+          font-size:14px; font-weight:700;
+          letter-spacing:2px; text-transform:uppercase;
+          text-decoration:none;
+          transition:all 0.2s;
+        ">← Naar de Portal</a>
+        <div style="margin-top:24px; font-size:10px; color:#353f55; letter-spacing:2px;">
+          OIP LIVE SCENARIO PLATFORM
+        </div>
+      </div>
+    `;
   }
 
+  // ── Token controleren ─────────────────────────────────────
   function controleerToken(token) {
     try {
       const decoded = atob(token);
       const delen   = decoded.split('|');
       if (delen.length !== 3) return false;
       const [klantcode, vervalt, hashStr] = delen;
+
+      // Verlopen?
       if (Date.now() > parseInt(vervalt)) return false;
+
+      // Handtekening controleren
       const payload = klantcode + '|' + vervalt;
       let hash = 0;
       const str = payload + TOKEN_SECRET;
@@ -2548,18 +2596,24 @@ body.light .msg.sys .msg-bub { color: var(--text-dim); }
         hash |= 0;
       }
       return Math.abs(hash).toString(36) === hashStr;
-    } catch { return false; }
+    } catch {
+      return false;
+    }
   }
 
+  // ── Token ophalen uit URL ─────────────────────────────────
   const params = new URLSearchParams(window.location.search);
   const token  = params.get('oiptoken');
+
   if (!token || !controleerToken(token)) {
+    // Wacht tot DOM geladen is voordat we het scherm vervangen
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', toonBlokkeerscherm);
     } else {
       toonBlokkeerscherm();
     }
   }
+
 })();
 
 // ═══════════════════════════════════════════════════════════════
@@ -3816,19 +3870,29 @@ class InlineVoiceInput {
   async start() {
     if (this.state !== 'idle') return;
     try {
+      // Audio-constraints geoptimaliseerd voor Whisper:
+      // - sampleRate 16 kHz: matcht Whisper's interne sample-rate (geen extra resampling)
+      // - channelCount 1: mono is genoeg voor spraak, halveert upload-grootte
+      // - autoGainControl uit: AGC boost achtergrondgeluid in stilte → meer Whisper-hallucinaties
+      //   Zet weer op true als gebruikers met zwakke microfoons klagen over te zachte opname.
       this.stream = await navigator.mediaDevices.getUserMedia({
-        audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: false,
+          sampleRate: 16000,
+          channelCount: 1,
+        }
       });
 
       // Kies een ondersteund mime-type (browser-afhankelijk).
-      // Volgorde belangrijk: kale 'audio/webm' zonder codec-clausule eerst,
-      // omdat sommige Whisper-wrappers struikelen over de codec-suffix.
-      // Voor Edge/Chrome werkt mp4 vaak beter dan webm.
+      // Volgorde: Opus eerst — efficiëntste spraak-codec, beste resultaat met Whisper.
+      // mp4 (AAC) blijft als fallback voor Safari/iOS waar Opus niet altijd werkt.
       const candidates = [
-        'audio/mp4',                  // Edge/Safari/iOS
-        'audio/webm',                 // Chrome/Firefox (zonder codec-suffix)
-        'audio/webm;codecs=opus',     // Chrome/Firefox (expliciet)
-        'audio/ogg;codecs=opus',      // Firefox legacy
+        'audio/webm;codecs=opus',     // BEST voor spraak (Chrome/Firefox/Edge)
+        'audio/ogg;codecs=opus',      // Firefox-fallback
+        'audio/webm',                 // Chrome zonder expliciete codec
+        'audio/mp4',                  // Safari/iOS
         'audio/mpeg',                 // zelden, maar volledig ondersteund
         '',                           // browser-default (laatste redmiddel)
       ];
@@ -3842,8 +3906,9 @@ class InlineVoiceInput {
       }
       console.log('[OIP voice] Using mimeType:', mimeType || '(browser default)');
 
+      // 32 kbps is ruim voldoende voor spraak; lagere bitrate = kleinere upload = snellere transcriptie.
       this.mediaRecorder = mimeType
-        ? new MediaRecorder(this.stream, { mimeType, audioBitsPerSecond: 96000 })
+        ? new MediaRecorder(this.stream, { mimeType, audioBitsPerSecond: 32000 })
         : new MediaRecorder(this.stream);
       this.chunks = [];
       this.mediaRecorder.addEventListener('dataavailable', e => {
@@ -3983,36 +4048,33 @@ class InlineVoiceInput {
                 ' · audio: ' + Math.round(blob.size/1024) + ' KB · ' + t +
                 ' · file: ' + filename + ' · lang: ' + this.language);
 
-    // Audio naar base64 converteren
-    const base64 = await InlineVoiceInput._blobToBase64(blob);
-
-    // Stuur expliciete filename + format mee zodat de server het correct doorgeeft aan Whisper.
-    // Verschillende veldnamen tegelijk voor maximale compatibiliteit met de Netlify-functie.
-    const payload = {
-      audio:       base64,
-      file:        base64,
-      data:        base64,
-      audioBase64: base64,
-      mimeType:    t,
-      mime_type:   t,
-      contentType: t,
-      content_type: t,
-      format:      ext,
-      extension:   ext,
-      filename:    filename,
-      file_name:   filename,
-      name:        filename,
-      language:    this.language,
-      prompt:      this.prompt,
-      model:       'whisper-1',
-    };
+    // Verstuur als multipart/form-data. Veel sneller dan base64-in-JSON:
+    // - geen ~33% base64-overhead op de upload
+    // - geen JSON parse + base64 decode op de server (proxy kan multipart 1-op-1 doorzetten naar OpenAI)
+    // - matcht het native formaat van OpenAI's /v1/audio/transcriptions endpoint
+    //
+    // BELANGRIJK: stel GEEN 'Content-Type' header in — de browser zet zelf de juiste
+    // multipart-boundary. Een handmatige Content-Type header sloopt de boundary.
+    //
+    // SERVER-NOTE: dit vereist dat je Netlify-functie multipart/form-data accepteert
+    // i.p.v. JSON met base64. Zie de bijgeleverde refactor-tip.
+    const fd = new FormData();
+    fd.append('file', blob, filename);
+    fd.append('language', this.language || '');
+    fd.append('prompt', this.prompt || '');
+    // gpt-4o-mini-transcribe: lagere WER dan whisper-1, vergelijkbare latency,
+    // door OpenAI aanbevolen voor productie. De server kan dit overrulen.
+    fd.append('model', 'gpt-4o-mini-transcribe');
+    // Deterministisch: voorkomt drift tussen identieke opnames
+    fd.append('temperature', '0');
+    fd.append('response_format', 'json');
 
     let res;
     try {
       res = await fetch(this.endpoint, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: fd,
+        // GEEN headers — browser zet Content-Type met boundary automatisch
       });
     } catch (e) {
       throw new Error('Network error: ' + (e.message || e));
@@ -4147,23 +4209,75 @@ class InlineVoiceInput {
 }
 
 function buildVoicePrompt() {
-  // Combineer base-vocabulaire met scenario-specifieke termen
-  const parts = [VOICE_CONFIG.basePrompt];
+  // Whisper-prompt-limiet: 224 tokens (~600-900 tekens). We bouwen prioriteits-gebaseerd op:
+  // 1. Rolnamen (komen letterlijk voor in operator-spraak)
+  // 2. Tags uit beginsituatie (T-204, P-12, MS Rosita...)
+  // 3. Tags uit fase-regie en AI-extra (operator zal deze noemen)
+  // 4. Bedrijfsprofiel-specifieke tags (uit gekoppeld profiel)
+  // 5. Generieke fallback-vocab pas als laatste, ALLEEN als er ruimte is
   const sc = scenarioConfig?.aiScenario;
+  const parts = [];
+  const SOFT_LIMIT = 600; // ruim onder de 224-token grens
 
-  // Namen van AI-rollen toevoegen (die worden vaak uitgesproken)
+  // 1. Rolnamen
   const roleNames = (sc?.roles || []).map(r => r?.name).filter(Boolean);
-  if (roleNames.length) {
-    parts.push('Roles: ' + roleNames.join(', ') + '.');
-  }
-  // Deelnemer-naam als relevante context
+  if (roleNames.length) parts.push('Roles: ' + roleNames.join(', ') + '.');
+
+  // 2. Deelnemer-naam
   const pName = scenarioConfig?.participant?.name;
   if (pName) parts.push('Operator: ' + pName + '.');
 
-  // Scenario-titel als extra context (bevat vaak unieke termen)
-  if (sc?.scenarioTitle) parts.push('Scenario: ' + sc.scenarioTitle + '.');
+  // 3. Tags uit beginsituatie + fase-regie + AI-extra
+  // Patronen die operators letterlijk uitspreken:
+  //   - Equipment-tags:  T-204, P-12, V-301, CAM_5
+  //   - Schipnamen:      MS Rosita, MV Hudson
+  //   - Afkortingen:     VRU, DCS, LMRA, ATEX, BRZO
+  //   - Productnamen:    biodiesel, naphtha, methanol (3+ letters, hoofdletter optioneel)
+  const corpus = [
+    sc?.initialSituation || '',
+    sc?.scenarioTitle || '',
+    sc?.description || '',
+    (sc?.phases || []).map(p => (p.label||'') + ' ' + (p.direction||'')).join(' '),
+    sc?.systemPromptExtraRaw?.general || '',
+  ].join(' ');
 
-  return parts.join(' ');
+  const tagPatterns = [
+    /\b[A-Z]{2,5}_?[-_]?\d{1,4}\b/g,   // T-204, CAM_5, P12, V-301
+    /\b(?:MS|MV|MT|FV)\s+[A-Z][a-zA-Z]+\b/g, // MS Rosita, MV Hudson
+    /\b[A-Z]{2,6}\b/g,                  // VRU, DCS, LMRA, BRZO, ATEX (acroniemen)
+  ];
+  const found = new Set();
+  for (const rx of tagPatterns) {
+    const matches = corpus.match(rx) || [];
+    matches.forEach(m => { if (m.length >= 2) found.add(m); });
+  }
+  // Filter veelvoorkomende stop-acroniemen die geen jargon zijn
+  const stopAcr = new Set(['THE','AND','FOR','BUT','NOT','YOU','ARE','WAS','HIS','HER','OK','OFF','ON','NL','EN','DE','ES','FR','IF','IT','OR','AT','TO','BE','IS','AS','AI','UI']);
+  const tags = [...found].filter(t => !stopAcr.has(t.toUpperCase()));
+  if (tags.length) parts.push('Terms: ' + tags.slice(0, 30).join(', ') + '.');
+
+  // 4. Bedrijfsprofiel-tags (als gekoppeld)
+  try {
+    const profileId = sc?.linkedProfileId;
+    if (profileId) {
+      const profiles = JSON.parse(localStorage.getItem('oip_company_profiles_v1') || '[]');
+      const profile = profiles.find(p => p.id === profileId);
+      if (profile?.tags) {
+        const profileTags = profile.tags.slice(0, 200);
+        if (profileTags) parts.push(profileTags);
+      }
+    }
+  } catch (_) { /* localStorage faal stilte ok */ }
+
+  // 5. Generieke fallback-vocab — alleen als we nog veel ruimte over hebben
+  let prompt = parts.join(' ');
+  if (prompt.length < SOFT_LIMIT - 100 && VOICE_CONFIG.basePrompt) {
+    const remaining = SOFT_LIMIT - prompt.length;
+    prompt += ' ' + VOICE_CONFIG.basePrompt.slice(0, remaining);
+  }
+
+  // Hard cap
+  return prompt.slice(0, SOFT_LIMIT).trim();
 }
 
 function buildVoiceMeter() {
